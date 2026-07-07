@@ -1,0 +1,147 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   DESIGN TOKENS — shadcn theme layer
+
+   Tier 1: Brand tokens for type, action color, shape, and page tint.
+   Tier 2: Semantic shadcn surfaces and interaction colors.
+   Tier 3: System tokens for shadows, charts, and platform details.
+
+   Keep global CSS as shared infrastructure. Brand and visual-language changes
+   should happen here first, then be exposed through Tailwind in globals.css.
+────────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Tier 1: Brand */
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-size: 16px;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+
+  --background: oklch(0.965 0.009 248);
+  --foreground: oklch(0.14 0.01 258);
+  --primary: oklch(0.13 0 0);
+  --primary-foreground: oklch(0.98 0 0);
+  --radius: 0.75rem;
+
+  /* Tier 2: Semantic */
+  --card: oklch(0.992 0.003 248);
+  --card-foreground: oklch(0.14 0.01 258);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.14 0.01 258);
+
+  --secondary: oklch(0.955 0.01 248);
+  --secondary-foreground: oklch(0.14 0.01 258);
+  --muted: oklch(0.935 0.012 248);
+  --muted-foreground: oklch(0.5 0.01 258);
+  --accent: oklch(0.955 0.01 248);
+  --accent-foreground: oklch(0.14 0.01 258);
+
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.98 0 0);
+  --success: oklch(0.5 0.15 150);
+  --success-foreground: oklch(0.98 0 0);
+  --warning: oklch(0.72 0.16 75);
+  --warning-foreground: oklch(0.14 0.01 258);
+
+  --border: oklch(0.9 0.007 248);
+  --input: oklch(0.9 0.007 248);
+  --input-background: oklch(0.96 0.006 248);
+  --switch-background: oklch(0.78 0.008 248);
+  --ring: oklch(0.4 0 0);
+
+  --sidebar: oklch(0.96 0.007 248);
+  --sidebar-foreground: oklch(0.14 0.01 258);
+  --sidebar-primary: oklch(0.13 0 0);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.93 0.008 248);
+  --sidebar-accent-foreground: oklch(0.14 0.01 258);
+  --sidebar-border: oklch(0.9 0.007 248);
+  --sidebar-ring: oklch(0.4 0 0);
+
+  /* Portfolio compatibility aliases */
+  --surface: var(--muted);
+  --surface-raised: var(--secondary);
+  --focus: var(--ring);
+  --accent-secondary: var(--primary);
+  --project-funding-finder: #e8196a;
+
+  /* Healthdirect case study — journey map note colours. The pastels stay
+     fixed in dark mode, so their text colour is pinned dark too. */
+  --journey-needs: #ccecea;
+  --journey-needs-foreground: oklch(0.14 0.01 258);
+  --journey-pain: #fce7e2;
+  --journey-pain-foreground: oklch(0.14 0.01 258);
+
+  /* Tier 3: System */
+  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+  --font-apple: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-sm: 0 1px 4px oklch(0 0 0 / 0.04), 0 1px 2px oklch(0 0 0 / 0.02);
+  --shadow-card: 0 2px 12px oklch(0 0 0 / 0.06), 0 1px 4px oklch(0 0 0 / 0.03);
+  --shadow-bubble: 0 1px 8px oklch(0 0 0 / 0.05), 0 0.5px 2px oklch(0 0 0 / 0.02);
+  --shadow-elevated: 0 4px 24px oklch(0 0 0 / 0.08), 0 2px 8px oklch(0 0 0 / 0.04);
+
+  --apple-pay-blue: oklch(0.61 0.236 258);
+  --apple-pay-surface: oklch(0.07 0.01 258);
+  --apple-fills-tertiary: rgba(118, 118, 128, 0.12);
+  --apple-fills-tertiary-hover: rgba(118, 118, 128, 0.2);
+  --apple-labels-vibrant-secondary: #999999;
+
+  --chart-1: oklch(0.55 0.14 243);
+  --chart-2: oklch(0.62 0.12 180);
+  --chart-3: oklch(0.58 0.14 140);
+  --chart-4: oklch(0.68 0.14 60);
+  --chart-5: oklch(0.62 0.16 25);
+}
+
+.dark {
+  --background: oklch(0.13 0.01 258);
+  --foreground: oklch(0.97 0.004 248);
+  --primary: oklch(0.93 0 0);
+  --primary-foreground: oklch(0.13 0 0);
+
+  --card: oklch(0.18 0.01 258);
+  --card-foreground: oklch(0.97 0.004 248);
+  --popover: oklch(0.18 0.01 258);
+  --popover-foreground: oklch(0.97 0.004 248);
+  --secondary: oklch(0.23 0.01 258);
+  --secondary-foreground: oklch(0.97 0.004 248);
+  --muted: oklch(0.23 0.01 258);
+  --muted-foreground: oklch(0.62 0.012 258);
+  --accent: oklch(0.23 0.01 258);
+  --accent-foreground: oklch(0.97 0.004 248);
+
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.98 0 0);
+  --success: oklch(0.63 0.15 150);
+  --success-foreground: oklch(0.13 0.01 258);
+  --warning: oklch(0.8 0.16 75);
+  --warning-foreground: oklch(0.13 0.01 258);
+
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 14%);
+  --input-background: oklch(0.2 0.01 258);
+  --switch-background: oklch(0.35 0.01 258);
+  --ring: oklch(0.65 0 0);
+
+  --sidebar: oklch(0.18 0.01 258);
+  --sidebar-foreground: oklch(0.97 0.004 248);
+  --sidebar-primary: oklch(0.93 0 0);
+  --sidebar-primary-foreground: oklch(0.13 0 0);
+  --sidebar-accent: oklch(0.23 0.01 258);
+  --sidebar-accent-foreground: oklch(0.97 0.004 248);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.65 0 0);
+
+  --apple-pay-surface: oklch(0.12 0.01 258);
+  --apple-fills-tertiary: rgba(118, 118, 128, 0.24);
+  --apple-fills-tertiary-hover: rgba(118, 118, 128, 0.32);
+  --shadow-sm: 0 1px 4px oklch(0 0 0 / 0.2), 0 1px 2px oklch(0 0 0 / 0.14);
+  --shadow-card: 0 2px 12px oklch(0 0 0 / 0.28), 0 1px 4px oklch(0 0 0 / 0.18);
+  --shadow-bubble: 0 1px 8px oklch(0 0 0 / 0.24), 0 0.5px 2px oklch(0 0 0 / 0.14);
+  --shadow-elevated: 0 4px 24px oklch(0 0 0 / 0.36), 0 2px 8px oklch(0 0 0 / 0.22);
+  --chart-1: oklch(0.62 0.14 243);
+  --chart-2: oklch(0.68 0.12 180);
+  --chart-3: oklch(0.62 0.14 140);
+  --chart-4: oklch(0.7 0.14 60);
+  --chart-5: oklch(0.65 0.16 25);
+}
