@@ -12,12 +12,17 @@ import {
 import { cn } from "@/lib/utils";
 import { motionDuration, motionEase } from "../lib/motion";
 import { workEntryHref, type WorkEntry } from "../work/projects";
+import { PixelResolve } from "./PixelResolve";
+import { ProjectCover } from "./ProjectCover";
 
 type ProjectCardProps = {
   entry: WorkEntry;
   fillRow: boolean;
   index: number;
 };
+
+/** Tag chips stay tonal — project colour lives on the case-study page, not the shell. */
+const tagStyle = "bg-secondary text-secondary-foreground";
 
 export function ProjectCard({ entry, fillRow, index }: ProjectCardProps) {
   const shouldReduce = useReducedMotion();
@@ -32,8 +37,7 @@ export function ProjectCard({ entry, fillRow, index }: ProjectCardProps) {
   const linkClassName = cn(
     "group block outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-8 focus-visible:ring-offset-background",
     entry.size === "large" && "md:col-span-2 lg:col-span-1",
-    fillRow && "lg:col-span-2",
-    index === 1 && "md:mt-28"
+    fillRow && "lg:col-span-2"
   );
 
   const card = (
@@ -66,7 +70,24 @@ export function ProjectCard({ entry, fillRow, index }: ProjectCardProps) {
             className="project-card-media absolute inset-0 bg-secondary"
             animate={{ scale: isHovered && !shouldReduce ? 1.04 : 1 }}
             transition={motionEase.spring}
-          />
+          >
+            {entry.media ? (
+              "cover" in entry.media ? (
+                <ProjectCover
+                  cover={entry.media.cover}
+                  hovered={isHovered}
+                  className="absolute inset-0"
+                />
+              ) : (
+                <PixelResolve
+                  media={entry.media}
+                  hovered={isHovered}
+                  sizes="(min-width: 768px) 50vw, 100vw"
+                  className="absolute inset-0"
+                />
+              )
+            ) : null}
+          </motion.div>
         </div>
         <CardHeader className="gap-2 p-0">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -84,6 +105,21 @@ export function ProjectCard({ entry, fillRow, index }: ProjectCardProps) {
           <CardDescription className="max-w-xl text-base leading-[1.35] tracking-[-0.02em] text-muted-foreground md:text-xl">
             {entry.tagline}
           </CardDescription>
+          {entry.tags?.length ? (
+            <ul className="mt-1 flex flex-wrap gap-1.5">
+              {entry.tags.map((tag) => (
+                <li
+                  key={tag}
+                  className={cn(
+                    "rounded-full px-2.5 py-1 text-[11px] font-medium leading-none",
+                    tagStyle
+                  )}
+                >
+                  {tag}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </CardHeader>
       </Card>
     </motion.article>

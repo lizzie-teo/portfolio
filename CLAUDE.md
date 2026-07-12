@@ -4,13 +4,22 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Portfolio frontend rules
 
-Before creating or changing frontend UI, read and follow `docs/style-rules.md`.
+Before creating or changing frontend UI, read and follow `.docs/style-rules.md`. When building or changing an animated home-card cover, also follow `.docs/cover-effects.md`.
 
 - Build every component mobile-first and verify it from 320px through wide desktop layouts.
 - Search for and reuse existing components before creating new ones.
 - Use the portfolio's semantic design tokens; do not introduce one-off colours or duplicate spacing conventions.
 - Treat accessibility, keyboard use, touch input, reduced motion, and responsive image behaviour as acceptance criteria.
 - Use local shadcn/ui components from `@/components/ui/*` as the default primitive layer for reusable UI. Keep the portfolio's editorial theme, spacing, typography, motion, and case-study visuals defined in local components and semantic tokens.
+
+## Token efficiency
+
+Full playbook: `.docs/token-playbook.md`. Standing rules:
+
+- **Delegate by default — don't wait to be asked.** The user won't remember to request agents; picking the right one is Claude's job. Route automatically: UI change made → `visual-qa`; user asks how a design looks or for an opinion → `design-crit`; "where/how does X work" across many files → Explore agent; mechanical batch work (renames, repetitive edits, formatting) → a haiku or sonnet agent. Say in one line which agent is being used and why; don't ask permission first.
+- When a whole stretch of upcoming work is mechanical, recommend the user run `/model sonnet` (only they can switch the main session), and remind them to switch back after.
+- Never take screenshots in the main conversation to verify UI. After frontend changes, spawn the `visual-qa` agent (`.claude/agents/visual-qa.md`) with the affected routes; it captures, looks, and returns text findings.
+- Any screenshot capture goes through `node scripts/screenshot.mjs` — never write ad-hoc Playwright or headless-Chrome code.
 
 ## Work architecture
 

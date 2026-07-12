@@ -51,7 +51,7 @@ function Leader({ toward }: { toward: "right" | "left" }) {
   );
 }
 
-export function EngineAudit() {
+export function EngineAudit({ id }: { id?: string }) {
   const shouldReduce = useReducedMotion();
 
   const v: { map: Variants; cell: Variants } = {
@@ -76,8 +76,9 @@ export function EngineAudit() {
 
   return (
     <section
+      id={id}
       aria-label="AI engine audit — what held up, where trust could break, and the design agenda"
-      className="rounded-3xl border border-border bg-card p-4 shadow-card sm:p-6 md:p-8"
+      className="scroll-mt-24 rounded-3xl border border-border bg-card p-4 shadow-card sm:p-6 md:p-8"
     >
       <motion.div
         initial="hidden"
@@ -86,7 +87,7 @@ export function EngineAudit() {
         variants={v.map}
       >
         <h3 className="text-2xl font-semibold tracking-[-0.03em] md:text-3xl lg:text-4xl">
-          AI Engine Audit
+          AI engine audit
         </h3>
 
         <div className="mt-8 md:mt-10 lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center lg:gap-x-3 xl:gap-x-4">

@@ -10,6 +10,8 @@
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
+  --color-sc-hero-stage: var(--sc-hero-stage);
+  --shadow-sc-hero: var(--sc-hero-shadow);
   --color-journey-needs: var(--journey-needs);
   --color-journey-needs-foreground: var(--journey-needs-foreground);
   --color-journey-pain: var(--journey-pain);
@@ -28,7 +30,11 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-apple: var(--font-apple);
-  --font-heading: var(--font-sans);
+  /* Headings render in the display face (ITC Avant Garde Gothic design,
+     served as TeX Gyre Adventor via next/font/local in layout.tsx); body
+     copy stays Geist through --font-sans — Avant Garde is display-only
+     because its closed geometric forms fatigue at paragraph sizes. */
+  --font-heading: var(--font-display, var(--font-sans));
   --shadow-sm: var(--shadow-sm);
   --shadow-card: var(--shadow-card);
   --shadow-bubble: var(--shadow-bubble);
@@ -55,6 +61,15 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-leaf: var(--leaf);
+  --color-leaf-foreground: var(--leaf-foreground);
+  --color-grout: var(--grout);
+  --color-grout-foreground: var(--grout-foreground);
+  --color-rail-tile: var(--rail-tile);
+  --color-rail-tile-foreground: var(--rail-tile-foreground);
+  --color-rail-tile-hover: var(--rail-tile-hover);
+  --color-rail-tile-active: var(--rail-tile-active);
+  --color-rail-tile-active-foreground: var(--rail-tile-active-foreground);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -107,5 +122,16 @@ body {
   }
   html {
     @apply font-sans;
+  }
+  /* All headings carry the display face; non-heading display type (card
+     titles, cover artwork titles, footer statements) opts in with the
+     `font-heading` utility. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading;
   }
 }

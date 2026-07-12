@@ -162,7 +162,7 @@ function NoteChip({ note, lensChip }: { note: Note; lensChip: string }) {
   );
 }
 
-export function JourneyMap() {
+export function JourneyMap({ id }: { id?: string }) {
   const shouldReduce = useReducedMotion();
 
   const v: { map: Variants; stage: Variants; cell: Variants } = {
@@ -193,8 +193,9 @@ export function JourneyMap() {
 
   return (
     <section
+      id={id}
       aria-label="User journey — current state"
-      className="rounded-3xl border border-border bg-card p-4 shadow-card sm:p-6 md:p-8"
+      className="scroll-mt-24 rounded-3xl border border-border bg-card p-4 shadow-card sm:p-6 md:p-8"
     >
       <motion.div
         initial="hidden"
@@ -203,7 +204,7 @@ export function JourneyMap() {
         variants={v.map}
       >
         <h3 className="text-2xl font-semibold tracking-[-0.03em] md:text-3xl lg:text-4xl">
-          User Journey
+          User journey
         </h3>
 
         <motion.div

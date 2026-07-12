@@ -25,7 +25,7 @@ type CaseSnapshotProps = {
 export function CaseSnapshot({ stats, meta }: CaseSnapshotProps) {
   return (
     <section aria-label="Project snapshot">
-      <dl className="grid grid-cols-1 gap-10 border-t border-border pt-10 sm:grid-cols-3 sm:gap-8 md:pt-12">
+      <dl className="grid grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-8">
         {stats.map((stat, index) => (
           <MotionReveal key={stat.label} delay={index * 0.05}>
             <div>

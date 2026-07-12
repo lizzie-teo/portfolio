@@ -232,7 +232,7 @@ function FlowStage({
   );
 }
 
-export function IaFlow() {
+export function IaFlow({ id }: { id?: string }) {
   const shouldReduce = useReducedMotion();
 
   const v: FlowVariants = {
@@ -279,13 +279,14 @@ export function IaFlow() {
     },
   };
 
-  const sideInfoSub = "Plain-language info on risk factors and medical terms";
+  const sideInfoSub = "Plain language info on risk factors and medical terms";
   const sideHistorySub = "View or edit any earlier answer";
 
   return (
     <section
+      id={id}
       aria-label="Information architecture — one flow from first tap to care action"
-      className="rounded-3xl border border-border bg-card p-4 shadow-card sm:p-6 md:p-8"
+      className="scroll-mt-24 rounded-3xl border border-border bg-card p-4 shadow-card sm:p-6 md:p-8"
     >
       <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
         <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">

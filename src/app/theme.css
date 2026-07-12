@@ -5,6 +5,19 @@
    Tier 2: Semantic shadcn surfaces and interaction colors.
    Tier 3: System tokens for shadows, charts, and platform details.
 
+   Two-layer theming — neutral shell, project colour:
+
+   1. The shell (`:root`) is neutral and mostly off-white: warm charcoal text,
+      ink interaction states, warm-neutral tinted surfaces, whisper hairlines.
+      The home page, header, and shared chrome never carry a brand hue.
+   2. Each case study may re-tint a fixed contract of semantic tokens inside
+      a `[data-project-theme="<slug>"]` scope (set by CaseStudyShell), so the
+      project page picks up that product's own colour while every component
+      keeps using the same semantic roles. See PROJECT THEMES below.
+
+   Brand hues used as text or fills are deepened to clear WCAG AA (4.5:1);
+   the raw hue may only appear in imagery or large decorative surfaces.
+
    Keep global CSS as shared infrastructure. Brand and visual-language changes
    should happen here first, then be exposed through Tailwind in globals.css.
 ────────────────────────────────────────────────────────────────────────────── */
@@ -16,69 +29,89 @@
   --font-weight-normal: 400;
   --font-weight-medium: 500;
 
-  --background: oklch(0.965 0.009 248);
-  --foreground: oklch(0.14 0.01 258);
-  --primary: oklch(0.13 0 0);
-  --primary-foreground: oklch(0.98 0 0);
-  --radius: 0.75rem;
+  --background: oklch(0.9965 0.0026 106.45); /* #FEFEFC soft off-white */
+  --foreground: oklch(0.3385 0.0081 75.29); /* #3A3733 — 11.7:1 on background */
+  --primary: oklch(0.2749 0.007 67.53); /* #2A2724 ink — 14.9:1 with white */
+  --primary-foreground: oklch(1 0 0); /* #FFFFFF */
+  --radius: 0.625rem;
 
   /* Tier 2: Semantic */
-  --card: oklch(0.992 0.003 248);
-  --card-foreground: oklch(0.14 0.01 258);
+  --card: oklch(1 0 0); /* #FFFFFF — pure white pops slightly off the bg */
+  --card-foreground: oklch(0.3385 0.0081 75.29);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.14 0.01 258);
+  --popover-foreground: oklch(0.3385 0.0081 75.29);
 
-  --secondary: oklch(0.955 0.01 248);
-  --secondary-foreground: oklch(0.14 0.01 258);
-  --muted: oklch(0.935 0.012 248);
-  --muted-foreground: oklch(0.5 0.01 258);
-  --accent: oklch(0.955 0.01 248);
-  --accent-foreground: oklch(0.14 0.01 258);
+  /* Secondary — warm-neutral panel tint (project thumbnails, large quiet
+     surfaces); muted — the quietest wash; accent — hover/focus surfaces.
+     All three stay tonal in the shell; project themes may re-tint them. */
+  --secondary: oklch(0.9553 0.007 88.64); /* #F2F0EB */
+  --secondary-foreground: oklch(0.4341 0.0117 72.51); /* #55504A — 7.0:1 */
+  --muted: oklch(0.9646 0.0057 84.57); /* #F5F3EF */
+  --muted-foreground: oklch(0.5064 0.0191 79.25); /* #6B6459 — 5.3:1 on muted, 5.8:1 on bg */
+  --accent: oklch(0.9347 0.0087 84.57); /* #ECE9E3 */
+  --accent-foreground: oklch(0.3931 0.0134 76.45); /* #4A453E — 7.8:1 */
 
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.98 0 0);
+  /* Destructive — terracotta, kept in-family rather than a stock alert red */
+  --destructive: oklch(0.5517 0.1464 28.84); /* #B8493D — 5.2:1 with white */
+  --destructive-foreground: oklch(1 0 0);
   --success: oklch(0.5 0.15 150);
-  --success-foreground: oklch(0.98 0 0);
+  --success-foreground: oklch(1 0 0);
   --warning: oklch(0.72 0.16 75);
-  --warning-foreground: oklch(0.14 0.01 258);
+  --warning-foreground: oklch(0.3385 0.0081 75.29);
 
-  --border: oklch(0.9 0.007 248);
-  --input: oklch(0.9 0.007 248);
-  --input-background: oklch(0.96 0.006 248);
-  --switch-background: oklch(0.78 0.008 248);
-  --ring: oklch(0.4 0 0);
+  --border: oklch(0.9173 0.0092 78.28); /* #E7E3DD whisper-warm hairline */
+  --input: oklch(0.9173 0.0092 78.28);
+  --input-background: #ffffff;
+  --switch-background: #c9c3ba;
+  --ring: oklch(0.2749 0.007 67.53); /* matches primary */
 
-  --sidebar: oklch(0.96 0.007 248);
-  --sidebar-foreground: oklch(0.14 0.01 258);
-  --sidebar-primary: oklch(0.13 0 0);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.93 0.008 248);
-  --sidebar-accent-foreground: oklch(0.14 0.01 258);
-  --sidebar-border: oklch(0.9 0.007 248);
-  --sidebar-ring: oklch(0.4 0 0);
+  --sidebar: oklch(0.9887 0.0038 78.28); /* #FCFAF7 — a touch deeper than the page */
+  --sidebar-foreground: oklch(0.3385 0.0081 75.29);
+  --sidebar-primary: oklch(0.2749 0.007 67.53);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.9347 0.0087 84.57);
+  --sidebar-accent-foreground: oklch(0.3931 0.0134 76.45);
+  --sidebar-border: oklch(0.9173 0.0092 78.28);
+  --sidebar-ring: oklch(0.2749 0.007 67.53);
+
+  /* Leaf — the dark chapter divider tile inside case studies.
+     The neutral shell falls back to ink; project themes deepen their own
+     brand hue toward ink inside their scope. */
+  --leaf: oklch(0.2749 0.007 67.53); /* ink #2A2724 — 14.9:1 with white */
+  --leaf-foreground: oklch(1 0 0);
+
+  /* Grout — the dark page surface behind the case-study tile system,
+     one step deeper than the leaf so leaf tiles still read as tiles on
+     it. Foreground covers the little chrome that sits directly on the
+     grout (header, prev/next footer). */
+  --grout: oklch(0.205 0.0065 67.5); /* deep warm ink */
+  --grout-foreground: oklch(0.945 0.0108 76.6); /* #F1ECE5 */
+
+  /* Rail tile — the "On this page" anchor tiles in case studies. The
+     default trio covers the collapsed tiles, the active pair covers the
+     expanded current-chapter tile. The shell falls back to the quiet
+     secondary panel and primary; project themes may re-tint the set
+     (each foreground must clear 4.5:1 on its surfaces). */
+  --rail-tile: var(--secondary);
+  --rail-tile-foreground: var(--secondary-foreground);
+  --rail-tile-hover: var(--accent);
+  --rail-tile-active: var(--primary);
+  --rail-tile-active-foreground: var(--primary-foreground);
 
   /* Portfolio compatibility aliases */
   --surface: var(--muted);
   --surface-raised: var(--secondary);
   --focus: var(--ring);
   --accent-secondary: var(--primary);
-  --project-funding-finder: #e8196a;
-
-  /* Healthdirect case study — journey map note colours. The pastels stay
-     fixed in dark mode, so their text colour is pinned dark too. */
-  --journey-needs: #ccecea;
-  --journey-needs-foreground: oklch(0.14 0.01 258);
-  --journey-pain: #fce7e2;
-  --journey-pain-foreground: oklch(0.14 0.01 258);
 
   /* Tier 3: System */
   --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
   --font-apple: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
 
-  --shadow-sm: 0 1px 4px oklch(0 0 0 / 0.04), 0 1px 2px oklch(0 0 0 / 0.02);
-  --shadow-card: 0 2px 12px oklch(0 0 0 / 0.06), 0 1px 4px oklch(0 0 0 / 0.03);
-  --shadow-bubble: 0 1px 8px oklch(0 0 0 / 0.05), 0 0.5px 2px oklch(0 0 0 / 0.02);
-  --shadow-elevated: 0 4px 24px oklch(0 0 0 / 0.08), 0 2px 8px oklch(0 0 0 / 0.04);
+  --shadow-sm: 0 1px 4px oklch(0.35 0.03 80 / 0.06), 0 1px 2px oklch(0.35 0.03 80 / 0.03);
+  --shadow-card: 0 2px 12px oklch(0.35 0.03 80 / 0.09), 0 1px 4px oklch(0.35 0.03 80 / 0.04);
+  --shadow-bubble: 0 1px 8px oklch(0.35 0.03 80 / 0.07), 0 0.5px 2px oklch(0.35 0.03 80 / 0.03);
+  --shadow-elevated: 0 4px 24px oklch(0.35 0.03 80 / 0.12), 0 2px 8px oklch(0.35 0.03 80 / 0.06);
 
   --apple-pay-blue: oklch(0.61 0.236 258);
   --apple-pay-surface: oklch(0.07 0.01 258);
@@ -86,51 +119,143 @@
   --apple-fills-tertiary-hover: rgba(118, 118, 128, 0.2);
   --apple-labels-vibrant-secondary: #999999;
 
-  --chart-1: oklch(0.55 0.14 243);
-  --chart-2: oklch(0.62 0.12 180);
-  --chart-3: oklch(0.58 0.14 140);
-  --chart-4: oklch(0.68 0.14 60);
-  --chart-5: oklch(0.62 0.16 25);
+  /* Chart palette — a tonal ink-to-sand ramp; project themes may re-tint */
+  --chart-1: oklch(0.35 0.01 70);
+  --chart-2: oklch(0.5 0.015 75);
+  --chart-3: oklch(0.65 0.015 80);
+  --chart-4: oklch(0.78 0.012 85);
+  --chart-5: oklch(0.88 0.008 90);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   PROJECT THEMES
+
+   CaseStudyShell stamps `data-project-theme="<slug>"` on its root, and the
+   matching scope below re-tints the page in that product's own colour. A
+   case study with no scope here simply renders on the neutral shell.
+
+   A project scope may override ONLY this contract of semantic tokens:
+
+     --background             whisper tint of the brand hue, near-white
+     --primary / --ring       brand hue, deepened to ≥4.5:1 with white
+     --accent(-foreground)    brand-tinted hover/focus surface
+     --secondary(-foreground) brand-tinted quiet panel
+     --border / --input       brand-warmed hairline
+     --chart-1..5             module data-viz, if the project charts
+
+   plus module tokens specific to that project, prefixed clearly. Text
+   (--foreground), cards (--card), muted, and shadows stay neutral: the
+   product colour frames the page; it never colours the reading experience.
+   Saturated brand colour belongs in imagery, not in large token surfaces.
+────────────────────────────────────────────────────────────────────────────── */
+
+[data-project-theme="funding-finder"] {
+  --background: #fef9fb;
+  --primary: #c21358; /* brand #E8196A deepened — 6.0:1 with white */
+  --ring: #c21358;
+  --accent: #fbe9f0;
+  --accent-foreground: #9c2450; /* 6.5:1 on accent */
+  --secondary: #f9eef3;
+  --secondary-foreground: #9c2450;
+  --border: #f0dfe7;
+  --input: #f0dfe7;
+}
+
+[data-project-theme="healthdirect-symptom-checker"] {
+  /* Sampled from the HDA styleguide (Figma, hda-styleguide-v0.5): core
+     brand Base Teal #1e4759 with the green family as the action colour. */
+  --background: #f8fbfc;
+  --primary: #007f78; /* HDA Green Darken 20 — 4.9:1 with white */
+  --ring: #007f78;
+  --accent: #ccecea; /* HDA Green Lighten 80 */
+  --accent-foreground: #006f69; /* HDA Green Darken 30 — 4.8:1 on accent */
+  --secondary: #e6f5f5; /* HDA Green Lighten 90 */
+  --secondary-foreground: #006f69; /* 5.4:1 on secondary */
+  --border: #e9edee; /* HDA Teal Lighten 90 */
+  --input: #e9edee;
+  --leaf: #183947; /* HDA Teal Darken 20 — 12.3:1 with white */
+  --leaf-foreground: #ffffff;
+  --grout: #10262f; /* HDA Teal deepened below the leaf */
+  --grout-foreground: #ffffff;
+  --rail-tile: #99d9d5; /* HDA mid teal tint — default anchor tiles */
+  --rail-tile-foreground: #00443f; /* deep teal ink — 7.0:1 on tile, 6.0:1 on hover */
+  --rail-tile-hover: #85ccc7; /* one step deeper on hover */
+  --rail-tile-active: #e37778; /* coral marks the open chapter */
+  --rail-tile-active-foreground: #ffffff; /* per design direction — 3.0:1 on coral, below AA */
+
+  /* Module tokens — case-study hero stage. The screenshots sit on a muted
+     slate teal (a decorative surface carrying no text) with the showcase
+     Figma's "portfolio shadow" effect. */
+  --sc-hero-stage: #4b6c7a;
+  --sc-hero-shadow: 5px 5px 20px 2px rgb(0 0 0 / 0.25);
+
+  /* Module tokens — journey-map note pastels. The pastels stay fixed in
+     dark mode, so their text colour is pinned dark too. */
+  --journey-needs: #ccecea;
+  --journey-needs-foreground: oklch(0.14 0.01 258);
+  --journey-pain: #fce7e2;
+  --journey-pain-foreground: oklch(0.14 0.01 258);
+}
+
+[data-project-theme="ap-testing-portal"] {
+  --background: #f8f7fc;
+  --primary: #0c033b; /* AP+ midnight, straight from the brand mark — 19.2:1 */
+  --ring: #5f4bb8; /* AP+ violet #9E8AEF deepened so focus stays visible on tints */
+  --accent: #ece8fb;
+  --accent-foreground: #453394; /* 8.1:1 on accent */
+  --secondary: #eeebf9;
+  --secondary-foreground: #453394;
+  --border: #e2ddf2;
+  --input: #e2ddf2;
 }
 
 .dark {
-  --background: oklch(0.13 0.01 258);
-  --foreground: oklch(0.97 0.004 248);
-  --primary: oklch(0.93 0 0);
-  --primary-foreground: oklch(0.13 0 0);
+  /* First-draft neutral extrapolation, built on a warm ink tone rather than
+     a generic slate. Project themes define light values only for now; add
+     dark counterparts inside the scopes if a dark mode ships. */
+  --background: oklch(0.2373 0.0073 67.47); /* #211E1B warm charcoal */
+  --foreground: oklch(0.945 0.0108 76.6); /* #F1ECE5 — 14.1:1 */
+  --primary: oklch(0.9 0.008 80); /* light warm sand — inverse of the ink */
+  --primary-foreground: oklch(0.2373 0.0073 67.47);
 
-  --card: oklch(0.18 0.01 258);
-  --card-foreground: oklch(0.97 0.004 248);
-  --popover: oklch(0.18 0.01 258);
-  --popover-foreground: oklch(0.97 0.004 248);
-  --secondary: oklch(0.23 0.01 258);
-  --secondary-foreground: oklch(0.97 0.004 248);
-  --muted: oklch(0.23 0.01 258);
-  --muted-foreground: oklch(0.62 0.012 258);
-  --accent: oklch(0.23 0.01 258);
-  --accent-foreground: oklch(0.97 0.004 248);
+  --card: oklch(0.2674 0.0094 67.41); /* #292521 */
+  --card-foreground: oklch(0.945 0.0108 76.6);
+  --popover: oklch(0.2674 0.0094 67.41);
+  --popover-foreground: oklch(0.945 0.0108 76.6);
+  --secondary: oklch(0.32 0.008 70);
+  --secondary-foreground: oklch(0.88 0.01 80);
+  --muted: oklch(0.3 0.008 70);
+  --muted-foreground: oklch(0.76 0.012 80);
+  --accent: oklch(0.34 0.009 70);
+  --accent-foreground: oklch(0.9 0.008 80);
 
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.6697 0.1297 30.79); /* #D97463 — 5.2:1 with dark text */
+  --destructive-foreground: oklch(0.2373 0.0073 67.47);
   --success: oklch(0.63 0.15 150);
-  --success-foreground: oklch(0.13 0.01 258);
+  --success-foreground: oklch(0.2373 0.0073 67.47);
   --warning: oklch(0.8 0.16 75);
-  --warning-foreground: oklch(0.13 0.01 258);
+  --warning-foreground: oklch(0.2373 0.0073 67.47);
 
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
-  --input-background: oklch(0.2 0.01 258);
-  --switch-background: oklch(0.35 0.01 258);
-  --ring: oklch(0.65 0 0);
+  --border: oklch(0.3321 0.0125 72.4); /* #3A352F */
+  --input: oklch(0.3321 0.0125 72.4);
+  --input-background: #292521;
+  /* Leaf sits a step below the dark background so the light content plane
+     carries the act-break contrast instead of the leaf itself. */
+  --leaf: oklch(0.195 0.007 67);
+  --leaf-foreground: oklch(0.945 0.0108 76.6);
+  --grout: oklch(0.165 0.006 67);
+  --grout-foreground: oklch(0.945 0.0108 76.6);
+  --switch-background: #4a453d;
+  --ring: oklch(0.9 0.008 80);
 
-  --sidebar: oklch(0.18 0.01 258);
-  --sidebar-foreground: oklch(0.97 0.004 248);
-  --sidebar-primary: oklch(0.93 0 0);
-  --sidebar-primary-foreground: oklch(0.13 0 0);
-  --sidebar-accent: oklch(0.23 0.01 258);
-  --sidebar-accent-foreground: oklch(0.97 0.004 248);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.65 0 0);
+  --sidebar: oklch(0.2674 0.0094 67.41);
+  --sidebar-foreground: oklch(0.945 0.0108 76.6);
+  --sidebar-primary: oklch(0.9 0.008 80);
+  --sidebar-primary-foreground: oklch(0.2373 0.0073 67.47);
+  --sidebar-accent: oklch(0.34 0.009 70);
+  --sidebar-accent-foreground: oklch(0.9 0.008 80);
+  --sidebar-border: oklch(0.3321 0.0125 72.4);
+  --sidebar-ring: oklch(0.9 0.008 80);
 
   --apple-pay-surface: oklch(0.12 0.01 258);
   --apple-fills-tertiary: rgba(118, 118, 128, 0.24);
@@ -139,9 +264,10 @@
   --shadow-card: 0 2px 12px oklch(0 0 0 / 0.28), 0 1px 4px oklch(0 0 0 / 0.18);
   --shadow-bubble: 0 1px 8px oklch(0 0 0 / 0.24), 0 0.5px 2px oklch(0 0 0 / 0.14);
   --shadow-elevated: 0 4px 24px oklch(0 0 0 / 0.36), 0 2px 8px oklch(0 0 0 / 0.22);
-  --chart-1: oklch(0.62 0.14 243);
-  --chart-2: oklch(0.68 0.12 180);
-  --chart-3: oklch(0.62 0.14 140);
-  --chart-4: oklch(0.7 0.14 60);
-  --chart-5: oklch(0.65 0.16 25);
+
+  --chart-1: oklch(0.9 0.008 80);
+  --chart-2: oklch(0.78 0.01 78);
+  --chart-3: oklch(0.65 0.012 76);
+  --chart-4: oklch(0.52 0.012 74);
+  --chart-5: oklch(0.42 0.01 72);
 }

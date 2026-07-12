@@ -55,7 +55,7 @@ const lenses = [
   },
 ] as const;
 
-export function LandscapeReview() {
+export function LandscapeReview({ id }: { id?: string }) {
   const shouldReduce = useReducedMotion();
 
   const v: { map: Variants; lens: Variants; cell: Variants } = {
@@ -86,8 +86,9 @@ export function LandscapeReview() {
 
   return (
     <section
+      id={id}
       aria-label="Landscape review — Ada Symptom Check"
-      className="rounded-3xl border border-border bg-card p-4 shadow-card sm:p-6 md:p-8"
+      className="scroll-mt-24 rounded-3xl border border-border bg-card p-4 shadow-card sm:p-6 md:p-8"
     >
       <motion.div
         initial="hidden"
@@ -96,7 +97,7 @@ export function LandscapeReview() {
         variants={v.map}
       >
         <h3 className="text-2xl font-semibold tracking-[-0.03em] md:text-3xl lg:text-4xl">
-          Landscape Review
+          Landscape review
         </h3>
 
         <motion.div variants={v.cell} className="mt-8 max-w-prose">
