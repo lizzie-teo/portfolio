@@ -4,7 +4,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Portfolio frontend rules
 
-Before creating or changing frontend UI, read and follow `.docs/style-rules.md`. When building or changing an animated home-card cover, also follow `.docs/cover-effects.md`.
+Before creating or changing frontend UI, read and follow `.docs/style-rules.md`. When building or changing an animated home-card cover, also follow `.docs/cover-effects.md`. When placing video that must dissolve into the page background (no visible rectangle), follow `.docs/video-blend.md`.
+
+When the user asks for a frontend change, load the `frontend-design` skill (Skill tool: `frontend-design:frontend-design`) before writing or editing any UI code, and apply its guidance alongside the rules below.
 
 - Build every component mobile-first and verify it from 320px through wide desktop layouts.
 - Search for and reuse existing components before creating new ones.
@@ -16,9 +18,9 @@ Before creating or changing frontend UI, read and follow `.docs/style-rules.md`.
 
 Full playbook: `.docs/token-playbook.md`. Standing rules:
 
-- **Delegate by default — don't wait to be asked.** The user won't remember to request agents; picking the right one is Claude's job. Route automatically: UI change made → `visual-qa`; user asks how a design looks or for an opinion → `design-crit`; "where/how does X work" across many files → Explore agent; mechanical batch work (renames, repetitive edits, formatting) → a haiku or sonnet agent. Say in one line which agent is being used and why; don't ask permission first.
+- **Delegate by default — don't wait to be asked.** The user won't remember to request agents; picking the right one is Claude's job. Route automatically: user asks how a design looks or for an opinion → `design-crit`; new UI needing design decisions (a section, component, or layout where the look isn't settled, without a motion centrepiece) → `fd` (the frontend designer agent); motion-heavy work (animated covers, hero shaders, scroll-linked sequences, canvas/WebGL effects, retuning existing motion) → `ms` (the motion designer agent); prose review or rewrite across a whole case study → `writer` agent (a one-line copy tweak mid-conversation uses the `ux-writer` skill inline instead); "where/how does X work" across many files → Explore agent; mechanical batch work (renames, repetitive edits, formatting) → a haiku or sonnet agent. Say in one line which agent is being used and why; don't ask permission first.
 - When a whole stretch of upcoming work is mechanical, recommend the user run `/model sonnet` (only they can switch the main session), and remind them to switch back after.
-- Never take screenshots in the main conversation to verify UI. After frontend changes, spawn the `visual-qa` agent (`.claude/agents/visual-qa.md`) with the affected routes; it captures, looks, and returns text findings.
+- Never take screenshots in the main conversation to verify UI. Run the `visual-qa` agent (`.claude/agents/visual-qa.md`) only when the user asks for it, not automatically after frontend changes; give it the affected routes and it captures, looks, and returns text findings. (Agents that verify their own work with screenshots, like `fd` and `ms`, still do so.)
 - Any screenshot capture goes through `node scripts/screenshot.mjs` — never write ad-hoc Playwright or headless-Chrome code.
 
 ## Work architecture

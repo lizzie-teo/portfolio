@@ -12,10 +12,9 @@
   --color-surface-raised: var(--surface-raised);
   --color-sc-hero-stage: var(--sc-hero-stage);
   --shadow-sc-hero: var(--sc-hero-shadow);
+  --color-note-ink: var(--note-ink);
   --color-journey-needs: var(--journey-needs);
-  --color-journey-needs-foreground: var(--journey-needs-foreground);
   --color-journey-pain: var(--journey-pain);
-  --color-journey-pain-foreground: var(--journey-pain-foreground);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
   --color-accent-secondary: var(--accent-secondary);
@@ -59,15 +58,20 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
+  --color-glass-tint: var(--glass-tint);
+  --color-glass-tint-strong: var(--glass-tint-strong);
+  --color-glass-foreground: var(--glass-foreground);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
   --color-leaf: var(--leaf);
   --color-leaf-foreground: var(--leaf-foreground);
+  --color-leaf-highlight: var(--leaf-highlight);
   --color-grout: var(--grout);
   --color-grout-foreground: var(--grout-foreground);
   --color-rail-tile: var(--rail-tile);
   --color-rail-tile-foreground: var(--rail-tile-foreground);
   --color-rail-tile-hover: var(--rail-tile-hover);
+  --color-rail-tile-border: var(--rail-tile-border);
   --color-rail-tile-active: var(--rail-tile-active);
   --color-rail-tile-active-foreground: var(--rail-tile-active-foreground);
   --color-popover-foreground: var(--popover-foreground);
@@ -99,6 +103,30 @@ body {
 
 .project-card-media {
   transform-origin: center;
+}
+
+/* Frosted-glass label panel on home project cards. A borderless translucent
+   pane inset near the card's lower edge with a smaller corner radius than the
+   card, floating over the animated cover like a real sheet of glass: a
+   low-opacity warm-white tint plus a wide backdrop blur with a saturation boost
+   so the cover colours stay vivid through the pane, defined only by that
+   blur/fill and a soft drop shadow — no rim outline. The industry chip and
+   title sit on it as plain elements, not glass-styled. Positioning, radius,
+   and padding live in ProjectCard (Tailwind). */
+.project-card-glass {
+  background-color: var(--glass-tint);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-shadow);
+}
+
+/* Fallback where backdrop-filter is unsupported: no blur means the cover shows
+   through unsoftened, so lift the fill to the more opaque tint for a clean,
+   still-legible frosted pane. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .project-card-glass {
+    background-color: var(--glass-tint-strong);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

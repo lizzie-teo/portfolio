@@ -51,6 +51,73 @@
   --accent: oklch(0.9347 0.0087 84.57); /* #ECE9E3 */
   --accent-foreground: oklch(0.3931 0.0134 76.45); /* #4A453E — 7.8:1 */
 
+  /* Glass — the frosted label panel that floats over each home card's animated
+     cover. A dark smoked-glass recipe carrying white type: a translucent dark
+     tint plus a wide backdrop blur and a saturation boost so the cover colours
+     stay vivid through the pane. The pane is borderless, defined only by that
+     blur/fill and a soft drop shadow for lift; the title, tagline, and chips
+     sit on it as plain white text (--glass-foreground). The cover still shows
+     through, so the old "ink clears AA over any cover via a heavy tint" promise
+     no longer holds at rest — and on pointer devices the panel fades out on
+     hover anyway. The tint is dark enough to carry white type over the real
+     greyscale covers; the very lightest cover frames are the edge case.
+       --glass-tint          everyday translucent dark fill (backdrop blur present)
+       --glass-tint-strong   no-backdrop fallback: more opaque, still glassy
+       --glass-foreground    the white type/chip colour on the pane
+       --glass-saturate      backdrop saturation so covers stay colourful
+       --glass-shadow        soft drop shadow that floats the pane */
+  --glass-tint: rgb(24 21 18 / 0.52);
+  --glass-tint-strong: rgb(28 25 22 / 0.72);
+  --glass-foreground: #ffffff;
+  --glass-blur: 20px;
+  --glass-saturate: 1.7;
+  --glass-shadow: 0 8px 24px -16px rgb(0 0 0 / 0.5);
+
+  /* Note ink — the fixed dark ink for diagram note chips that sit on fixed
+     light pastel surfaces (e.g. the Healthdirect journey mint/pink). It is
+     the warm near-black of the ink family (matching --primary/--foreground's
+     hue) so diagram notes read tonally identical to body copy rather than a
+     separate cool blue-black. Defined once and deliberately NOT overridden in
+     .dark: those pastels stay light in dark mode, so their ink must stay dark
+     too. Contrast recorded where it is applied in the project scopes. */
+  --note-ink: oklch(0.2749 0.007 67.53); /* #2A2724 warm near-black */
+
+  /* Hero highlight — the one editorial marker accent on the home hero: a warm
+     marigold highlighter swipe behind a single key word. Deliberately the sole
+     non-neutral hue in the shell (see style-rules §3 amendment). Mode stable —
+     NOT overridden in .dark — because the swiped word always keeps fixed dark
+     ink (--note-ink) on top, in every tone including the hero's grout-hover
+     inversion. --note-ink #2A2724 on solid marigold is 8.9:1; over the grout
+     band at the swipe's ~0.9 min coverage it stays ~8:1, clearing AA in both
+     tones. */
+  --hero-highlight: #f6c24d; /* warm marigold, apricot-leaning toward the coral family */
+
+  /* Hero keywords — four of the five live words in the statement hero copy are
+     bold and tinted with the primary hue of the project they evoke. (complexity,
+     the h1 word, is deliberately left unmapped: it keeps the headline ink and
+     semibold weight, its dotted underline alone marking it live.) The hero band
+     has two tones and the whole band inverts to grout while any keyword is lit,
+     so every colour needs a value that clears WCAG AA (4.5:1) as text on BOTH
+     tones. These :root values are the LIGHT-tone resting band (on --secondary
+     #F2F0EB): the brand hues deepened until they clear AA there. The grout-tone
+     overrides live in [data-hero-tone="dark"] below, and the dark colour-scheme
+     resting band gets its own lighter set in .dark. The colour transitions with
+     the band (500ms) rather than snapping.
+
+     Mappings (light-tone ratio on #F2F0EB):
+       users         Healthdirect teal    #00736c  5.03:1
+       designSystems AP+ plum             #80225f  7.98:1
+       stakeholders  Funding Finder pink  #c21358  5.23:1
+       vibeCoder     AP+ magenta          #b0006f  6.00:1
+       figmaToCode   hero marigold family #9a5300  5.11:1
+                     (the --hero-highlight hue deepened to burnt orange for
+                     this light band; the dark tones get the marigold itself) */
+  --hero-kw-users: #00736c;
+  --hero-kw-design-systems: #80225f;
+  --hero-kw-stakeholders: #c21358;
+  --hero-kw-vibe-coder: #b0006f;
+  --hero-kw-figma-to-code: #9a5300;
+
   /* Destructive — terracotta, kept in-family rather than a stock alert red */
   --destructive: oklch(0.5517 0.1464 28.84); /* #B8493D — 5.2:1 with white */
   --destructive-foreground: oklch(1 0 0);
@@ -80,6 +147,12 @@
   --leaf: oklch(0.2749 0.007 67.53); /* ink #2A2724 — 14.9:1 with white */
   --leaf-foreground: oklch(1 0 0);
 
+  /* Leaf highlight — semibold emphasis colour for key words in leaf-surface
+     prose (the case-study intro). The neutral shell carries no brand hue, so
+     it falls back to plain bold leaf text; a project scope may opt into a hue
+     that clears 4.5:1 on its own leaf. */
+  --leaf-highlight: var(--leaf-foreground);
+
   /* Grout — the dark page surface behind the case-study tile system,
      one step deeper than the leaf so leaf tiles still read as tiles on
      it. Foreground covers the little chrome that sits directly on the
@@ -87,14 +160,17 @@
   --grout: oklch(0.205 0.0065 67.5); /* deep warm ink */
   --grout-foreground: oklch(0.945 0.0108 76.6); /* #F1ECE5 */
 
-  /* Rail tile — the "On this page" anchor tiles in case studies. The
-     default trio covers the collapsed tiles, the active pair covers the
-     expanded current-chapter tile. The shell falls back to the quiet
-     secondary panel and primary; project themes may re-tint the set
-     (each foreground must clear 4.5:1 on its surfaces). */
-  --rail-tile: var(--secondary);
-  --rail-tile-foreground: var(--secondary-foreground);
-  --rail-tile-hover: var(--accent);
+  /* Rail tile — the "On this page" anchor tiles in case studies.
+     Collapsed tiles are flat wireframes: no fill, a clean 1px hairline
+     in the grout ink (--rail-tile-border), taking a faint wash of that
+     ink on hover. The expanded current-chapter tile is the single
+     filled element (the active pair, falling back to primary). Project
+     themes may re-tint the set (each foreground must clear 4.5:1 on its
+     surfaces). */
+  --rail-tile: transparent;
+  --rail-tile-foreground: var(--grout-foreground);
+  --rail-tile-hover: color-mix(in oklab, var(--grout-foreground) 12%, transparent);
+  --rail-tile-border: color-mix(in oklab, var(--grout-foreground) 26%, transparent);
   --rail-tile-active: var(--primary);
   --rail-tile-active-foreground: var(--primary-foreground);
 
@@ -125,6 +201,22 @@
   --chart-3: oklch(0.65 0.015 80);
   --chart-4: oklch(0.78 0.012 85);
   --chart-5: oklch(0.88 0.008 90);
+}
+
+/* Hero keywords — grout-tone override. Applied on the hero section while any
+   keyword is lit (the band inverts to --grout). One bright-tint set serves the
+   near-black grout in BOTH colour schemes (light-scheme grout #191714,
+   dark-scheme grout #100e0c). Ratios on #191714:
+     users #40bdb2 7.79:1 · designSystems #cf7fb0 6.23:1 ·
+     stakeholders #ef77a4 6.68:1 · vibeCoder #f060ac 5.94:1 ·
+     figmaToCode #f6c24d 10.85:1 (--hero-highlight marigold, verbatim)
+   Set locally on the section, so it wins over the inherited .dark base. */
+[data-hero-tone="dark"] {
+  --hero-kw-users: #40bdb2;
+  --hero-kw-design-systems: #cf7fb0;
+  --hero-kw-stakeholders: #ef77a4;
+  --hero-kw-vibe-coder: #f060ac;
+  --hero-kw-figma-to-code: #f6c24d;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -177,11 +269,14 @@
   --leaf-foreground: #ffffff;
   --grout: #10262f; /* HDA Teal deepened below the leaf */
   --grout-foreground: #ffffff;
-  --rail-tile: #99d9d5; /* HDA mid teal tint — default anchor tiles */
-  --rail-tile-foreground: #00443f; /* deep teal ink — 7.0:1 on tile, 6.0:1 on hover */
-  --rail-tile-hover: #85ccc7; /* one step deeper on hover */
-  --rail-tile-active: #e37778; /* coral marks the open chapter */
-  --rail-tile-active-foreground: #ffffff; /* per design direction — 3.0:1 on coral, below AA */
+  /* Intro emphasis — the case study's coral, lightened until it clears WCAG
+     AA as text on the deep teal leaf (5.4:1 on #183947). The rail-active coral
+     #e37778 is a fill behind white and reads too dark for text here. */
+  --leaf-highlight: #ef948d;
+  /* Rail keeps the shell's wireframe default — white hairline tiles on
+     the deep teal grout — and coral floods the single open chapter. */
+  --rail-tile-active: #e37778; /* coral floods the open chapter */
+  --rail-tile-active-foreground: #ffffff; /* per design direction — 2.9:1 on coral, below AA; the user chose white over the AA-passing grout ink */
 
   /* Module tokens — case-study hero stage. The screenshots sit on a muted
      slate teal (a decorative surface carrying no text) with the showcase
@@ -189,24 +284,47 @@
   --sc-hero-stage: #4b6c7a;
   --sc-hero-shadow: 5px 5px 20px 2px rgb(0 0 0 / 0.25);
 
-  /* Module tokens — journey-map note pastels. The pastels stay fixed in
-     dark mode, so their text colour is pinned dark too. */
+  /* Module tokens — journey-map note pastels (used by the journey map,
+     engine audit, and landscape review). The pastels stay fixed in dark
+     mode; their text uses the shared --note-ink (warm near-black, mode
+     stable), so every diagram note reads in the same warm ink as body copy.
+     --note-ink on #ccecea mint is 11.9:1; on #fce7e2 pink is 12.4:1. */
   --journey-needs: #ccecea;
-  --journey-needs-foreground: oklch(0.14 0.01 258);
   --journey-pain: #fce7e2;
-  --journey-pain-foreground: oklch(0.14 0.01 258);
 }
 
 [data-project-theme="ap-testing-portal"] {
-  --background: #f8f7fc;
-  --primary: #0c033b; /* AP+ midnight, straight from the brand mark — 19.2:1 */
-  --ring: #5f4bb8; /* AP+ violet #9E8AEF deepened so focus stays visible on tints */
-  --accent: #ece8fb;
-  --accent-foreground: #453394; /* 8.1:1 on accent */
-  --secondary: #eeebf9;
-  --secondary-foreground: #453394;
-  --border: #e2ddf2;
-  --input: #e2ddf2;
+  /* Australian Payments Plus (AP+) case-study theme. The four brand values the
+     owner supplied: corporate plum #80225F as the action colour, magenta
+     #C6007E as the vivid accent, warm bone #EDEBE5 as the page, and warm
+     grey-green #373A36 as the dark band surface (leaf/grout — the symptom
+     checker pattern; no separate dark mode). The raw plum already clears AA
+     as text, so --primary uses it unchanged. (The AP+ product-UI palette from
+     the portal Figma — midnight, purple, mint — lives inside the case-study
+     screenshots, not in these page tokens.) */
+  --background: #edebe5; /* supplied warm-bone light theme background */
+  --primary: #80225f; /* AP+ plum, used as-is — 9.1:1 with white */
+  --ring: #80225f;
+  --accent: #f0dce8; /* pale plum hover/focus surface */
+  --accent-foreground: #6e1e50; /* plum deepened — 8.2:1 on accent */
+  --secondary: #efe1ea; /* pale plum quiet panel */
+  --secondary-foreground: #6e1e50; /* 8.5:1 on secondary */
+  --border: #ddced4; /* plum-warmed hairline over the bone page */
+  --input: #ddced4;
+  /* Leaf/grout — the supplied grey-green as the dark band surface, deepened
+     one step for the tile grout behind it. */
+  --leaf: #373a36; /* supplied grey-green — white 11.5:1 */
+  --leaf-foreground: #ffffff;
+  --grout: #2a2c29; /* grey-green deepened behind the tiles — white 14:1 */
+  --grout-foreground: #ffffff;
+  /* Intro emphasis — the accent magenta lightened until it clears AA as text
+     on the grey-green leaf (6.3:1 on #373a36). */
+  --leaf-highlight: #f7a8ce;
+  /* Rail keeps the shell's white wireframe on the plum grout; the brand
+     magenta floods the single open chapter. White on #C6007E is 5.7:1 —
+     clears AA, so no white-on-coral-style exception is needed here. */
+  --rail-tile-active: #c6007e;
+  --rail-tile-active-foreground: #ffffff;
 }
 
 .dark {
@@ -224,6 +342,24 @@
   --popover-foreground: oklch(0.945 0.0108 76.6);
   --secondary: oklch(0.32 0.008 70);
   --secondary-foreground: oklch(0.88 0.01 80);
+
+  /* Glass (dark) — the same dark smoked pane carrying white type; blur,
+     saturation, and --glass-foreground inherit the :root values. */
+  --glass-tint: rgb(20 18 16 / 0.55);
+  --glass-tint-strong: rgb(26 23 20 / 0.76);
+  --glass-shadow: 0 8px 24px -16px rgb(0 0 0 / 0.6);
+
+  /* Hero keywords — dark colour-scheme resting band. --secondary is a mid-dark
+     warm grey here (#36322e), so the deep :root hues would fail; these are
+     lightened to clear AA on it. The grout-tone override still applies on
+     hover. Ratios on #36322e: users #40bdb2 5.53 · designSystems #daa0c8 5.96 ·
+     stakeholders #ef8fb4 5.60 · vibeCoder #f584bf 5.41 ·
+     figmaToCode #f6c24d 7.71 (--hero-highlight marigold, verbatim). */
+  --hero-kw-users: #40bdb2;
+  --hero-kw-design-systems: #daa0c8;
+  --hero-kw-stakeholders: #ef8fb4;
+  --hero-kw-vibe-coder: #f584bf;
+  --hero-kw-figma-to-code: #f6c24d;
   --muted: oklch(0.3 0.008 70);
   --muted-foreground: oklch(0.76 0.012 80);
   --accent: oklch(0.34 0.009 70);
@@ -271,3 +407,4 @@
   --chart-4: oklch(0.52 0.012 74);
   --chart-5: oklch(0.42 0.01 72);
 }
+

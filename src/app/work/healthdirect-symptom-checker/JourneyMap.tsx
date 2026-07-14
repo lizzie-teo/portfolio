@@ -4,6 +4,8 @@ import { ArrowRightIcon } from "lucide-react";
 import { motion, useReducedMotion, type Variants } from "motion/react";
 import Image from "next/image";
 import { motionDuration, motionEase } from "@/app/lib/motion";
+import { cornerClasses, type TileCorners } from "@/app/components/Chapter";
+import { CollapsingLeaf } from "@/app/components/CollapsingLeaf";
 
 /**
  * The current-state user journey map for the priority persona, rebuilt as a
@@ -27,12 +29,12 @@ const lenses = [
   {
     key: "needs",
     label: "Needs",
-    chip: "bg-journey-needs text-journey-needs-foreground",
+    chip: "bg-journey-needs text-note-ink",
   },
   {
     key: "pains",
     label: "Pain points",
-    chip: "bg-journey-pain text-journey-pain-foreground",
+    chip: "bg-journey-pain text-note-ink",
   },
 ] as const;
 
@@ -153,7 +155,7 @@ function NoteChip({ note, lensChip }: { note: Note; lensChip: string }) {
   const emphasis = typeof note !== "string" && note.emphasis;
   return (
     <li
-      className={`max-w-prose rounded-lg px-3 py-2 text-xs leading-snug ${
+      className={`max-w-prose rounded-lg px-3 py-2 text-[13px] leading-snug ${
         emphasis ? "bg-primary text-primary-foreground" : lensChip
       }`}
     >
@@ -162,7 +164,13 @@ function NoteChip({ note, lensChip }: { note: Note; lensChip: string }) {
   );
 }
 
-export function JourneyMap({ id }: { id?: string }) {
+export function JourneyMap({
+  id,
+  corners = "all",
+}: {
+  id?: string;
+  corners?: TileCorners;
+}) {
   const shouldReduce = useReducedMotion();
 
   const v: { map: Variants; stage: Variants; cell: Variants } = {
@@ -195,121 +203,126 @@ export function JourneyMap({ id }: { id?: string }) {
     <section
       id={id}
       aria-label="User journey — current state"
-      className="scroll-mt-24 rounded-3xl border border-border bg-card p-4 shadow-card sm:p-6 md:p-8"
+      className="scroll-mt-24"
     >
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "0px 0px -80px 0px" }}
-        variants={v.map}
+      <CollapsingLeaf
+        pinTopPx={0}
+        className={`flex flex-col justify-start ${cornerClasses[corners]} border border-border bg-card p-5 shadow-card sm:p-8 md:p-10`}
       >
-        <h3 className="text-2xl font-semibold tracking-[-0.03em] md:text-3xl lg:text-4xl">
-          User journey
-        </h3>
-
         <motion.div
-          variants={v.cell}
-          className="mt-8 flex items-start gap-4 md:gap-6"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "0px 0px -80px 0px" }}
+          variants={v.map}
         >
-          <Image
-            src="/assets/healthdirect/family.svg"
-            alt=""
-            width={123}
-            height={123}
-            className="size-16 shrink-0 md:size-24"
-          />
-          <div className="min-w-0 max-w-prose">
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-              Persona — &ldquo;Aliya&rdquo;
-            </p>
-            <p className="mt-2 text-base font-semibold leading-snug">
-              A time-poor parent researching a child&apos;s symptoms
-            </p>
-            <blockquote className="mt-3 border-l border-border pl-4 text-sm leading-relaxed text-muted-foreground">
-              &ldquo;I take online search results with a grain of salt but I
-              like smart tools that save me time and get to the point quickly
-              and have constructive and progressive ideas on treatments and
-              prevention.&rdquo;
-            </blockquote>
-          </div>
-        </motion.div>
+          <h3 className="text-2xl font-semibold tracking-[-0.03em] md:text-3xl lg:text-4xl">
+            User journey
+          </h3>
 
-        <div className="mt-8 md:mt-10 lg:grid lg:grid-cols-[7.5rem_repeat(5,minmax(0,1fr))] lg:gap-x-5 xl:grid-cols-[8.5rem_repeat(5,minmax(0,1fr))] xl:gap-x-6">
-          {/* Desktop-only row labels; mobile repeats them inside each stage. */}
-          <div className="hidden lg:contents">
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground lg:col-start-1 lg:row-start-1 lg:self-end lg:border-b lg:border-border lg:pb-3">
-              Journey steps
-            </p>
-            {lenses.map((lens, lensIndex) => (
-              <p
-                key={lens.key}
-                aria-hidden="true"
-                className={`text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground lg:col-start-1 ${lensRow[lensIndex]} ${lensRule(lensIndex)} lg:py-4`}
-              >
-                {lens.label}
+          <motion.div
+            variants={v.cell}
+            className="mt-8 flex items-start gap-4 md:gap-6"
+          >
+            <Image
+              src="/assets/healthdirect/family.svg"
+              alt=""
+              width={123}
+              height={123}
+              className="size-16 shrink-0 md:size-24"
+            />
+            <div className="min-w-0 max-w-prose">
+              <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                Persona — &ldquo;Aliya&rdquo;
               </p>
+              <p className="mt-2 text-base font-semibold leading-snug">
+                A time-poor parent researching a child&apos;s symptoms
+              </p>
+              <blockquote className="mt-3 border-l border-border pl-4 text-sm leading-relaxed text-muted-foreground">
+                &ldquo;I take online search results with a grain of salt but I
+                like smart tools that save me time and get to the point quickly
+                and have constructive and progressive ideas on treatments and
+                prevention.&rdquo;
+              </blockquote>
+            </div>
+          </motion.div>
+
+          <div className="mt-8 md:mt-10 lg:grid lg:grid-cols-[7.5rem_repeat(5,minmax(0,1fr))] lg:gap-x-5 xl:grid-cols-[8.5rem_repeat(5,minmax(0,1fr))] xl:gap-x-6">
+            {/* Desktop-only row labels; mobile repeats them inside each stage. */}
+            <div className="hidden lg:contents">
+              <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground lg:col-start-1 lg:row-start-1 lg:self-end lg:border-b lg:border-border lg:pb-3">
+                Journey steps
+              </p>
+              {lenses.map((lens, lensIndex) => (
+                <p
+                  key={lens.key}
+                  aria-hidden="true"
+                  className={`text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground lg:col-start-1 ${lensRow[lensIndex]} ${lensRule(lensIndex)} lg:py-4`}
+                >
+                  {lens.label}
+                </p>
+              ))}
+            </div>
+
+            {stages.map((stage, stageIndex) => (
+              <motion.section
+                key={stage.title}
+                variants={v.stage}
+                aria-label={`Stage ${stageIndex + 1} — ${stage.title}`}
+                className="mt-8 border-t border-border pt-6 first-of-type:mt-0 first-of-type:border-t-0 first-of-type:pt-0 lg:contents"
+              >
+                <motion.div
+                  variants={v.cell}
+                  className={`${stageCol[stageIndex]} lg:row-start-1 lg:flex lg:items-end lg:justify-between lg:gap-2 lg:border-b lg:border-border lg:pb-3`}
+                >
+                  <p className="text-sm font-semibold leading-snug">
+                    {stage.title}
+                  </p>
+                  {stageIndex < stages.length - 1 ? (
+                    <ArrowRightIcon
+                      aria-hidden="true"
+                      className="hidden size-3.5 shrink-0 text-foreground/45 lg:mb-0.5 lg:block"
+                    />
+                  ) : null}
+                </motion.div>
+
+                {lenses.map((lens, lensIndex) => (
+                  <motion.div
+                    key={lens.key}
+                    variants={v.cell}
+                    className={`mt-4 lg:mt-0 ${stageCol[stageIndex]} ${lensRow[lensIndex]} ${lensRule(lensIndex)} lg:py-4`}
+                  >
+                    <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground lg:hidden">
+                      {lens.label}
+                    </p>
+                    <ul
+                      aria-label={`${lens.label} — ${stage.title}`}
+                      className="mt-2 flex flex-wrap gap-2 lg:mt-0 lg:flex-col lg:flex-nowrap"
+                    >
+                      {stage.notes[lens.key].map((note) => (
+                        <NoteChip
+                          key={typeof note === "string" ? note : note.text}
+                          note={note}
+                          lensChip={lens.chip}
+                        />
+                      ))}
+                    </ul>
+                  </motion.div>
+                ))}
+              </motion.section>
             ))}
           </div>
 
-          {stages.map((stage, stageIndex) => (
-            <motion.section
-              key={stage.title}
-              variants={v.stage}
-              aria-label={`Stage ${stageIndex + 1} — ${stage.title}`}
-              className="mt-8 border-t border-border pt-6 first-of-type:mt-0 first-of-type:border-t-0 first-of-type:pt-0 lg:contents"
-            >
-              <motion.div
-                variants={v.cell}
-                className={`${stageCol[stageIndex]} lg:row-start-1 lg:flex lg:items-end lg:justify-between lg:gap-2 lg:border-b lg:border-border lg:pb-3`}
-              >
-                <p className="text-sm font-semibold leading-snug">
-                  {stage.title}
-                </p>
-                {stageIndex < stages.length - 1 ? (
-                  <ArrowRightIcon
-                    aria-hidden="true"
-                    className="hidden size-3.5 shrink-0 text-foreground/45 lg:mb-0.5 lg:block"
-                  />
-                ) : null}
-              </motion.div>
-
-              {lenses.map((lens, lensIndex) => (
-                <motion.div
-                  key={lens.key}
-                  variants={v.cell}
-                  className={`mt-4 lg:mt-0 ${stageCol[stageIndex]} ${lensRow[lensIndex]} ${lensRule(lensIndex)} lg:py-4`}
-                >
-                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground lg:hidden">
-                    {lens.label}
-                  </p>
-                  <ul
-                    aria-label={`${lens.label} — ${stage.title}`}
-                    className="mt-2 flex flex-wrap gap-2 lg:mt-0 lg:flex-col lg:flex-nowrap"
-                  >
-                    {stage.notes[lens.key].map((note) => (
-                      <NoteChip
-                        key={typeof note === "string" ? note : note.text}
-                        note={note}
-                        lensChip={lens.chip}
-                      />
-                    ))}
-                  </ul>
-                </motion.div>
-              ))}
-            </motion.section>
-          ))}
-        </div>
-
-        <p className="mt-8 max-w-prose text-xs leading-relaxed text-muted-foreground">
-          <span
-            aria-hidden="true"
-            className="mr-2 inline-block size-2.5 translate-y-px rounded-[0.25rem] bg-primary"
-          />
-          Near-black notes mark where trust broke down — momentum stalling
-          inside the question loop and care advice that didn&apos;t explain
-          itself, the doubts behind most of the 55% drop-off.
-        </p>
-      </motion.div>
+          <p className="mt-8 max-w-prose text-[13px] leading-relaxed text-muted-foreground">
+            <span
+              aria-hidden="true"
+              className="mr-2 inline-block size-2.5 translate-y-px rounded-[0.25rem] bg-primary"
+            />
+            Near-black notes mark where trust broke down — momentum stalling
+            inside the question loop and care advice that didn&apos;t explain
+            itself, the doubts behind most of the 55% drop-off.
+          </p>
+        </motion.div>
+      </CollapsingLeaf>
     </section>
   );
 }

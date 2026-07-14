@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { cornerClasses, type TileCorners } from "@/app/components/Chapter";
+import { CollapsingLeaf } from "@/app/components/CollapsingLeaf";
 
 type ScreenshotProps = {
   src: string;
@@ -36,9 +38,31 @@ function Screenshot({ src, alt, ratio, sizes }: ScreenshotProps) {
  * relative to the tile. Small viewports simplify to the mobile screenshot
  * alone; the desktop capture is unreadable at that scale.
  */
-export function SymptomsHero() {
+export function SymptomsHero({
+  corners = "all",
+}: {
+  /** Corner rounding for the stage surface — "top" when the hero caps the
+      introduction slab. */
+  corners?: TileCorners;
+}) {
+  /* The stage shares the leaf arrival (CollapsingLeaf): it opens at the full
+     leaf height — showing more of the screenshots than the tuned crop — and
+     collapses onto its aspect-ratio height, the bottom edge cropping the
+     screenshots progressively until the reviewed composition rests. The
+     aspect classes stay on the collapsing surface as its natural floor.
+
+     w-full pins the width definite so the collapse only ever moves the bottom
+     edge. This is the one leaf whose floor is an aspect ratio, not content
+     height; while the leaf's min-height overshoots that ratio (110svh on
+     arrival), an auto width would let the aspect ratio transfer the tall
+     height back into a wide width and balloon the stage past its lane. A
+     100% width leaves the ratio only the height to compute, so the width
+     stays exactly as tuned. */
   return (
-    <div className="aspect-[3/3.85] overflow-hidden rounded-3xl bg-sc-hero-stage md:aspect-[100/58.22]">
+    <CollapsingLeaf
+      pinTopPx={0}
+      className={`aspect-[3/3.85] w-full overflow-hidden ${cornerClasses[corners]} bg-sc-hero-stage md:aspect-[100/58.22]`}
+    >
       <div className="flex w-full items-start justify-center px-4 pt-[7%] sm:px-6 md:justify-start md:gap-[3.6%] md:px-8 md:pt-[min(4%,4.5rem)] lg:px-12">
         <div className="hidden w-[73.3%] shadow-sc-hero md:block">
           <Screenshot
@@ -57,6 +81,6 @@ export function SymptomsHero() {
           />
         </div>
       </div>
-    </div>
+    </CollapsingLeaf>
   );
 }

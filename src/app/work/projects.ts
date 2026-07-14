@@ -11,7 +11,7 @@ export type WorkImageMedia = {
 };
 
 /** Ids of bespoke animated covers registered in `components/ProjectCover.tsx`. */
-export type WorkCoverId = "symptom-checker" | "ap-testing-portal";
+export type WorkCoverId = "symptom-checker" | "ap-testing-portal" | "macquarie-radar";
 
 /** A composed, animated scene instead of a still image. */
 export type WorkCoverMedia = {
@@ -25,7 +25,10 @@ type WorkEntryBase = {
   title: string;
   tagline: string;
   size: WorkSize;
-  /** Short category tags shown as accent chips on the home card. */
+  /** The sector the project served, shown as the single chip on the home
+      card. Distinct from `tags`, which mix industry and discipline. */
+  industry?: string;
+  /** Short category tags (industry + discipline) used elsewhere. */
   tags?: string[];
   media?: WorkMedia;
 };
@@ -51,6 +54,7 @@ export const workEntries: WorkEntry[] = [
     title: "Funding Finder",
     tagline: "Designing trust into a faster private-lending application.",
     size: "standard",
+    industry: "Financial services",
     tags: ["Fintech", "Product design"],
   },
   {
@@ -60,6 +64,7 @@ export const workEntries: WorkEntry[] = [
     tagline:
       "Reframing a clinical path so people could complete it with confidence.",
     size: "standard",
+    industry: "Healthcare",
     tags: ["Health", "Service design"],
     media: { cover: "symptom-checker" },
   },
@@ -69,8 +74,19 @@ export const workEntries: WorkEntry[] = [
     title: "AP+ Testing Portal",
     tagline: "Making certification workflows and delivery status easier to read.",
     size: "standard",
+    industry: "Payments",
     tags: ["Payments", "Platform UX"],
     media: { cover: "ap-testing-portal" },
+  },
+  {
+    kind: "case-study",
+    slug: "macquarie-radar",
+    title: "Macquarie Radar",
+    tagline: "Helping advisors reach students who need support sooner.",
+    size: "standard",
+    industry: "Higher education",
+    tags: ["Education", "Product design"],
+    media: { cover: "macquarie-radar" },
   },
   // Substack writing slots into the same grid. Example:
   // {

@@ -4,6 +4,8 @@ import { ChevronDownIcon, RotateCwIcon } from "lucide-react";
 import { motion, useReducedMotion, type Variants } from "motion/react";
 import type { ReactNode } from "react";
 import { motionDuration, motionEase } from "@/app/lib/motion";
+import { cornerClasses, type TileCorners } from "@/app/components/Chapter";
+import { CollapsingLeaf } from "@/app/components/CollapsingLeaf";
 
 /**
  * The Symptom Checker information architecture, rebuilt as a native
@@ -108,7 +110,7 @@ function FlowNode({
         <div className="relative max-w-[62%] text-center">
           <p className="text-sm font-semibold leading-snug">{title}</p>
           {sub ? (
-            <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+            <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground">
               {sub}
             </p>
           ) : null}
@@ -125,7 +127,7 @@ function FlowNode({
       <p className="text-sm font-semibold leading-snug">{title}</p>
       {sub ? (
         <p
-          className={`mt-1 text-xs leading-relaxed ${
+          className={`mt-1 text-[13px] leading-relaxed ${
             kind === "system"
               ? "text-primary-foreground/75"
               : "text-muted-foreground"
@@ -154,7 +156,7 @@ function FlowDown({ v, label }: { v: FlowVariants; label?: string }) {
           className="-mt-2 size-3.5 text-foreground/45"
         />
         {label ? (
-          <span className="mt-1 text-center text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+          <span className="mt-1 text-center text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
             {label}
           </span>
         ) : null}
@@ -232,7 +234,13 @@ function FlowStage({
   );
 }
 
-export function IaFlow({ id }: { id?: string }) {
+export function IaFlow({
+  id,
+  corners = "all",
+}: {
+  id?: string;
+  corners?: TileCorners;
+}) {
   const shouldReduce = useReducedMotion();
 
   const v: FlowVariants = {
@@ -286,225 +294,230 @@ export function IaFlow({ id }: { id?: string }) {
     <section
       id={id}
       aria-label="Information architecture — one flow from first tap to care action"
-      className="scroll-mt-24 rounded-3xl border border-border bg-card p-4 shadow-card sm:p-6 md:p-8"
+      className="scroll-mt-24"
     >
-      <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-        <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          Information architecture
-        </h3>
-        <ul aria-label="Legend" className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          {legend.map((item) => (
-            <li
-              key={item.name}
-              className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
-            >
-              <span
-                aria-hidden="true"
-                className={`relative size-2.5 rounded-[0.25rem] ${item.swatch}`}
+      <CollapsingLeaf
+        pinTopPx={0}
+        className={`flex flex-col justify-start ${cornerClasses[corners]} border border-border bg-card p-5 shadow-card sm:p-8 md:p-10`}
+      >
+        <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+          <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            Information architecture
+          </h3>
+          <ul aria-label="Legend" className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            {legend.map((item) => (
+              <li
+                key={item.name}
+                className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground"
               >
-                {"dashed" in item ? <DashedEdge rx={4} dash="1.5 1.5" /> : null}
+                <span
+                  aria-hidden="true"
+                  className={`relative size-2.5 rounded-[0.25rem] ${item.swatch}`}
+                >
+                  {"dashed" in item ? <DashedEdge rx={4} dash="1.5 1.5" /> : null}
+                </span>
+                {item.name}
+              </li>
+            ))}
+          </ul>
+        </header>
+
+        <div className="mx-auto mt-8 w-full max-w-2xl space-y-2 md:mt-10">
+          <FlowStage
+            v={v}
+            title="The way in"
+          >
+            <motion.div variants={v.node} className="flex justify-center">
+              <span className="rounded-full border border-foreground/30 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.14em]">
+                Start
               </span>
-              {item.name}
-            </li>
-          ))}
-        </ul>
-      </header>
-
-      <div className="mx-auto mt-8 w-full max-w-2xl space-y-2 md:mt-10">
-        <FlowStage
-          v={v}
-          title="The way in"
-        >
-          <motion.div variants={v.node} className="flex justify-center">
-            <span className="rounded-full border border-foreground/30 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.14em]">
-              Start
-            </span>
-          </motion.div>
-          <FlowDown v={v} />
-          <FlowNode
-            v={v}
-            title="Tool introduction"
-            sub="What the check does — and doesn't do"
-            className="mx-auto w-full max-w-sm"
-          />
-          <FlowDown v={v} label="accept terms and start" />
-          <FlowNode
-            v={v}
-            title="Basic questions"
-            sub="Who the check is for — age, sex at birth"
-            className="mx-auto w-full max-w-sm"
-          />
-        </FlowStage>
-
-        <FlowStage
-          v={v}
-          title="Two ways to say what's wrong"
-        >
-          <FlowDown v={v} label="select / input answers" />
-          <FlowNode
-            v={v}
-            kind="decision"
-            title="Indicate symptoms"
-            sub="Free text or body diagram"
-            className="mx-auto w-44"
-          />
-          <ForkSplit v={v} bar="w-1/2" />
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            <div className="flex flex-col">
-              <FlowNode
-                v={v}
-                title="Type a symptom"
-                sub="Natural-language search"
-                className="flex-1"
-              />
-              <FlowDown v={v} label="view" />
-              <FlowNode v={v} kind="modal" title="Suggested symptoms" />
-            </div>
-            <div className="flex flex-col">
-              <FlowNode
-                v={v}
-                title="Body diagram"
-                sub="Select a point on the body"
-                className="flex-1"
-              />
-              <FlowDown v={v} label="select" />
-              <FlowNode v={v} kind="modal" title="Symptoms for that body part" />
-            </div>
-          </div>
-          <ForkSplit v={v} bar="w-1/2" merge />
-          <FlowNode
-            v={v}
-            title="Selected symptoms"
-            className="mx-auto w-full max-w-sm"
-          />
-        </FlowStage>
-
-        <FlowStage
-          v={v}
-          title="The question loop"
-        >
-          <FlowDown v={v} label="next" />
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.2fr)_auto_minmax(0,1fr)] lg:items-center">
+            </motion.div>
+            <FlowDown v={v} />
             <FlowNode
               v={v}
-              kind="modal"
-              title="Why am I being asked this?"
-              sub={sideInfoSub}
-              className="hidden lg:block"
+              title="Tool introduction"
+              sub="What the check does — and doesn't do"
+              className="mx-auto w-full max-w-sm"
             />
-            <motion.span
-              variants={v.node}
-              aria-hidden="true"
-              className="hidden h-[1.5px] w-6 bg-foreground/20 lg:block"
-            />
-            <div className="flex flex-col items-center gap-2">
-              <FlowNode
-                v={v}
-                title="Question"
-                sub="“x of total questions” — one at a time"
-                className="w-full max-w-sm"
-              />
-              <motion.p
-                variants={v.node}
-                className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
-              >
-                <RotateCwIcon aria-hidden="true" className="size-3" />
-                adaptive loop, until done
-              </motion.p>
-            </div>
-            <motion.span
-              variants={v.node}
-              aria-hidden="true"
-              className="hidden h-[1.5px] w-6 bg-foreground/20 lg:block"
-            />
+            <FlowDown v={v} label="accept terms and start" />
             <FlowNode
               v={v}
-              kind="menu"
-              title="Answer history"
-              sub={sideHistorySub}
-              className="hidden lg:block"
+              title="Basic questions"
+              sub="Who the check is for — age, sex at birth"
+              className="mx-auto w-full max-w-sm"
             />
-            <div className="grid grid-cols-2 gap-3 lg:hidden">
+          </FlowStage>
+
+          <FlowStage
+            v={v}
+            title="Two ways to say what's wrong"
+          >
+            <FlowDown v={v} label="select / input answers" />
+            <FlowNode
+              v={v}
+              kind="decision"
+              title="Indicate symptoms"
+              sub="Free text or body diagram"
+              className="mx-auto w-44"
+            />
+            <ForkSplit v={v} bar="w-1/2" />
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <div className="flex flex-col">
+                <FlowNode
+                  v={v}
+                  title="Type a symptom"
+                  sub="Natural-language search"
+                  className="flex-1"
+                />
+                <FlowDown v={v} label="view" />
+                <FlowNode v={v} kind="modal" title="Suggested symptoms" />
+              </div>
+              <div className="flex flex-col">
+                <FlowNode
+                  v={v}
+                  title="Body diagram"
+                  sub="Select a point on the body"
+                  className="flex-1"
+                />
+                <FlowDown v={v} label="select" />
+                <FlowNode v={v} kind="modal" title="Symptoms for that body part" />
+              </div>
+            </div>
+            <ForkSplit v={v} bar="w-1/2" merge />
+            <FlowNode
+              v={v}
+              title="Selected symptoms"
+              className="mx-auto w-full max-w-sm"
+            />
+          </FlowStage>
+
+          <FlowStage
+            v={v}
+            title="The question loop"
+          >
+            <FlowDown v={v} label="next" />
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.2fr)_auto_minmax(0,1fr)] lg:items-center">
               <FlowNode
                 v={v}
                 kind="modal"
                 title="Why am I being asked this?"
                 sub={sideInfoSub}
+                className="hidden lg:block"
+              />
+              <motion.span
+                variants={v.node}
+                aria-hidden="true"
+                className="hidden h-[1.5px] w-6 bg-foreground/20 lg:block"
+              />
+              <div className="flex flex-col items-center gap-2">
+                <FlowNode
+                  v={v}
+                  title="Question"
+                  sub="“x of total questions” — one at a time"
+                  className="w-full max-w-sm"
+                />
+                <motion.p
+                  variants={v.node}
+                  className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground"
+                >
+                  <RotateCwIcon aria-hidden="true" className="size-3" />
+                  adaptive loop, until done
+                </motion.p>
+              </div>
+              <motion.span
+                variants={v.node}
+                aria-hidden="true"
+                className="hidden h-[1.5px] w-6 bg-foreground/20 lg:block"
               />
               <FlowNode
                 v={v}
                 kind="menu"
                 title="Answer history"
                 sub={sideHistorySub}
+                className="hidden lg:block"
+              />
+              <div className="grid grid-cols-2 gap-3 lg:hidden">
+                <FlowNode
+                  v={v}
+                  kind="modal"
+                  title="Why am I being asked this?"
+                  sub={sideInfoSub}
+                />
+                <FlowNode
+                  v={v}
+                  kind="menu"
+                  title="Answer history"
+                  sub={sideHistorySub}
+                />
+              </div>
+            </div>
+          </FlowStage>
+
+          <FlowStage
+            v={v}
+            title="Where it lands"
+          >
+            <FlowDown v={v} label="done" />
+            <FlowNode
+              v={v}
+              title="Disposition + reference number"
+              sub="The outcome, in plain language"
+              className="mx-auto w-full max-w-sm"
+            />
+            <FlowDown v={v} />
+            <ol className="flex flex-wrap justify-center gap-2">
+              {dispositions.map((item, itemIndex) => (
+                <motion.li
+                  key={item.label}
+                  variants={v.node}
+                  className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] font-medium ${item.chip}`}
+                >
+                  <span className="tabular-nums opacity-60">{itemIndex + 1}</span>
+                  {item.label}
+                </motion.li>
+              ))}
+            </ol>
+          </FlowStage>
+
+          <FlowStage
+            v={v}
+            title="Into care"
+          >
+            <FlowDown v={v} label="views" />
+            <FlowNode
+              v={v}
+              kind="decision"
+              title="Care advice"
+              className="mx-auto w-36"
+            />
+            <ForkSplit v={v} bar="w-2/3" center className="hidden sm:block" />
+            <div className="sm:hidden">
+              <FlowDown v={v} label="choose a channel" />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
+              <FlowNode
+                v={v}
+                title="Service Finder"
+                sub="Search services by need, fee, and distance"
+              />
+              <FlowNode v={v} title="Web chat" sub="Get help via texting" />
+              <FlowNode
+                v={v}
+                kind="system"
+                title="System dials the number"
+                sub="Healthdirect nurse, or ambulance"
               />
             </div>
-          </div>
-        </FlowStage>
-
-        <FlowStage
-          v={v}
-          title="Where it lands"
-        >
-          <FlowDown v={v} label="done" />
-          <FlowNode
-            v={v}
-            title="Disposition + reference number"
-            sub="The outcome, in plain language"
-            className="mx-auto w-full max-w-sm"
-          />
-          <FlowDown v={v} />
-          <ol className="flex flex-wrap justify-center gap-2">
-            {dispositions.map((item, itemIndex) => (
-              <motion.li
-                key={item.label}
-                variants={v.node}
-                className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium ${item.chip}`}
-              >
-                <span className="tabular-nums opacity-60">{itemIndex + 1}</span>
-                {item.label}
-              </motion.li>
-            ))}
-          </ol>
-        </FlowStage>
-
-        <FlowStage
-          v={v}
-          title="Into care"
-        >
-          <FlowDown v={v} label="views" />
-          <FlowNode
-            v={v}
-            kind="decision"
-            title="Care advice"
-            className="mx-auto w-36"
-          />
-          <ForkSplit v={v} bar="w-2/3" center className="hidden sm:block" />
-          <div className="sm:hidden">
-            <FlowDown v={v} label="choose a channel" />
-          </div>
-          <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
-            <FlowNode
-              v={v}
-              title="Service Finder"
-              sub="Search services by need, fee, and distance"
-            />
-            <FlowNode v={v} title="Web chat" sub="Get help via texting" />
-            <FlowNode
-              v={v}
-              kind="system"
-              title="System dials the number"
-              sub="Healthdirect nurse, or ambulance"
-            />
-          </div>
-          <motion.p
-            variants={v.node}
-            className="mt-5 text-center text-xs leading-relaxed text-muted-foreground"
-          >
-            From here the result can be saved to a user account, or shared by
-            email, print, or SMS.
-          </motion.p>
-        </FlowStage>
-      </div>
+            <motion.p
+              variants={v.node}
+              className="mt-5 text-center text-[13px] leading-relaxed text-muted-foreground"
+            >
+              From here the result can be saved to a user account, or shared by
+              email, print, or SMS.
+            </motion.p>
+          </FlowStage>
+        </div>
+      </CollapsingLeaf>
     </section>
   );
 }

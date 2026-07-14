@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 import { motionDuration, motionEase } from "../lib/motion";
+import { useHeroTone } from "./HeroToneContext";
 
 const navItems = [
   ["Work", "/#work"],
@@ -14,7 +15,9 @@ type SiteHeaderProps = {
   /**
    * light — the neutral shell (home). dark — pages whose surface is the
    * grout token (the case-study tile system), where the bar tints to the
-   * grout and its text goes light.
+   * grout and its text goes light. Omit the prop on the home page to let the
+   * bar follow the hero's hover tone (HeroToneContext): hovering a hero
+   * passage inverts the bar and the hero together as one dark stage.
    */
   tone?: "light" | "dark";
 };
@@ -27,9 +30,10 @@ type SiteHeaderProps = {
  * off-screen link. Under reduced motion the slide collapses to an
  * effectively instant change.
  */
-export function SiteHeader({ tone = "light" }: SiteHeaderProps) {
+export function SiteHeader({ tone }: SiteHeaderProps) {
   const [hidden, setHidden] = useState(false);
   const shouldReduce = useReducedMotion();
+  const { dark: heroDark } = useHeroTone();
 
   useEffect(() => {
     let lastY = window.scrollY;
@@ -60,7 +64,9 @@ export function SiteHeader({ tone = "light" }: SiteHeaderProps) {
     };
   }, []);
 
-  const isDark = tone === "dark";
+  // Explicit prop wins (case studies force dark); otherwise the home bar
+  // follows the hero's hover tone.
+  const isDark = tone ? tone === "dark" : heroDark;
   const barTone = isDark
     ? "bg-grout/88 text-grout-foreground"
     : "bg-background/88";
@@ -83,29 +89,31 @@ export function SiteHeader({ tone = "light" }: SiteHeaderProps) {
             : { duration: motionDuration.fast, ease: motionEase.out }
       }
       onFocus={() => setHidden(false)}
-      className={`sticky top-0 z-40 mx-auto flex w-full max-w-[1800px] items-center justify-between px-4 py-4 backdrop-blur-md sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-24 ${barTone}`}
+      className={`sticky top-0 z-40 w-full backdrop-blur-md transition-colors duration-300 ${barTone}`}
     >
-      <Link
-        href="/"
-        className={`text-[0.72rem] font-bold uppercase tracking-[0.18em] outline-none focus-visible:ring-2 focus-visible:ring-offset-4 ${brandTone}`}
-        aria-label="Lizzie Teo homepage"
-      >
-        Lizzie Teo
-      </Link>
-      <nav aria-label="Primary navigation">
-        <ul className="flex items-center gap-5 text-[0.72rem] font-bold uppercase tracking-[0.14em] sm:gap-8">
-          {navItems.map(([label, href]) => (
-            <li key={href}>
-              <Link
-                className={`border-b border-transparent pb-1 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-offset-4 ${linkTone}`}
-                href={href}
-              >
-                {label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      <div className="mx-auto flex w-full max-w-[1800px] items-center justify-between px-4 py-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-24">
+        <Link
+          href="/"
+          className={`text-[0.72rem] font-bold uppercase tracking-[0.18em] outline-none focus-visible:ring-2 focus-visible:ring-offset-4 ${brandTone}`}
+          aria-label="Main tree homepage"
+        >
+          Main tree
+        </Link>
+        <nav aria-label="Primary navigation">
+          <ul className="flex items-center gap-5 text-[0.72rem] font-bold uppercase tracking-[0.14em] sm:gap-8">
+            {navItems.map(([label, href]) => (
+              <li key={href}>
+                <Link
+                  className={`border-b border-transparent pb-1 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-offset-4 ${linkTone}`}
+                  href={href}
+                >
+                  {label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
     </motion.header>
   );
 }

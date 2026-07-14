@@ -3,6 +3,8 @@
 import { motion, useReducedMotion, type Variants } from "motion/react";
 import Image from "next/image";
 import { motionDuration, motionEase } from "@/app/lib/motion";
+import { cornerClasses, type TileCorners } from "@/app/components/Chapter";
+import { CollapsingLeaf } from "@/app/components/CollapsingLeaf";
 
 /**
  * The Infermedica engine audit, drawn as a native annotated diagram in the
@@ -34,7 +36,7 @@ const agenda = [
 ];
 
 const groupLabel =
-  "text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground";
+  "text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground";
 
 /** Desktop-only leader line tying a note chip to the central exhibit. */
 function Leader({ toward }: { toward: "right" | "left" }) {
@@ -51,7 +53,13 @@ function Leader({ toward }: { toward: "right" | "left" }) {
   );
 }
 
-export function EngineAudit({ id }: { id?: string }) {
+export function EngineAudit({
+  id,
+  corners = "all",
+}: {
+  id?: string;
+  corners?: TileCorners;
+}) {
   const shouldReduce = useReducedMotion();
 
   const v: { map: Variants; cell: Variants } = {
@@ -78,125 +86,141 @@ export function EngineAudit({ id }: { id?: string }) {
     <section
       id={id}
       aria-label="AI engine audit — what held up, where trust could break, and the design agenda"
-      className="scroll-mt-24 rounded-3xl border border-border bg-card p-4 shadow-card sm:p-6 md:p-8"
+      className="scroll-mt-24"
     >
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "0px 0px -80px 0px" }}
-        variants={v.map}
+      <CollapsingLeaf
+        pinTopPx={0}
+        className={`flex flex-col justify-start ${cornerClasses[corners]} border border-border bg-card p-5 shadow-card sm:p-8 md:p-10`}
       >
-        <h3 className="text-2xl font-semibold tracking-[-0.03em] md:text-3xl lg:text-4xl">
-          AI engine audit
-        </h3>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "0px 0px -80px 0px" }}
+          variants={v.map}
+        >
+          <h3 className="text-2xl font-semibold tracking-[-0.03em] md:text-3xl lg:text-4xl">
+            AI engine audit
+          </h3>
 
-        <div className="mt-8 md:mt-10 lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center lg:gap-x-3 xl:gap-x-4">
-          <motion.figure
+          <motion.p
             variants={v.cell}
-            className="mx-auto w-full max-w-xs lg:col-start-2 lg:row-start-1 lg:w-60 xl:w-72"
+            className="mt-4 max-w-prose text-base leading-relaxed text-foreground md:text-lg"
           >
-            <div
-              style={{ aspectRatio: 1910 / 930 }}
-              className="relative w-full overflow-hidden rounded-lg border border-border bg-secondary"
-            >
-              <Image
-                src="/assets/healthdirect/triage-results-tablet.webp"
-                alt="Infermedica triage results on a tablet: a 'Consult a doctor within 24 hours' recommendation above a list of possible conditions"
-                fill
-                sizes="(min-width: 1280px) 288px, (min-width: 1024px) 240px, 320px"
-                className="object-cover"
-              />
-            </div>
-            <figcaption className={`mt-2 text-center ${groupLabel}`}>
-              The engine we audited
-            </figcaption>
-          </motion.figure>
+            The brief was to rebuild the Symptom Checker around Infermedica, a
+            new AI triage engine, inside Australia&apos;s strict clinical
+            standards, legal constraints, and Healthdirect&apos;s remit to guide
+            people toward care without diagnosing them. Before any design, we
+            audited what the engine could and couldn&apos;t do.
+          </motion.p>
 
-          <div className="mt-8 lg:col-start-1 lg:row-start-1 lg:mt-0">
-            <motion.p variants={v.cell} className={groupLabel}>
-              What held up
-            </motion.p>
-            <ul aria-label="What held up" className="mt-3 space-y-2">
-              {strengths.map((note) => (
-                <motion.li
-                  key={note.text}
-                  variants={v.cell}
-                  className="flex items-center gap-3"
-                >
-                  <span className="rounded-lg bg-journey-needs px-3 py-2 text-xs leading-snug text-journey-needs-foreground">
-                    {note.text}
-                  </span>
-                  <Leader toward="right" />
-                </motion.li>
-              ))}
-            </ul>
+          <div className="mt-8 md:mt-10 lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center lg:gap-x-3 xl:gap-x-4">
+            <motion.figure
+              variants={v.cell}
+              className="mx-auto w-full max-w-xs lg:col-start-2 lg:row-start-1 lg:w-60 xl:w-72"
+            >
+              <div
+                style={{ aspectRatio: 1910 / 930 }}
+                className="relative w-full overflow-hidden rounded-lg border border-border bg-secondary"
+              >
+                <Image
+                  src="/assets/healthdirect/triage-results-tablet.webp"
+                  alt="Infermedica triage results on a tablet: a 'Consult a doctor within 24 hours' recommendation above a list of possible conditions"
+                  fill
+                  sizes="(min-width: 1280px) 288px, (min-width: 1024px) 240px, 320px"
+                  className="object-cover"
+                />
+              </div>
+              <figcaption className={`mt-2 text-center ${groupLabel}`}>
+                Infermedica, the engine we audited
+              </figcaption>
+            </motion.figure>
+
+            <div className="mt-8 lg:col-start-1 lg:row-start-1 lg:mt-0">
+              <motion.p variants={v.cell} className={groupLabel}>
+                What held up
+              </motion.p>
+              <ul aria-label="What held up" className="mt-3 space-y-2">
+                {strengths.map((note) => (
+                  <motion.li
+                    key={note.text}
+                    variants={v.cell}
+                    className="flex items-center gap-3"
+                  >
+                    <span className="rounded-lg bg-journey-needs px-3 py-2 text-[13px] leading-snug text-note-ink">
+                      {note.text}
+                    </span>
+                    <Leader toward="right" />
+                  </motion.li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mt-8 lg:col-start-3 lg:row-start-1 lg:mt-0">
+              <motion.p variants={v.cell} className={`${groupLabel} lg:text-right`}>
+                Where trust could break
+              </motion.p>
+              <ul
+                aria-label="Where trust could break"
+                className="mt-3 space-y-2"
+              >
+                {risks.map((note) => (
+                  <motion.li
+                    key={note.text}
+                    variants={v.cell}
+                    className="flex items-center gap-3"
+                  >
+                    <Leader toward="left" />
+                    <span
+                      className={`rounded-lg px-3 py-2 text-[13px] leading-snug ${
+                        note.emphasis
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-journey-pain text-note-ink"
+                      }`}
+                    >
+                      {note.text}
+                    </span>
+                  </motion.li>
+                ))}
+              </ul>
+            </div>
           </div>
 
-          <div className="mt-8 lg:col-start-3 lg:row-start-1 lg:mt-0">
-            <motion.p variants={v.cell} className={`${groupLabel} lg:text-right`}>
-              Where trust could break
+          <div className="mt-8 flex flex-col items-center lg:mt-2">
+            <motion.span
+              variants={v.cell}
+              aria-hidden="true"
+              className="hidden h-7 w-[1.5px] bg-foreground/20 lg:block"
+            />
+            <motion.p variants={v.cell} className={`${groupLabel} lg:mt-2`}>
+              The design agenda
             </motion.p>
             <ul
-              aria-label="Where trust could break"
-              className="mt-3 space-y-2"
+              aria-label="The design agenda"
+              className="mt-3 flex flex-wrap justify-center gap-2"
             >
-              {risks.map((note) => (
+              {agenda.map((item) => (
                 <motion.li
-                  key={note.text}
+                  key={item}
                   variants={v.cell}
-                  className="flex items-center gap-3"
+                  className="max-w-prose rounded-lg border border-foreground/30 bg-card px-3 py-2 text-center text-[13px] leading-snug"
                 >
-                  <Leader toward="left" />
-                  <span
-                    className={`rounded-lg px-3 py-2 text-xs leading-snug ${
-                      note.emphasis
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-journey-pain text-journey-pain-foreground"
-                    }`}
-                  >
-                    {note.text}
-                  </span>
+                  {item}
                 </motion.li>
               ))}
             </ul>
           </div>
-        </div>
 
-        <div className="mt-8 flex flex-col items-center lg:mt-2">
-          <motion.span
-            variants={v.cell}
-            aria-hidden="true"
-            className="hidden h-7 w-[1.5px] bg-foreground/20 lg:block"
-          />
-          <motion.p variants={v.cell} className={`${groupLabel} lg:mt-2`}>
-            The design agenda
-          </motion.p>
-          <ul
-            aria-label="The design agenda"
-            className="mt-3 flex flex-wrap justify-center gap-2"
-          >
-            {agenda.map((item) => (
-              <motion.li
-                key={item}
-                variants={v.cell}
-                className="max-w-prose rounded-lg border border-foreground/30 bg-card px-3 py-2 text-center text-xs leading-snug"
-              >
-                {item}
-              </motion.li>
-            ))}
-          </ul>
-        </div>
-
-        <p className="mt-8 max-w-prose text-xs leading-relaxed text-muted-foreground">
-          <span
-            aria-hidden="true"
-            className="mr-2 inline-block size-2.5 translate-y-px rounded-[0.25rem] bg-primary"
-          />
-          The black note marks the core tension. Advice this confident could
-          read as a diagnosis, but Healthdirect is not legally allowed to
-          diagnose. The design agenda shows how the redesign answered that.
-        </p>
-      </motion.div>
+          <p className="mt-8 max-w-prose text-[13px] leading-relaxed text-muted-foreground">
+            <span
+              aria-hidden="true"
+              className="mr-2 inline-block size-2.5 translate-y-px rounded-[0.25rem] bg-primary"
+            />
+            The black note marks the core tension. Advice this confident could
+            read as exactly the diagnosis the service is never allowed to give.
+            The design agenda shows how the redesign answered that.
+          </p>
+        </motion.div>
+      </CollapsingLeaf>
     </section>
   );
 }

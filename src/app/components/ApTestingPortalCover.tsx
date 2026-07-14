@@ -10,15 +10,19 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { motionDuration, motionEase } from "../lib/motion";
+import { useCoverFilm } from "../lib/useCoverFilm";
+import { DITHER_REST_OPACITY, DitherOverlay } from "./DitherOverlay";
+
+const NOOP = () => {};
 
 const ASSETS = "/assets/ap-testing-portal/ap-card-cover-assets";
 const VIDEO_SRC = `${ASSETS}/ap-testing-portal.mp4`;
 
 /* Artwork colours for this card's scene, not shell tokens: the AP+ midnight
-   ink under a lavender pixel mosaic of the footage, with the logo purple for
-   the title. TITLE_PURPLE on FIELD measures 6.7:1. */
+   ink under a lavender pixel mosaic of the footage. The hook heading and body
+   line are white on the FIELD (>15:1); the brand purple lives in the footage
+   and badge, not the type. */
 const FIELD = "#0D033C";
-const TITLE_PURPLE = "#9E8AEF";
 const PIXEL_INK = "#DFD8F9";
 
 /* Pixel grid — the .docs/cover-effects.md halftone recipe, varied: square
@@ -63,6 +67,11 @@ type ApTestingPortalCoverProps = {
   /** Card hover state, owned by the parent link/card; drives the dissolve. */
   hovered?: boolean;
   className?: string;
+  /** True while this card holds the one-pass playback grant; the film plays a
+      single pass then freezes on its frame under the dither. */
+  filmActive?: boolean;
+  /** Fired when the pass ends, releasing the grant to the next card. */
+  onFilmEnd?: () => void;
 };
 
 const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
@@ -91,16 +100,24 @@ function RiseLine({ order, children }: { order: number; children: React.ReactNod
  * with two variations: square pixels on a coarser grid (a screen mosaic in
  * lavender on AP+ midnight) and a left-to-right sweep dissolve instead of a
  * random scatter. At rest the portal footage plays plainly with the corner
- * badge and the bold purple title; hovering pixelates the film and sweeps it
- * away into the hook line, and hover-out reverses mid-flight. Reduced motion
- * holds the film's first frame and crossfades the hook over it on hover.
+ * badge, under the card's own title and tags; hovering pixelates the film and
+ * sweeps it away into the top-anchored hook line (an Avant Garde headline over
+ * a plain Geist body line, both white on the field), and hover-out reverses
+ * mid-flight. Reduced motion holds the film's first frame and crossfades the
+ * hook over it on hover.
  */
-export function ApTestingPortalCover({ hovered = false, className }: ApTestingPortalCoverProps) {
+export function ApTestingPortalCover({
+  hovered = false,
+  className,
+  filmActive = false,
+  onFilmEnd,
+}: ApTestingPortalCoverProps) {
   const shouldReduce = useReducedMotion();
   const reduce = !!shouldReduce;
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const ditherRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<Scene | null>(null);
   const rafRef = useRef<number | null>(null);
   const runningRef = useRef(false);
@@ -113,7 +130,6 @@ export function ApTestingPortalCover({ hovered = false, className }: ApTestingPo
 
   const [showHook, setShowHook] = useState(false);
   const inView = useInView(containerRef);
-  const seen = useInView(containerRef, { once: true, margin: "0px 0px -12% 0px" });
 
   useEffect(() => {
     hoveredRef.current = hovered;
@@ -253,6 +269,11 @@ export function ApTestingPortalCover({ hovered = false, className }: ApTestingPo
 
       video.style.opacity = String(1 - dotify);
       canvas.style.opacity = String(dotify);
+      /* The dither finish belongs to the resting film; fade it out with the
+         film so it never sits over the mosaic or the hook line. */
+      if (ditherRef.current) {
+        ditherRef.current.style.opacity = String(DITHER_REST_OPACITY * (1 - dotify));
+      }
 
       const hook = scatter >= 0.98;
       if (hook !== showHookRef.current) {
@@ -293,19 +314,15 @@ export function ApTestingPortalCover({ hovered = false, className }: ApTestingPo
     };
   }, []);
 
-  /* The film plays only on screen; reduced motion holds its first frame. */
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (reduce || !inView) {
-      video.pause();
-      return;
-    }
-    video.play().catch(() => {
-      /* Autoplay blocked (e.g. low-power mode): the still first frame
-         stands in and the hover dissolve still works. */
-    });
-  }, [inView, reduce]);
+  /* The film plays a single granted pass on scroll-in, then freezes; hover
+     resumes it under the dissolve independent of the queue. Off-screen and
+     reduced motion hold the first frame. Pass-end detection and play/pause
+     both live in useCoverFilm (keeps `loop`, never seeks). */
+  useCoverFilm(videoRef, {
+    play: !reduce && inView && (hovered || filmActive),
+    passActive: filmActive && !reduce,
+    onPassEnd: onFilmEnd ?? NOOP,
+  });
 
   useEffect(() => {
     const wrap = containerRef.current;
@@ -337,6 +354,9 @@ export function ApTestingPortalCover({ hovered = false, className }: ApTestingPo
         tabIndex={-1}
         className="pointer-events-none absolute inset-0 h-full w-full object-cover"
       />
+      {/* Slight ordered-dither finish over the resting film; fades with the
+          film into the mosaic on hover. */}
+      <DitherOverlay ref={ditherRef} />
       <canvas
         ref={canvasRef}
         aria-hidden="true"
@@ -349,7 +369,7 @@ export function ApTestingPortalCover({ hovered = false, className }: ApTestingPo
         {!reduce && showHook ? (
           <motion.div
             key="hook"
-            className="absolute inset-0 flex flex-col items-start justify-center gap-[2.5cqw] px-[8cqw] pb-[16cqw]"
+            className="absolute inset-0 flex flex-col items-start justify-start gap-[2cqw] px-[8cqw] pt-[10cqw]"
             exit={{
               opacity: 0,
               transition: { duration: motionDuration.instant, ease: motionEase.in },
@@ -361,10 +381,7 @@ export function ApTestingPortalCover({ hovered = false, className }: ApTestingPo
               </span>
             </RiseLine>
             <RiseLine order={1}>
-              <span
-                className="block text-[3.6cqw] font-medium uppercase tracking-[0.16em]"
-                style={{ color: TITLE_PURPLE }}
-              >
+              <span className="block text-[3.6cqw] leading-snug text-white/80">
                 Certification status at a glance
               </span>
             </RiseLine>
@@ -377,7 +394,7 @@ export function ApTestingPortalCover({ hovered = false, className }: ApTestingPo
         {reduce && hovered ? (
           <motion.div
             key="hook-static"
-            className="absolute inset-0 flex flex-col items-start justify-center gap-[2.5cqw] px-[8cqw] pb-[16cqw]"
+            className="absolute inset-0 flex flex-col items-start justify-start gap-[2cqw] px-[8cqw] pt-[10cqw]"
             style={{ backgroundColor: "rgba(13, 3, 60, 0.9)" }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1, transition: { duration: 0.01 } }}
@@ -386,10 +403,7 @@ export function ApTestingPortalCover({ hovered = false, className }: ApTestingPo
             <span className="block font-heading text-[8.5cqw] font-semibold leading-[1.08] tracking-[-0.03em] text-white">
               Testing without the guesswork
             </span>
-            <span
-              className="block text-[3.6cqw] font-medium uppercase tracking-[0.16em]"
-              style={{ color: TITLE_PURPLE }}
-            >
+            <span className="block text-[3.6cqw] leading-snug text-white/80">
               Certification status at a glance
             </span>
           </motion.div>
@@ -415,33 +429,8 @@ export function ApTestingPortalCover({ hovered = false, className }: ApTestingPo
         />
       </motion.div>
 
-      {/* Persistent title on a field-coloured scrim, inset on the same
-          margins as SymptomCheckerCover. It yields with the badge while the
-          hook line is up — the card header below already carries the title. */}
-      <motion.div
-        className="absolute inset-x-0 bottom-0 px-[7cqw] pb-[6cqw] pt-[18cqw]"
-        style={{
-          background: "linear-gradient(to top, rgba(13, 3, 60, 0.95) 35%, rgba(13, 3, 60, 0))",
-        }}
-        initial={false}
-        animate={{ opacity: hookVisible ? 0 : 1 }}
-        transition={{
-          duration: reduce ? 0.01 : motionDuration.fast,
-          ease: motionEase.inOut,
-        }}
-      >
-        <div className="overflow-hidden pb-[0.08em]">
-          <motion.span
-            className="block font-heading text-[8cqw] font-bold leading-[1.05] tracking-[-0.03em]"
-            style={{ color: TITLE_PURPLE }}
-            initial={reduce ? false : { y: "115%" }}
-            animate={seen || reduce ? { y: "0%" } : undefined}
-            transition={{ duration: motionDuration.slow, ease: motionEase.out }}
-          >
-            AP+ Testing Portal
-          </motion.span>
-        </div>
-      </motion.div>
+      {/* The card face carries the title and tags now (ProjectCard); this
+          cover stays pure artwork under that label. */}
     </div>
   );
 }

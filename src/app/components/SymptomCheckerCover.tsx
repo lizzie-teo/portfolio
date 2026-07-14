@@ -9,12 +9,16 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { motionDuration, motionEase } from "../lib/motion";
+import { useCoverFilm } from "../lib/useCoverFilm";
+import { DITHER_REST_OPACITY, DitherOverlay } from "./DitherOverlay";
+
+const NOOP = () => {};
 
 /* Artwork colours for this card's scene, not shell tokens: a deep teal-ink
-   field under a near-white halftone of the film, with the product teal for
-   the title. TITLE_TEAL on FIELD measures 6.6:1. */
+   field under a near-white halftone of the film. The hook heading and body
+   line are white on the FIELD (>13:1); the product teal lives in the footage,
+   not the type. */
 const FIELD = "#0F2830";
-const TITLE_TEAL = "#66C5C0";
 const DOT_INK = "#EAF5F2";
 
 const VIDEO_SRC = "/assets/healthdirect/sc-card-cover-assets/child-unwell.mp4";
@@ -60,6 +64,11 @@ type SymptomCheckerCoverProps = {
   /** Card hover state, owned by the parent link/card; drives the dissolve. */
   hovered?: boolean;
   className?: string;
+  /** True while this card holds the one-pass playback grant; the film plays a
+      single pass then freezes on its frame under the dither. */
+  filmActive?: boolean;
+  /** Fired when the pass ends, releasing the grant to the next card. */
+  onFilmEnd?: () => void;
 };
 
 const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
@@ -85,18 +94,25 @@ function RiseLine({ order, children }: { order: number; children: React.ReactNod
 
 /**
  * Cover for the Healthdirect Symptom Checker card. At rest the child-unwell
- * film plays plainly with the bold product-teal title anchored at the
- * bottom. Hovering the card dissolves the film into a halftone of teal-white
- * dots that scatter into the hook line; hover-out condenses everything back
- * into the film, reversible mid-flight. Reduced motion holds the film's
- * first frame and crossfades the hook line over it on hover instead.
+ * film plays plainly under the card's own title and tags. Hovering the card
+ * dissolves the film into a halftone of teal-white dots that scatter into the
+ * hook line, anchored at the top of the card: an Avant Garde headline over a
+ * plain Geist body line, both white on the dark field. Hover-out condenses
+ * everything back into the film, reversible mid-flight. Reduced motion holds
+ * the film's first frame and crossfades the hook over it on hover instead.
  */
-export function SymptomCheckerCover({ hovered = false, className }: SymptomCheckerCoverProps) {
+export function SymptomCheckerCover({
+  hovered = false,
+  className,
+  filmActive = false,
+  onFilmEnd,
+}: SymptomCheckerCoverProps) {
   const shouldReduce = useReducedMotion();
   const reduce = !!shouldReduce;
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const ditherRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<Scene | null>(null);
   const rafRef = useRef<number | null>(null);
   const runningRef = useRef(false);
@@ -109,7 +125,6 @@ export function SymptomCheckerCover({ hovered = false, className }: SymptomCheck
 
   const [showHook, setShowHook] = useState(false);
   const inView = useInView(containerRef);
-  const seen = useInView(containerRef, { once: true, margin: "0px 0px -12% 0px" });
 
   useEffect(() => {
     hoveredRef.current = hovered;
@@ -245,6 +260,11 @@ export function SymptomCheckerCover({ hovered = false, className }: SymptomCheck
 
       video.style.opacity = String(1 - dotify);
       canvas.style.opacity = String(dotify);
+      /* The dither finish belongs to the resting film; fade it out with the
+         film so it never sits over the halftone or the hook line. */
+      if (ditherRef.current) {
+        ditherRef.current.style.opacity = String(DITHER_REST_OPACITY * (1 - dotify));
+      }
 
       const hook = scatter >= 0.98;
       if (hook !== showHookRef.current) {
@@ -285,19 +305,15 @@ export function SymptomCheckerCover({ hovered = false, className }: SymptomCheck
     };
   }, []);
 
-  /* The film plays only on screen; reduced motion holds its first frame. */
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (reduce || !inView) {
-      video.pause();
-      return;
-    }
-    video.play().catch(() => {
-      /* Autoplay blocked (e.g. low-power mode): the still first frame
-         stands in and the hover dissolve still works. */
-    });
-  }, [inView, reduce]);
+  /* The film plays a single granted pass on scroll-in, then freezes; hover
+     resumes it under the dissolve independent of the queue. Off-screen and
+     reduced motion hold the first frame. Pass-end detection and play/pause
+     both live in useCoverFilm (keeps `loop`, never seeks). */
+  useCoverFilm(videoRef, {
+    play: !reduce && inView && (hovered || filmActive),
+    passActive: filmActive && !reduce,
+    onPassEnd: onFilmEnd ?? NOOP,
+  });
 
   useEffect(() => {
     const wrap = containerRef.current;
@@ -318,10 +334,7 @@ export function SymptomCheckerCover({ hovered = false, className }: SymptomCheck
         </span>
       </RiseLine>
       <RiseLine order={1}>
-        <span
-          className="block text-[3.8cqw] font-medium uppercase tracking-[0.16em]"
-          style={{ color: TITLE_TEAL }}
-        >
+        <span className="block text-[3.8cqw] leading-snug text-white/80">
           Know what to do next
         </span>
       </RiseLine>
@@ -345,6 +358,9 @@ export function SymptomCheckerCover({ hovered = false, className }: SymptomCheck
         tabIndex={-1}
         className="pointer-events-none absolute inset-0 h-full w-full object-cover"
       />
+      {/* Slight ordered-dither finish over the resting film; fades with the
+          film into the halftone on hover. */}
+      <DitherOverlay ref={ditherRef} />
       <canvas
         ref={canvasRef}
         aria-hidden="true"
@@ -357,7 +373,7 @@ export function SymptomCheckerCover({ hovered = false, className }: SymptomCheck
         {!reduce && showHook ? (
           <motion.div
             key="hook"
-            className="absolute inset-0 flex flex-col items-start justify-center gap-[2.5cqw] px-[8cqw] pb-[16cqw]"
+            className="absolute inset-0 flex flex-col items-start justify-start gap-[2cqw] px-[8cqw] pt-[10cqw]"
             exit={{
               opacity: 0,
               transition: { duration: motionDuration.instant, ease: motionEase.in },
@@ -373,7 +389,7 @@ export function SymptomCheckerCover({ hovered = false, className }: SymptomCheck
         {reduce && hovered ? (
           <motion.div
             key="hook-static"
-            className="absolute inset-0 flex flex-col items-start justify-center gap-[2.5cqw] px-[8cqw] pb-[16cqw]"
+            className="absolute inset-0 flex flex-col items-start justify-start gap-[2cqw] px-[8cqw] pt-[10cqw]"
             style={{ backgroundColor: "rgba(15, 40, 48, 0.9)" }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1, transition: { duration: 0.01 } }}
@@ -382,35 +398,15 @@ export function SymptomCheckerCover({ hovered = false, className }: SymptomCheck
             <span className="block font-heading text-[10cqw] font-semibold leading-[1.08] tracking-[-0.03em] text-white">
               How sick is too sick?
             </span>
-            <span
-              className="block text-[3.8cqw] font-medium uppercase tracking-[0.16em]"
-              style={{ color: TITLE_TEAL }}
-            >
+            <span className="block text-[3.8cqw] leading-snug text-white/80">
               Know what to do next
             </span>
           </motion.div>
         ) : null}
       </AnimatePresence>
 
-      {/* Persistent title on a field-coloured scrim. */}
-      <div
-        className="absolute inset-x-0 bottom-0 px-[7cqw] pb-[6cqw] pt-[18cqw]"
-        style={{
-          background: "linear-gradient(to top, rgba(15, 40, 48, 0.95) 35%, rgba(15, 40, 48, 0))",
-        }}
-      >
-        <div className="overflow-hidden pb-[0.08em]">
-          <motion.span
-            className="block max-w-[70cqw] text-[8cqw] font-bold leading-[1.05] tracking-[-0.03em]"
-            style={{ color: TITLE_TEAL }}
-            initial={reduce ? false : { y: "115%" }}
-            animate={seen || reduce ? { y: "0%" } : undefined}
-            transition={{ duration: motionDuration.slow, ease: motionEase.out }}
-          >
-            Healthdirect Symptom Checker
-          </motion.span>
-        </div>
-      </div>
+      {/* The card face carries the title and tags now (ProjectCard); this
+          cover stays pure artwork under that label. */}
     </div>
   );
 }

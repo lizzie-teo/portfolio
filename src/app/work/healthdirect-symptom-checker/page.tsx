@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { AnnotatedFrame } from "@/app/components/AnnotatedFrame";
 import { ArtifactSection } from "@/app/components/ArtifactSection";
 import { ArtifactViewer } from "@/app/components/ArtifactViewer";
-import { CaseSnapshot } from "@/app/components/CaseSnapshot";
+import { CaseStatement } from "@/app/components/CaseStatement";
 import { CaseStudyShell } from "@/app/components/CaseStudyShell";
-import { Chapter, tileGap } from "@/app/components/Chapter";
+import { Chapter, chapterGap, tileGap } from "@/app/components/Chapter";
 import { ChapterMarker } from "@/app/components/ChapterMarker";
 import { InsightCallout } from "@/app/components/InsightCallout";
 import { MediaFrame } from "@/app/components/MediaFrame";
@@ -20,16 +20,19 @@ import {
   CaseStudyRail,
   type CaseChapter,
 } from "@/app/components/CaseStudyRail";
-import { caseStudyMetadata } from "../projects";
+import { caseStudyMetadata, getCaseStudy } from "../projects";
 import { EngineAudit } from "./EngineAudit";
 import { IaFlow } from "./IaFlow";
 import { JourneyMap } from "./JourneyMap";
 import { LandscapeReview } from "./LandscapeReview";
 import { SymptomsHero } from "./SymptomsHero";
 
-export const metadata: Metadata = caseStudyMetadata("healthdirect-symptom-checker");
+const slug = "healthdirect-symptom-checker";
+
+export const metadata: Metadata = caseStudyMetadata(slug);
 
 const chapters: CaseChapter[] = [
+  { id: "introduction", title: "Introduction" },
   { id: "problem", title: "The Problem" },
   {
     id: "approach",
@@ -57,7 +60,7 @@ const chapters: CaseChapter[] = [
 ];
 
 const successMetrics = [
-  "Completion rate: increase from 45% baseline toward the 60–70% industry benchmark",
+  "Completion rate: reach the 60–70% industry benchmark",
   "Task success: achieve 78%+ task success rate and resolve all severity 3–4 issues",
   "Drop-off: no single step loses more than 20% of users",
   "Health literacy: users can understand medical terms and instructions without assistance",
@@ -208,7 +211,7 @@ function BulletList({ items }: { items: string[] }) {
       {items.map((item) => (
         <li
           key={item}
-          className="flex gap-3 text-base leading-relaxed text-foreground"
+          className="flex gap-3 text-base leading-relaxed text-foreground md:text-lg"
         >
           <span
             aria-hidden="true"
@@ -246,24 +249,47 @@ export default function HealthdirectSymptomCheckerPage() {
   return (
     <CaseStudyShell
       slug="healthdirect-symptom-checker"
+      hideTagline
+      heroId="introduction"
+      heroCorners="top"
       intro={{
         text: (
           <>
             Healthdirect is Australia&apos;s government funded health information
-            service, reaching millions of people across digital and phone
-            channels. Its Symptom Checker helps people make sense of their
-            symptoms and decide where to go for care. I redesigned the
-            experience from early discovery through delivery, then stayed on
-            for a second phase exploring how the wider service ecosystem could
-            work better for the people who need it most.
+            service, reaching{" "}
+            <span className="font-semibold text-leaf-highlight">
+              millions of people
+            </span>{" "}
+            across digital and phone channels. Its Symptom Checker helps people
+            make sense of their symptoms and decide where to go for care. I{" "}
+            <span className="font-semibold text-leaf-highlight">
+              redesigned the experience
+            </span>{" "}
+            from early discovery through delivery, then stayed on for a second
+            phase exploring how{" "}
+            <span className="font-semibold text-leaf-highlight">
+              the wider service ecosystem
+            </span>{" "}
+            could work better for the people who need it most.
           </>
         ),
         meta: [
           { label: "Role", value: "Senior Product Designer" },
           {
-            label: "Contribution",
-            value:
-              "UX design, content strategy, information architecture, accessibility, consumer research, service design",
+            label: "Phase 1 — The redesign",
+            items: [
+              "UX design, discovery to delivery",
+              "Content strategy and accessibility",
+              "Stakeholder alignment across teams",
+            ],
+          },
+          {
+            label: "Phase 2 — The ecosystem",
+            items: [
+              "Consumer research and synthesis",
+              "Service design and ecosystem mapping",
+              "Concept prototyping for strategy",
+            ],
           },
         ],
       }}
@@ -272,10 +298,16 @@ export default function HealthdirectSymptomCheckerPage() {
         <ChapterMarker chapters={chapters} />
       </div>
 
-      <div className={tileGap}>
-        <SymptomsHero />
-        <Tile>
-          <CaseSnapshot
+      <div className={chapterGap}>
+        {/* The introduction slab continues from the shell's title tile (its
+            top cap, carrying the #introduction anchor): product hero square in
+            the middle, the reframe statement closing the bottom. */}
+        <div className={tileGap}>
+          <SymptomsHero corners="none" />
+          <CaseStatement
+            corners="bottom"
+            eyebrow="The reframe"
+            statsEyebrow="The result"
             stats={[
               {
                 value: "86.5%",
@@ -293,50 +325,21 @@ export default function HealthdirectSymptomCheckerPage() {
                 detail: "Through cross-functional workshops",
               },
             ]}
-            meta={[
-              {
-                label: "Impact area",
-                items: ["Public health", "Government-funded digital triage"],
-              },
-              {
-                label: "Phase 1 — The redesign",
-                items: [
-                  "UX design from light discovery through delivery",
-                  "Content strategy and accessibility compliance",
-                  "Information architecture and UI design",
-                  "Stakeholder alignment and facilitation across teams",
-                ],
-              },
-              {
-                label: "Phase 2 — The ecosystem",
-                items: [
-                  "Consumer research and qualitative synthesis",
-                  "Service design and ecosystem mapping",
-                  "Concept prototyping to inform strategic decisions",
-                ],
-              },
-            ]}
-          />
-        </Tile>
+          >
+            {getCaseStudy(slug)?.tagline}
+          </CaseStatement>
+        </div>
 
         <Chapter
               id="problem"
               title="The problem"
+              leafCorners="top"
               lede="Only 45% of people finished the check — most dropped off before they ever saw care guidance."
             >
-              <Tile>
-                <Prose>
-                  The challenge was to redesign the Symptom Checker around a new
-                  AI triage engine (Infermedica) while navigating
-                  Australia&apos;s strict clinical standards, legal constraints,
-                  and Healthdirect&apos;s remit to guide people toward care
-                  without diagnosing them.
-                </Prose>
-              </Tile>
-              <Tile>
+              <Tile immersive corners="bottom">
                 <MotionReveal>
                   <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                    The six success metrics we set
+                    What success had to look like
                   </h3>
                   <div className="mt-4">
                     <BulletList items={successMetrics} />
@@ -348,14 +351,16 @@ export default function HealthdirectSymptomCheckerPage() {
             <Chapter
               id="approach"
               title="The approach"
-              lede="Evidence before pixels: we audited the AI engine, mapped the real journey, then rebuilt the architecture and tested it twice."
+              leafCorners="top"
+              lede="Evidence before pixels: an audit of the AI engine, a map of the real journey, then a rebuilt architecture, tested twice."
             >
-              <EngineAudit id="engine-audit" />
-              <LandscapeReview id="landscape-review" />
-              <JourneyMap id="user-journey" />
+              <EngineAudit id="engine-audit" corners="none" />
+              <LandscapeReview id="landscape-review" corners="none" />
+              <JourneyMap id="user-journey" corners="none" />
               <ArtifactSection
                 id="sketches"
                 title="Sketches"
+                corners="none"
                 takeaway="Rough concepts kept early debate on flow and framing, not visual polish."
               >
                 <MotionReveal>
@@ -375,10 +380,11 @@ export default function HealthdirectSymptomCheckerPage() {
                   </div>
                 </MotionReveal>
               </ArtifactSection>
-              <IaFlow id="information-architecture" />
+              <IaFlow id="information-architecture" corners="none" />
               <ArtifactSection
                 id="usability-testing"
                 title="Usability testing"
+                corners="none"
                 takeaway="Twelve sessions across two rounds produced eleven recommendations, all implemented."
               >
                 <Prose>
@@ -411,7 +417,7 @@ export default function HealthdirectSymptomCheckerPage() {
                   </div>
                 </MotionReveal>
               </ArtifactSection>
-              <Tile>
+              <Tile immersive corners="bottom">
                 <ProcessDisclosure
                   items={[
                     {
@@ -432,11 +438,13 @@ export default function HealthdirectSymptomCheckerPage() {
             <Chapter
               id="decisions"
               title="Key decisions"
+              leafCorners="top"
               lede="Every screen had one job: keep an anxious person moving toward care."
             >
               <MotionReveal>
                 <AnnotatedFrame
                   label="Assessment flow decisions"
+                  corners="bottom"
                   steps={[
                     {
                       title: "Motivation through a long assessment",
@@ -502,9 +510,10 @@ export default function HealthdirectSymptomCheckerPage() {
             <Chapter
               id="outcome"
               title="The outcome"
+              leafCorners="top"
               lede="Completion nearly doubled — from 45% to 86.5% within two releases."
             >
-              <Tile>
+              <Tile immersive corners="none">
                 <div className="space-y-6 md:space-y-8">
                   <MotionReveal>
                     <BulletList
@@ -521,7 +530,7 @@ export default function HealthdirectSymptomCheckerPage() {
                   </Prose>
                 </div>
               </Tile>
-              <Tile>
+              <Tile immersive corners="bottom">
                 <MotionReveal>
                   <MediaFrame
                     label="Native app concept screens: family profiles, guided basic-info questions, a 'See a GP today' care plan, and a five-day self-care timeline"
@@ -536,9 +545,10 @@ export default function HealthdirectSymptomCheckerPage() {
             <Chapter
               id="phase-2"
               title="Phase 2 — the ecosystem"
+              leafCorners="top"
               lede="Phase 2 stepped back from one product to ask where the whole service system was failing people."
             >
-              <Tile>
+              <Tile immersive corners="none">
                 <Prose>
                   Following Phase 1 delivery, the redesign became an input into a
                   broader, time-boxed CX and service design initiative. We examined
@@ -548,12 +558,12 @@ export default function HealthdirectSymptomCheckerPage() {
                   to do next.
                 </Prose>
               </Tile>
-              <Tile surface="secondary">
+              <Tile surface="secondary" immersive corners="none">
                 <InsightCallout context="Consumer interviews — designing AI for health decisions under stress">
                   More information doesn&apos;t mean more confidence under stress.
                 </InsightCallout>
               </Tile>
-              <Tile>
+              <Tile immersive corners="none">
                 <div className="space-y-6 md:space-y-8">
                   <Prose>
                     Australians turn to digital tools when anxious or uncertain —
@@ -569,6 +579,7 @@ export default function HealthdirectSymptomCheckerPage() {
               <ArtifactSection
                 id="research-themes"
                 title="Research themes"
+                corners="none"
                 takeaway="Four gaps consumers quietly navigate around."
               >
                 <MotionReveal>
@@ -590,7 +601,7 @@ export default function HealthdirectSymptomCheckerPage() {
                   </div>
                 </MotionReveal>
               </ArtifactSection>
-              <Tile>
+              <Tile immersive corners="none">
                 <MotionReveal>
                   <MediaFrame
                     label="Five-step process diagram: discovery research, insights and opportunities, generating ideas, prototyping, and validating with stakeholder and consumer workshops"
@@ -603,6 +614,7 @@ export default function HealthdirectSymptomCheckerPage() {
               <ArtifactSection
                 id="service-concepts"
                 title="Service concepts"
+                corners="none"
                 takeaway="Two concepts built to provoke discussion, not to ship."
               >
                 <MotionReveal>
@@ -679,6 +691,7 @@ export default function HealthdirectSymptomCheckerPage() {
               <ArtifactSection
                 id="roadmap"
                 title="The roadmap"
+                corners="none"
                 takeaway="Five focus areas to anchor government funding discussions."
               >
                 <MotionReveal>
@@ -702,12 +715,12 @@ export default function HealthdirectSymptomCheckerPage() {
                   </ol>
                 </MotionReveal>
               </ArtifactSection>
-              <Tile>
+              <Tile immersive corners="none">
                 <MotionReveal>
                   <BulletList items={phase2Outcomes} />
                 </MotionReveal>
               </Tile>
-              <Tile>
+              <Tile immersive corners="bottom">
                 <ProcessDisclosure
                   items={[
                     {

@@ -21,13 +21,18 @@ export type CaseChapter = {
  * stack): the tiles share the column from just below the header to the
  * viewport's bottom edge, collapsed chapters dividing the space evenly
  * with their labels anchored to the tile foot, while the chapter the
- * reader is inside expands taller into the project colour and carries
- * its subsection links within it. Position is expressed by which tile
- * is open — no numbering, no progress hardware. The expansion is a
+ * reader is inside expands into the project colour and carries its
+ * subsection links within it. Position is expressed by which tile is
+ * open — no numbering, no progress hardware. The expansion is a
  * repeated in-flow interaction, so it stays at the fast token via
  * Motion layout animation and collapses to an opacity-only change
- * under reduced motion. The rail is a fixed column in the content
- * lane the shell reserves from xl up; below xl the ChapterMarker pill
+ * under reduced motion. Collapsed tiles are clean flat wireframes: a
+ * 1px grout-ink hairline (--rail-tile-border) with no fill, washing in
+ * on hover. The open chapter is the single filled tile in the active
+ * colour; its height scales with content, so a sectionless chapter
+ * opens only a little taller than a collapsed one instead of leaving an
+ * empty coloured belly. The rail is a fixed column in the content lane
+ * the shell reserves from xl up; below xl the ChapterMarker pill
  * provides the same destinations. Anchors keep native browser
  * behaviour — no scroll hijack.
  */
@@ -95,6 +100,7 @@ export function CaseStudyRail({
         <ul className="flex h-full flex-col gap-2">
           {chapters.map((chapter, index) => {
             const isOpen = index === activeChapterIndex;
+            const openWithSections = isOpen && Boolean(chapter.sections?.length);
             return (
               <motion.li
                 key={chapter.id}
@@ -103,13 +109,15 @@ export function CaseStudyRail({
                   duration: motionDuration.fast,
                   ease: motionEase.out,
                 }}
-                className={`min-h-11 rounded-xl shadow-card ${
-                  isOpen
+                className={`relative min-h-11 rounded-xl ${
+                  openWithSections
                     ? "flex flex-[2.5] flex-col overflow-hidden bg-rail-tile-active px-4 pb-4 pt-3.5"
-                    : "flex-1 bg-rail-tile transition-colors hover:bg-rail-tile-hover"
+                    : isOpen
+                      ? "flex-1 bg-rail-tile-active"
+                      : "flex-1 border border-rail-tile-border bg-rail-tile transition-colors hover:bg-rail-tile-hover"
                 }`}
               >
-                {isOpen ? (
+                {openWithSections ? (
                   <>
                     <h4 className="shrink-0">
                       <a
@@ -166,7 +174,14 @@ export function CaseStudyRail({
                   <h4 className="h-full">
                     <a
                       href={`#${chapter.id}`}
-                      className={`${labelBase} flex h-full w-full items-end rounded-xl px-4 py-3.5 text-rail-tile-foreground focus-visible:rounded-xl focus-visible:ring-grout-foreground focus-visible:ring-offset-grout`}
+                      aria-current={
+                        isOpen && activeId === chapter.id ? "location" : undefined
+                      }
+                      className={`${labelBase} flex h-full w-full items-end rounded-xl px-4 py-3.5 focus-visible:rounded-xl ${
+                        isOpen
+                          ? "text-rail-tile-active-foreground focus-visible:ring-rail-tile-active-foreground focus-visible:ring-offset-rail-tile-active"
+                          : "text-rail-tile-foreground focus-visible:ring-grout-foreground focus-visible:ring-offset-grout"
+                      }`}
                     >
                       {chapter.title}
                     </a>

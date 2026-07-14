@@ -9,11 +9,21 @@ type StatCalloutProps = {
   value: string;
   label: string;
   detail?: string;
+  /**
+   * lg — the standalone snapshot hero (default). md — a supporting proof
+   * row under a larger statement, sized so it never outweighs the line above.
+   */
+  size?: "lg" | "md";
 };
+
+const valueSize = {
+  lg: "text-[clamp(2.75rem,5vw,4.5rem)]",
+  md: "text-[clamp(2rem,3.4vw,3rem)]",
+} as const;
 
 const numericPattern = /^([^\d]*)(\d+(?:\.\d+)?)(.*)$/;
 
-export function StatCallout({ value, label, detail }: StatCalloutProps) {
+export function StatCallout({ value, label, detail, size = "lg" }: StatCalloutProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "0px 0px -12% 0px" });
   const shouldReduce = useReducedMotion();
@@ -48,7 +58,7 @@ export function StatCallout({ value, label, detail }: StatCalloutProps) {
     <div ref={ref}>
       <p
         aria-hidden="true"
-        className="text-[clamp(2.75rem,5vw,4.5rem)] font-semibold leading-none tracking-[-0.03em] tabular-nums"
+        className={`${valueSize[size]} font-semibold leading-none tracking-[-0.03em] tabular-nums`}
       >
         {showStatic ? value : display}
       </p>

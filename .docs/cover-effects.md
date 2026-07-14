@@ -111,6 +111,63 @@ Rules that keep it correct:
 - Read `hovered` through a ref (synced in an effect) so the rAF loop sees
   the live value without re-subscribing.
 
+## Rotating-spotlight playback
+
+Covers do not loop at rest, and no more than one film ever moves at once. The
+home grid wraps its cards in `CoverPlaybackProvider`
+(`src/app/components/CoverPlaybackProvider.tsx`), a coordinator that grants
+playback to exactly one cover at a time in document order and keeps the
+spotlight circling: an in-view card plays a single pass of its film, freezes on
+its frame under the `DitherOverlay`, and after a short breather
+(`HANDOFF_MS`, ~1.5s) the next eligible in-view card takes its turn. A per-cycle
+`played` set tracks which in-view cards have already had a turn this cycle; once
+none remain eligible the grid rests (`CYCLE_REST_MS`, ~4s). The `played` set is
+cleared when the **rest timer fires**, not when eligibility runs out — the
+surviving set is what lets a fresh card scrolling in during the rest preempt to
+the short breather while an already-played re-entrant waits out the rest for the
+next cycle. After the rest the rotation restarts from the top-most in-view card.
+
+Semantics that fall out of this:
+
+- **Leaving mid-pass counts** for the cycle and advances the spotlight after the
+  breather; the departed card does not replay this cycle if it re-enters.
+- **Single card in view** simply replays every cycle (~4s rest + one pass).
+- **Empty viewport** idles with no looping timers; scrolling anything back in
+  resumes the rotation after a uniform ~50ms kick (which lets the initial
+  IntersectionObserver batch settle so the true top-most card wins the first
+  grant).
+- The coordinator owns granted state: a card's `filmActive` is set only by the
+  coordinator's grant/release notifier, and a stray `timeupdate` firing
+  `endFilm` after a scroll-out is ignored by an idempotency guard.
+
+Known limitation: a browser may pause a hidden granted `<video>` when its tab is
+backgrounded, which can stall the rotation on that card until the next
+interaction re-nudges it (it self-heals on any hover, scroll, or view change). A
+grant-watchdog that re-grants a wedged holder after a timeout is a documented
+follow-up, not yet built.
+
+Wiring, from card to cover:
+
+- `ProjectCard` calls `useCoverFilmGrant(articleRef, hasCover && !shouldReduce)`
+  and passes the returned `filmActive` / `onFilmEnd` down to `ProjectCover`.
+  Disabled cards (no cover, or reduced motion) never register, so they can
+  neither hold nor block a slot.
+- Each cover drives its `<video>` through
+  `useCoverFilm(videoRef, { play, passActive, onPassEnd })`
+  (`src/app/lib/useCoverFilm.ts`), which replaces the old per-cover play/pause
+  effect. It keeps the `loop` attribute and **never seeks** — the hover
+  dissolve needs the film to keep looping. Pass-end is detected by accumulating
+  elapsed time across loop wraps from `timeupdate`
+  (`elapsed += t >= last ? t − last : duration − last + t`), firing `onPassEnd`
+  at `elapsed ≥ duration − 0.05`. A rejected `play()` while a pass is active
+  counts as a completed pass so the queue never stalls.
+- The play condition is the same in every cover, and **hover lives outside the
+  queue**: `play = !reduce && inView && (hovered || filmActive)`, with
+  `passActive = filmActive && !reduce`. Hovering any card (even a rested or
+  already-played one) resumes the film under the dissolve without consuming or
+  blocking a grant; hover during another card's pass lets both play briefly and
+  is accepted as user-initiated.
+
 ## Non-negotiables for every cover
 
 - **Reduced motion** (`useReducedMotion`): no playback, no dots, no
@@ -118,10 +175,15 @@ Rules that keep it correct:
   the title; if the hook line matters, crossfade it over the still on hover
   at ~0.01s. Every cover must render a useful static state.
 - **Off-screen discipline**: pause the video (and never run rAF) while the
-  card is outside the viewport — `useInView` without `once`.
-- **Autoplay failure is a state, not an error**: `video.play().catch()` —
-  low-power iOS blocks autoplay; the first decoded frame stands in and the
-  hover effect still works on top of it.
+  card is outside the viewport — `useInView` without `once`. Playback is also
+  gated by the one-pass grant, so at rest an on-screen film is paused on its
+  frozen frame, not looping (see the film queue above); `useCoverFilm` owns the
+  play/pause, so a cover never writes its own play/pause effect.
+- **Autoplay failure is a state, not an error**: `useCoverFilm` runs
+  `video.play().catch()` — low-power iOS blocks autoplay; the first decoded
+  frame stands in and the hover effect still works on top of it. If the
+  rejection happens while a pass is active, it is reported as a completed pass
+  so the queue advances instead of waiting on a film that will never run.
 - **Artwork colours are scene constants**, declared at the top of the cover
   with a comment (and the contrast ratio if type sits on them, e.g.
   `#66C5C0` on `#0F2830` = 6.6:1). They are not shell tokens and never leak
@@ -141,7 +203,11 @@ Rules that keep it correct:
 2. Put web-ready footage under `public/assets/<project>/…` (square ~960px,
    a few seconds, muted; monochrome grades best under the halftone).
 3. Copy the scene skeleton from `SymptomCheckerCover.tsx`: field colour,
-   `<video>` + `<canvas>` layers, title scrim, hook overlay, hover loop.
-   Retune `GRID_COLS`, `LUM_CUTOFF`, field/ink/accent colours, and copy.
-4. Verify at 320 / 375 / 768 / 1440 in the real home grid: idle, hover in,
-   hover held, hover out mid-flight, reduced motion, and off-screen pause.
+   `<video>` + `<canvas>` layers, title scrim, hook overlay, hover loop. Drive
+   the film with `useCoverFilm` (accept `filmActive` / `onFilmEnd` props and use
+   the shared play condition) — never add a bespoke play/pause effect. Retune
+   `GRID_COLS`, `LUM_CUTOFF`, field/ink/accent colours, and copy.
+4. Verify at 320 / 375 / 768 / 1440 in the real home grid: one-pass grant on
+   scroll-in then freeze, hand-off to the next card, played cards staying frozen
+   on re-entry, idle, hover in, hover held, hover out mid-flight, reduced
+   motion, and off-screen pause.

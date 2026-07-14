@@ -4,6 +4,7 @@ import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useState, type ReactNode } from "react";
 import { motionDuration, motionEase } from "../lib/motion";
+import { cornerClasses, type TileCorners } from "./Chapter";
 
 type FrameStep = {
   /** Short step name, shown in the step list. */
@@ -16,6 +17,11 @@ type FrameStep = {
 type AnnotatedFrameProps = {
   /** What this walkthrough shows, e.g. "Assessment flow decisions". */
   label: string;
+  /**
+   * Which corners the tile rounds. Defaults to "all"; pass "none" or "bottom"
+   * when the module sits inside a grouped chapter slab.
+   */
+  corners?: TileCorners;
   steps: FrameStep[];
 };
 
@@ -26,7 +32,11 @@ type AnnotatedFrameProps = {
  * presenter-controlled (never scroll-driven) so the pacing follows the
  * narration in a live interview and stays stable while screen-sharing.
  */
-export function AnnotatedFrame({ label, steps }: AnnotatedFrameProps) {
+export function AnnotatedFrame({
+  label,
+  corners = "all",
+  steps,
+}: AnnotatedFrameProps) {
   const [index, setIndex] = useState(0);
   const shouldReduce = useReducedMotion();
   const step = steps[index];
@@ -49,7 +59,7 @@ export function AnnotatedFrame({ label, steps }: AnnotatedFrameProps) {
   return (
     <section
       aria-label={label}
-      className="rounded-3xl border border-border bg-card p-4 shadow-card sm:p-6 md:p-8"
+      className={`${cornerClasses[corners]} border border-border bg-card p-5 shadow-card sm:p-8 md:p-10`}
     >
       <header className="flex items-center justify-between gap-4">
         <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">

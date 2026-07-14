@@ -44,3 +44,6 @@ next-env.d.ts
 
 # local screenshot captures
 screenshots/
+
+# local working files
+scratchpad/
