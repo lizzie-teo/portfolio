@@ -76,7 +76,7 @@ export function SymptomsHero({
           <Screenshot
             src="/assets/healthdirect/hero/assessment-mobile.webp"
             alt="The Assessment step on mobile, asking for body temperature with one-tap answer options."
-            ratio={675 / 2160}
+            ratio={540 / 3276}
             sizes="(min-width: 768px) 21vw, 62vw"
           />
         </div>
