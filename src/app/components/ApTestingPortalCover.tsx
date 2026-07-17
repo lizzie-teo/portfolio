@@ -376,12 +376,12 @@ export function ApTestingPortalCover({
             }}
           >
             <RiseLine order={0}>
-              <span className="block font-heading text-[8.5cqw] font-semibold leading-[1.08] tracking-[-0.03em] text-white">
+              <span className="block font-heading text-[8.5cqw] font-semibold leading-[1.08] tracking-[-0.03em] text-glass-foreground">
                 Testing without the guesswork
               </span>
             </RiseLine>
             <RiseLine order={1}>
-              <span className="block text-[3.6cqw] leading-snug text-white/80">
+              <span className="block text-[3.6cqw] leading-snug text-glass-foreground/80">
                 Certification status at a glance
               </span>
             </RiseLine>
@@ -400,10 +400,10 @@ export function ApTestingPortalCover({
             animate={{ opacity: 1, transition: { duration: 0.01 } }}
             exit={{ opacity: 0, transition: { duration: 0.01 } }}
           >
-            <span className="block font-heading text-[8.5cqw] font-semibold leading-[1.08] tracking-[-0.03em] text-white">
+            <span className="block font-heading text-[8.5cqw] font-semibold leading-[1.08] tracking-[-0.03em] text-glass-foreground">
               Testing without the guesswork
             </span>
-            <span className="block text-[3.6cqw] leading-snug text-white/80">
+            <span className="block text-[3.6cqw] leading-snug text-glass-foreground/80">
               Certification status at a glance
             </span>
           </motion.div>

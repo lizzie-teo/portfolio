@@ -4,7 +4,13 @@ import { ChevronDownIcon, RotateCwIcon } from "lucide-react";
 import { motion, useReducedMotion, type Variants } from "motion/react";
 import type { ReactNode } from "react";
 import { motionDuration, motionEase } from "@/app/lib/motion";
-import { cornerClasses, type TileCorners } from "@/app/components/Chapter";
+import {
+  anchorScrollOffset,
+  cornerClasses,
+  readingTilePadding,
+  sectionHeading,
+  type TileCorners,
+} from "@/app/components/Chapter";
 import { CollapsingLeaf } from "@/app/components/CollapsingLeaf";
 
 /**
@@ -110,7 +116,7 @@ function FlowNode({
         <div className="relative max-w-[62%] text-center">
           <p className="text-sm font-semibold leading-snug">{title}</p>
           {sub ? (
-            <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground">
+            <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
               {sub}
             </p>
           ) : null}
@@ -127,7 +133,7 @@ function FlowNode({
       <p className="text-sm font-semibold leading-snug">{title}</p>
       {sub ? (
         <p
-          className={`mt-1 text-[13px] leading-relaxed ${
+          className={`mt-1 text-sm leading-relaxed ${
             kind === "system"
               ? "text-primary-foreground/75"
               : "text-muted-foreground"
@@ -294,16 +300,14 @@ export function IaFlow({
     <section
       id={id}
       aria-label="Information architecture — one flow from first tap to care action"
-      className="scroll-mt-24"
+      className={anchorScrollOffset}
     >
       <CollapsingLeaf
         pinTopPx={0}
-        className={`flex flex-col justify-start ${cornerClasses[corners]} border border-border bg-card p-5 shadow-card sm:p-8 md:p-10`}
+        className={`flex flex-col justify-start ${cornerClasses[corners]} border border-border bg-card shadow-card ${readingTilePadding}`}
       >
-        <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-          <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Information architecture
-          </h3>
+        <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+          <h2 className={sectionHeading}>Information architecture</h2>
           <ul aria-label="Legend" className="flex flex-wrap items-center gap-x-4 gap-y-1">
             {legend.map((item) => (
               <li
@@ -470,7 +474,7 @@ export function IaFlow({
                 <motion.li
                   key={item.label}
                   variants={v.node}
-                  className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] font-medium ${item.chip}`}
+                  className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium ${item.chip}`}
                 >
                   <span className="tabular-nums opacity-60">{itemIndex + 1}</span>
                   {item.label}
@@ -510,7 +514,7 @@ export function IaFlow({
             </div>
             <motion.p
               variants={v.node}
-              className="mt-5 text-center text-[13px] leading-relaxed text-muted-foreground"
+              className="mt-5 text-center text-sm leading-relaxed text-muted-foreground"
             >
               From here the result can be saved to a user account, or shared by
               email, print, or SMS.

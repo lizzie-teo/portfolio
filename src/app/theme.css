@@ -256,8 +256,16 @@
 [data-project-theme="healthdirect-symptom-checker"] {
   /* Sampled from the HDA styleguide (Figma, hda-styleguide-v0.5): core
      brand Base Teal #1e4759 with the green family as the action colour. */
-  --background: #f8fbfc;
-  --primary: #007f78; /* HDA Green Darken 20 — 4.9:1 with white */
+  /* Reading surfaces are softened for this theme only. The old pair (page
+     #f8fbfc, cards pure #FFFFFF) read too white and glary: the reading tiles
+     are bg-card and sit directly against the deep-teal leaves/grout, so the
+     glare was the pure-white tile, and the leaf-to-tile luminance jump felt
+     harsh. Both come down a whisper (~2-3% off white) while holding a faint
+     teal hue (oklch hue 200, tiny chroma) so they read as soft teal paper, not
+     neutral grey. Card stays a hair above the page (0.980 vs 0.972) so where the
+     page does show it still lifts, but the softening — not the lift — is the point. */
+  --background: oklch(0.972 0.004 200); /* #F3F7F7 soft teal paper — fg 11.0:1, primary 4.5:1 */
+  --primary: #007f78; /* HDA Green Darken 20 — 4.5:1 on this softened background */
   --ring: #007f78;
   --accent: #ccecea; /* HDA Green Lighten 80 */
   --accent-foreground: #006f69; /* HDA Green Darken 30 — 4.8:1 on accent */
@@ -265,6 +273,13 @@
   --secondary-foreground: #006f69; /* 5.4:1 on secondary */
   --border: #e9edee; /* HDA Teal Lighten 90 */
   --input: #e9edee;
+  /* Card retint — THIS THEME ONLY (global :root --card stays pure white). These
+     reading tiles are the glary surface: pure white butting the deep-teal leaves.
+     Dropped ~2% off white to soft teal paper (oklch hue 200, whisper chroma) so
+     the field stops reading fluorescent, while staying unmistakably white and a
+     gentle step above the page (0.980 vs 0.972). --card-foreground keeps the
+     neutral warm ink. */
+  --card: oklch(0.98 0.003 200); /* #F6F9F9 soft teal paper — fg 11.2:1, primary 4.6:1 */
   --leaf: #183947; /* HDA Teal Darken 20 — 12.3:1 with white */
   --leaf-foreground: #ffffff;
   --grout: #10262f; /* HDA Teal deepened below the leaf */

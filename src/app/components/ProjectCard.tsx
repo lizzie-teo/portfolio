@@ -128,7 +128,7 @@ export function ProjectCard({ entry, fillRow, index }: ProjectCardProps) {
             (Keep glass classes in sync with page.tsx placeholder.) */}
         <div
           className={cn(
-            "project-card-glass pointer-events-none absolute inset-x-[8px] bottom-[8px] flex flex-col gap-[2.4cqw] overflow-hidden rounded-xl p-[6.8cqw] transition-opacity duration-200 ease-out group-hover:opacity-0 sm:gap-2.5 sm:p-[6cqw]"
+            "project-card-glass pointer-events-none absolute inset-x-[8px] bottom-[8px] flex flex-col gap-4 overflow-hidden rounded-xl p-4 transition-opacity duration-200 ease-out group-hover:opacity-0 md:p-6"
           )}
         >
           {entry.industry ? (

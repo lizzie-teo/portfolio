@@ -1,8 +1,9 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useAnchorScroll } from "../lib/use-anchor-scroll";
 import { motionDuration, motionEase } from "../lib/motion";
+import { useActiveAnchor } from "../lib/use-active-anchor";
 
 export type CaseSection = {
   id: string;
@@ -13,6 +14,12 @@ export type CaseChapter = {
   id: string;
   title: string;
   sections?: CaseSection[];
+  /**
+   * Dock only: keep this chapter's sections expanded whenever the dock is
+   * open, not just when it is the active chapter — for a deep chapter whose
+   * sub-steps should be reachable on open without scrolling into it first.
+   */
+  defaultExpanded?: boolean;
 };
 
 /**
@@ -33,8 +40,9 @@ export type CaseChapter = {
  * opens only a little taller than a collapsed one instead of leaving an
  * empty coloured belly. The rail is a fixed column in the content lane
  * the shell reserves from xl up; below xl the ChapterMarker pill
- * provides the same destinations. Anchors keep native browser
- * behaviour — no scroll hijack.
+ * provides the same destinations. Anchors stay real `href="#id"` links
+ * (deep-linkable, modified-click friendly); a click handler scrolls to an exact
+ * 1cm landing so the collapsing leaves don't land inconsistently (useAnchorScroll).
  */
 export function CaseStudyRail({
   chapters,
@@ -43,44 +51,12 @@ export function CaseStudyRail({
   chapters: CaseChapter[];
   className?: string;
 }) {
-  const [activeId, setActiveId] = useState<string | null>(null);
   const shouldReduce = useReducedMotion();
-
-  useEffect(() => {
-    const ids = chapters.flatMap((chapter) => [
-      chapter.id,
-      ...(chapter.sections ?? []).map((section) => section.id),
-    ]);
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      // Active anchor = last one whose top has crossed the upper-third line.
-      const line = window.innerHeight * 0.4;
-      let next: string | null = null;
-      for (const id of ids) {
-        const element = document.getElementById(id);
-        if (element && element.getBoundingClientRect().top <= line) {
-          next = id;
-        }
-      }
-      setActiveId(next);
-    };
-    const requestUpdate = () => {
-      if (!frame) {
-        frame = window.requestAnimationFrame(update);
-      }
-    };
-    update();
-    window.addEventListener("scroll", requestUpdate, { passive: true });
-    window.addEventListener("resize", requestUpdate);
-    return () => {
-      if (frame) {
-        window.cancelAnimationFrame(frame);
-      }
-      window.removeEventListener("scroll", requestUpdate);
-      window.removeEventListener("resize", requestUpdate);
-    };
-  }, [chapters]);
+  // Active-anchor detection is shared with ChapterDock so both patterns
+  // track the same reading position (line = innerHeight * 0.4, last-crossed).
+  const activeId = useActiveAnchor(chapters);
+  // Deterministic 1cm landing on click (see useAnchorScroll).
+  const handleAnchor = useAnchorScroll();
 
   const activeChapterIndex = chapters.findIndex(
     (chapter) =>
@@ -125,6 +101,7 @@ export function CaseStudyRail({
                         aria-current={
                           activeId === chapter.id ? "location" : undefined
                         }
+                        onClick={(event) => handleAnchor(event, chapter.id)}
                         className={`${labelBase} block text-rail-tile-active-foreground focus-visible:ring-rail-tile-active-foreground focus-visible:ring-offset-rail-tile-active`}
                       >
                         {chapter.title}
@@ -154,7 +131,10 @@ export function CaseStudyRail({
                                     aria-current={
                                       isSectionCurrent ? "location" : undefined
                                     }
-                                    className={`block py-1 text-[13px] font-semibold leading-snug outline-none transition-colors focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-rail-tile-active-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-rail-tile-active ${
+                                    onClick={(event) =>
+                                      handleAnchor(event, section.id)
+                                    }
+                                    className={`block py-1 text-sm font-semibold leading-snug outline-none transition-colors focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-rail-tile-active-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-rail-tile-active ${
                                       isSectionCurrent
                                         ? "text-rail-tile-active-foreground"
                                         : "text-rail-tile-active-foreground/85 hover:text-rail-tile-active-foreground"
@@ -177,6 +157,7 @@ export function CaseStudyRail({
                       aria-current={
                         isOpen && activeId === chapter.id ? "location" : undefined
                       }
+                      onClick={(event) => handleAnchor(event, chapter.id)}
                       className={`${labelBase} flex h-full w-full items-end rounded-xl px-4 py-3.5 focus-visible:rounded-xl ${
                         isOpen
                           ? "text-rail-tile-active-foreground focus-visible:ring-rail-tile-active-foreground focus-visible:ring-offset-rail-tile-active"

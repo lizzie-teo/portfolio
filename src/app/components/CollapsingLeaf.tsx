@@ -74,12 +74,13 @@ type CollapsingLeafProps = {
  *
  * Because the open leaf is 10svh taller than the screen, flex-centred content
  * would sit 5svh below the visible centre on arrival. A content wrapper
- * carries a decaying bottom margin (openAmount * 10svh) that re-centres the
- * title and lede within the first 100svh while the leaf is open, easing to
- * zero as it collapses so the resting tile is pixel identical to a plain one.
- * Top-aligned content (justify-start, the content-section variant) is
- * unaffected by this bottom margin — its content sits where reading starts
- * and never moves; only the surface's bottom edge recedes.
+ * carries a decaying bottom margin (openAmount * 10svh) that re-centres it
+ * within the first 100svh while the leaf is open, easing to zero as it
+ * collapses so the resting tile is pixel identical to a plain one. Only the
+ * case-study cover still centres; every other surface — chapter leaves and
+ * content sections alike — is top-aligned (justify-start) and unaffected by
+ * this bottom margin: its content sits where reading starts and never moves,
+ * only the surface's bottom edge recedes.
  */
 export function CollapsingLeaf({
   children,

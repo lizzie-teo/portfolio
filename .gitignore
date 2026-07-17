@@ -47,3 +47,6 @@ screenshots/
 
 # local working files
 scratchpad/
+
+# agent worktrees
+.claude/worktrees/

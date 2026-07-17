@@ -18,7 +18,7 @@ export default function Home() {
         <main>
           <StatementHero />
 
-          <section id="work" className="border-y border-border bg-card">
+          <section id="work" className="scroll-mt-24 border-y border-border bg-card">
           <div className="mx-auto w-full max-w-[1800px] px-4 py-16 sm:px-6 md:px-8 lg:px-12 lg:py-24 xl:px-16 xl:py-32 2xl:px-24">
             <CoverPlaybackProvider>
             <div className="grid gap-10 md:grid-cols-2 md:items-start lg:grid-cols-3 lg:gap-x-8 lg:gap-y-14 xl:gap-x-10 xl:gap-y-16">
@@ -42,7 +42,7 @@ export default function Home() {
                   keeps a title-only panel. */}
               <MotionReveal>
                 <article className="@container relative isolate aspect-[4/5] overflow-hidden rounded-3xl border border-border bg-secondary shadow-card">
-                  <div className="project-card-glass pointer-events-none absolute inset-x-[8px] bottom-[8px] overflow-hidden rounded-xl p-[6.8cqw] sm:p-[6cqw]">
+                  <div className="project-card-glass pointer-events-none absolute inset-x-[8px] bottom-[8px] overflow-hidden rounded-xl p-4 md:p-6">
                     <p className="font-heading font-semibold leading-[1.05] tracking-[-0.03em] text-[clamp(1.2rem,5.6cqw,2.35rem)] text-glass-foreground">
                       Coming soon
                     </p>
@@ -55,7 +55,7 @@ export default function Home() {
           </section>
         </main>
 
-        <footer id="contact" className="border-t border-border px-4 py-8 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-24">
+        <footer id="contact" className="scroll-mt-24 border-t border-border px-4 py-8 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-24">
           <div className="mx-auto grid w-full max-w-[1800px] gap-8 md:grid-cols-[1fr_auto] md:items-end">
             <p className="max-w-3xl text-4xl font-semibold leading-[0.98] tracking-[-0.055em] md:text-7xl">
               Available for senior UX/UI and product design roles.

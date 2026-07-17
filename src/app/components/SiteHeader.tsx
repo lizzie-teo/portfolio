@@ -1,9 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "motion/react";
-import { useEffect, useState } from "react";
-import { motionDuration, motionEase } from "../lib/motion";
 import { useHeroTone } from "./HeroToneContext";
 
 const navItems = [
@@ -23,46 +20,16 @@ type SiteHeaderProps = {
 };
 
 /**
- * Sticky top bar that gets out of the reader's way: scrolling down slides
- * it off (exit — instant/ease-in), scrolling back up returns it (entry —
- * fast/ease-out). It never hides near the top of the page, and keyboard
- * focus entering the bar always reveals it so tabbing can't land on an
- * off-screen link. Under reduced motion the slide collapses to an
- * effectively instant change.
+ * Top masthead — the page's top matter, like the header of a printed page.
+ * It sits in normal flow and scrolls away with the content rather than
+ * chasing the reader down the page: no sticky reveal-on-scroll (which read as
+ * a distraction and fought in-page anchor landings), no hide/show motion. It
+ * is simply there again when the reader returns to the very top. During
+ * reading, the case study's ChapterDock spine carries the persistent
+ * wayfinding; the home grid is short enough to scroll back to.
  */
 export function SiteHeader({ tone }: SiteHeaderProps) {
-  const [hidden, setHidden] = useState(false);
-  const shouldReduce = useReducedMotion();
   const { dark: heroDark } = useHeroTone();
-
-  useEffect(() => {
-    let lastY = window.scrollY;
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      const y = window.scrollY;
-      if (y < 96) {
-        setHidden(false);
-      } else if (y > lastY + 2) {
-        setHidden(true);
-      } else if (y < lastY - 2) {
-        setHidden(false);
-      }
-      lastY = y;
-    };
-    const onScroll = () => {
-      if (!frame) {
-        frame = window.requestAnimationFrame(update);
-      }
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      if (frame) {
-        window.cancelAnimationFrame(frame);
-      }
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, []);
 
   // Explicit prop wins (case studies force dark); otherwise the home bar
   // follows the hero's hover tone.
@@ -78,29 +45,19 @@ export function SiteHeader({ tone }: SiteHeaderProps) {
     : "focus-visible:ring-focus focus-visible:ring-offset-background";
 
   return (
-    <motion.header
-      initial={false}
-      animate={{ y: hidden ? "-100%" : "0%" }}
-      transition={
-        shouldReduce
-          ? { duration: 0.01 }
-          : hidden
-            ? { duration: motionDuration.instant, ease: motionEase.in }
-            : { duration: motionDuration.fast, ease: motionEase.out }
-      }
-      onFocus={() => setHidden(false)}
-      className={`sticky top-0 z-40 w-full backdrop-blur-md transition-colors duration-300 ${barTone}`}
+    <header
+      className={`relative z-40 w-full backdrop-blur-md transition-colors duration-300 ${barTone}`}
     >
       <div className="mx-auto flex w-full max-w-[1800px] items-center justify-between px-4 py-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-24">
         <Link
           href="/"
-          className={`text-[0.72rem] font-bold uppercase tracking-[0.18em] outline-none focus-visible:ring-2 focus-visible:ring-offset-4 ${brandTone}`}
+          className={`text-xs font-bold uppercase tracking-[0.18em] outline-none focus-visible:ring-2 focus-visible:ring-offset-4 ${brandTone}`}
           aria-label="Main tree homepage"
         >
           Main tree
         </Link>
         <nav aria-label="Primary navigation">
-          <ul className="flex items-center gap-5 text-[0.72rem] font-bold uppercase tracking-[0.14em] sm:gap-8">
+          <ul className="flex items-center gap-5 text-xs font-bold uppercase tracking-[0.14em] sm:gap-8">
             {navItems.map(([label, href]) => (
               <li key={href}>
                 <Link
@@ -114,6 +71,6 @@ export function SiteHeader({ tone }: SiteHeaderProps) {
           </ul>
         </nav>
       </div>
-    </motion.header>
+    </header>
   );
 }

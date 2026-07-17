@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { CollapsingLeaf } from "./CollapsingLeaf";
-import { cornerClasses, type TileCorners } from "./Chapter";
+import { cornerClasses, tilePadding, type TileCorners } from "./Chapter";
 
 type TileProps = {
   /**
@@ -60,7 +60,7 @@ export function Tile({
   children,
 }: TileProps) {
   const surfaceClassName = `${cornerClasses[corners]} ${surfaceClasses[surface]} ${
-    flush ? "" : "p-6 sm:p-8 md:p-10 lg:p-12"
+    flush ? "" : tilePadding
   } ${className ?? ""}`;
 
   if (immersive) {

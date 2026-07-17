@@ -4,7 +4,13 @@ import { ArrowRightIcon } from "lucide-react";
 import { motion, useReducedMotion, type Variants } from "motion/react";
 import Image from "next/image";
 import { motionDuration, motionEase } from "@/app/lib/motion";
-import { cornerClasses, type TileCorners } from "@/app/components/Chapter";
+import {
+  anchorScrollOffset,
+  cornerClasses,
+  readingTilePadding,
+  sectionHeading,
+  type TileCorners,
+} from "@/app/components/Chapter";
 import { CollapsingLeaf } from "@/app/components/CollapsingLeaf";
 
 /**
@@ -155,7 +161,7 @@ function NoteChip({ note, lensChip }: { note: Note; lensChip: string }) {
   const emphasis = typeof note !== "string" && note.emphasis;
   return (
     <li
-      className={`max-w-prose rounded-lg px-3 py-2 text-[13px] leading-snug ${
+      className={`max-w-prose rounded-lg px-3 py-2 text-sm leading-snug ${
         emphasis ? "bg-primary text-primary-foreground" : lensChip
       }`}
     >
@@ -203,11 +209,11 @@ export function JourneyMap({
     <section
       id={id}
       aria-label="User journey — current state"
-      className="scroll-mt-24"
+      className={anchorScrollOffset}
     >
       <CollapsingLeaf
         pinTopPx={0}
-        className={`flex flex-col justify-start ${cornerClasses[corners]} border border-border bg-card p-5 shadow-card sm:p-8 md:p-10`}
+        className={`flex flex-col justify-start ${cornerClasses[corners]} border border-border bg-card shadow-card ${readingTilePadding}`}
       >
         <motion.div
           initial="hidden"
@@ -215,9 +221,7 @@ export function JourneyMap({
           viewport={{ once: true, margin: "0px 0px -80px 0px" }}
           variants={v.map}
         >
-          <h3 className="text-2xl font-semibold tracking-[-0.03em] md:text-3xl lg:text-4xl">
-            User journey
-          </h3>
+          <h2 className={sectionHeading}>User journey</h2>
 
           <motion.div
             variants={v.cell}
@@ -231,7 +235,7 @@ export function JourneyMap({
               className="size-16 shrink-0 md:size-24"
             />
             <div className="min-w-0 max-w-prose">
-              <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-foreground">
                 Persona — &ldquo;Aliya&rdquo;
               </p>
               <p className="mt-2 text-base font-semibold leading-snug">
@@ -249,14 +253,14 @@ export function JourneyMap({
           <div className="mt-8 md:mt-10 lg:grid lg:grid-cols-[7.5rem_repeat(5,minmax(0,1fr))] lg:gap-x-5 xl:grid-cols-[8.5rem_repeat(5,minmax(0,1fr))] xl:gap-x-6">
             {/* Desktop-only row labels; mobile repeats them inside each stage. */}
             <div className="hidden lg:contents">
-              <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground lg:col-start-1 lg:row-start-1 lg:self-end lg:border-b lg:border-border lg:pb-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-foreground lg:col-start-1 lg:row-start-1 lg:self-end lg:border-b lg:border-border lg:pb-3">
                 Journey steps
               </p>
               {lenses.map((lens, lensIndex) => (
                 <p
                   key={lens.key}
                   aria-hidden="true"
-                  className={`text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground lg:col-start-1 ${lensRow[lensIndex]} ${lensRule(lensIndex)} lg:py-4`}
+                  className={`text-xs font-semibold uppercase tracking-[0.14em] text-foreground lg:col-start-1 ${lensRow[lensIndex]} ${lensRule(lensIndex)} lg:py-4`}
                 >
                   {lens.label}
                 </p>
@@ -291,7 +295,7 @@ export function JourneyMap({
                     variants={v.cell}
                     className={`mt-4 lg:mt-0 ${stageCol[stageIndex]} ${lensRow[lensIndex]} ${lensRule(lensIndex)} lg:py-4`}
                   >
-                    <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground lg:hidden">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-foreground lg:hidden">
                       {lens.label}
                     </p>
                     <ul
@@ -312,7 +316,7 @@ export function JourneyMap({
             ))}
           </div>
 
-          <p className="mt-8 max-w-prose text-[13px] leading-relaxed text-muted-foreground">
+          <p className="mt-8 max-w-prose text-sm leading-relaxed text-muted-foreground">
             <span
               aria-hidden="true"
               className="mr-2 inline-block size-2.5 translate-y-px rounded-[0.25rem] bg-primary"

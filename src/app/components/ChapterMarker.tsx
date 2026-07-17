@@ -3,6 +3,8 @@
 import { ChevronUpIcon } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
+import { useActiveAnchor } from "../lib/use-active-anchor";
+import { useAnchorScroll } from "../lib/use-anchor-scroll";
 import { motionDuration, motionEase } from "../lib/motion";
 import type { CaseChapter } from "./CaseStudyRail";
 
@@ -18,57 +20,28 @@ type ChapterMarkerProps = {
  * when needed (e.g. "skip to the outcome" mid-interview).
  */
 export function ChapterMarker({ chapters }: ChapterMarkerProps) {
-  const [activeIndex, setActiveIndex] = useState(-1);
-  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const shouldReduce = useReducedMotion();
+  // Shared with CaseStudyRail and ChapterDock so all three navs track the same
+  // reading position (last chapter/section anchor past the upper-third line).
+  const activeId = useActiveAnchor(chapters);
+  // Deterministic 1cm landing on click (see useAnchorScroll).
+  const handleAnchor = useAnchorScroll();
 
-  useEffect(() => {
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      // Active chapter = last one whose top has crossed the upper-third line;
-      // active subsection = last section anchor crossed within that chapter.
-      const line = window.innerHeight * 0.4;
-      let next = -1;
-      let nextSectionId: string | null = null;
-      chapters.forEach((chapter, index) => {
-        const element = document.getElementById(chapter.id);
-        if (element && element.getBoundingClientRect().top <= line) {
-          next = index;
-          nextSectionId = null;
-        }
-        chapter.sections?.forEach((section) => {
-          const sectionElement = document.getElementById(section.id);
-          if (
-            sectionElement &&
-            sectionElement.getBoundingClientRect().top <= line
-          ) {
-            nextSectionId = section.id;
-          }
-        });
-      });
-      setActiveIndex(next);
-      setActiveSectionId(nextSectionId);
-    };
-    const requestUpdate = () => {
-      if (!frame) {
-        frame = window.requestAnimationFrame(update);
-      }
-    };
-    update();
-    window.addEventListener("scroll", requestUpdate, { passive: true });
-    window.addEventListener("resize", requestUpdate);
-    return () => {
-      if (frame) {
-        window.cancelAnimationFrame(frame);
-      }
-      window.removeEventListener("scroll", requestUpdate);
-      window.removeEventListener("resize", requestUpdate);
-    };
-  }, [chapters]);
+  // Active chapter = the one owning the current anchor; active subsection = that
+  // anchor when it is a section rather than the chapter head.
+  const activeIndex = chapters.findIndex(
+    (chapter) =>
+      chapter.id === activeId ||
+      chapter.sections?.some((section) => section.id === activeId)
+  );
+  const activeSectionId = chapters[activeIndex]?.sections?.some(
+    (section) => section.id === activeId
+  )
+    ? activeId
+    : null;
 
   useEffect(() => {
     if (!open) {
@@ -130,7 +103,10 @@ export function ChapterMarker({ chapters }: ChapterMarkerProps) {
                       <a
                         href={`#${chapter.id}`}
                         aria-current={isActive ? "location" : undefined}
-                        onClick={() => setOpen(false)}
+                        onClick={(event) => {
+                          handleAnchor(event, chapter.id);
+                          setOpen(false);
+                        }}
                         className={`flex min-h-11 items-center rounded-lg px-3 text-xs font-semibold leading-snug outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card ${
                           isActive ? "text-foreground" : "text-muted-foreground"
                         }`}
@@ -150,8 +126,11 @@ export function ChapterMarker({ chapters }: ChapterMarkerProps) {
                                   aria-current={
                                     isSectionActive ? "location" : undefined
                                   }
-                                  onClick={() => setOpen(false)}
-                                  className={`flex min-h-11 items-center rounded-lg py-2 pl-6 pr-3 text-[13px] font-semibold leading-snug outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card ${
+                                  onClick={(event) => {
+                                    handleAnchor(event, section.id);
+                                    setOpen(false);
+                                  }}
+                                  className={`flex min-h-11 items-center rounded-lg py-2 pl-6 pr-3 text-sm font-semibold leading-snug outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card ${
                                     isSectionActive
                                       ? "text-foreground"
                                       : "text-muted-foreground"

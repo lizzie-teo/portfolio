@@ -8,6 +8,7 @@
    our CSS-tile approach. It reuses buildDitherTile so the preview can never
    drift from what ships. */
 
+import { notFound } from "next/navigation";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { buildDitherTile, DITHER_DEFAULTS } from "../../components/DitherOverlay";
 
@@ -254,6 +255,13 @@ function SelectRow({
 }
 
 export default function DitherPlayground() {
+  // Dev-only scratch tool: 404 it out of production. NODE_ENV is inlined at
+  // build time, so this branch is constant per build — it never runs in dev
+  // and always short-circuits before the hooks below in a production build.
+  if (process.env.NODE_ENV === "production") {
+    notFound();
+  }
+
   const [s, setS] = useState<Settings>(SHIPPED);
   const [copied, setCopied] = useState(false);
 

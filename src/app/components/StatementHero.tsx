@@ -191,7 +191,7 @@ export function StatementHero() {
             keywords fall back to plain text. */}
         <motion.p
           {...entry(0)}
-          className="mb-7 font-heading text-[0.72rem] font-bold uppercase tracking-[0.24em] opacity-70 sm:text-[0.78rem] md:mb-10"
+          className="mb-7 font-heading text-xs font-bold uppercase tracking-[0.24em] opacity-70 md:mb-10"
         >
           <span className="whitespace-nowrap">Lizzie Teo&nbsp;·</span>{" "}
           Product Designer &amp;{" "}

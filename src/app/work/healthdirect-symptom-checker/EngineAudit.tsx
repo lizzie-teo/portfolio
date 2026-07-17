@@ -3,7 +3,13 @@
 import { motion, useReducedMotion, type Variants } from "motion/react";
 import Image from "next/image";
 import { motionDuration, motionEase } from "@/app/lib/motion";
-import { cornerClasses, type TileCorners } from "@/app/components/Chapter";
+import {
+  anchorScrollOffset,
+  cornerClasses,
+  readingTilePadding,
+  sectionHeading,
+  type TileCorners,
+} from "@/app/components/Chapter";
 import { CollapsingLeaf } from "@/app/components/CollapsingLeaf";
 
 /**
@@ -36,7 +42,7 @@ const agenda = [
 ];
 
 const groupLabel =
-  "text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground";
+  "text-xs font-semibold uppercase tracking-[0.14em] text-foreground";
 
 /** Desktop-only leader line tying a note chip to the central exhibit. */
 function Leader({ toward }: { toward: "right" | "left" }) {
@@ -86,11 +92,11 @@ export function EngineAudit({
     <section
       id={id}
       aria-label="AI engine audit — what held up, where trust could break, and the design agenda"
-      className="scroll-mt-24"
+      className={anchorScrollOffset}
     >
       <CollapsingLeaf
         pinTopPx={0}
-        className={`flex flex-col justify-start ${cornerClasses[corners]} border border-border bg-card p-5 shadow-card sm:p-8 md:p-10`}
+        className={`flex flex-col justify-start ${cornerClasses[corners]} border border-border bg-card shadow-card ${readingTilePadding}`}
       >
         <motion.div
           initial="hidden"
@@ -98,9 +104,7 @@ export function EngineAudit({
           viewport={{ once: true, margin: "0px 0px -80px 0px" }}
           variants={v.map}
         >
-          <h3 className="text-2xl font-semibold tracking-[-0.03em] md:text-3xl lg:text-4xl">
-            AI engine audit
-          </h3>
+          <h2 className={sectionHeading}>AI engine audit</h2>
 
           <motion.p
             variants={v.cell}
@@ -146,7 +150,7 @@ export function EngineAudit({
                     variants={v.cell}
                     className="flex items-center gap-3"
                   >
-                    <span className="rounded-lg bg-journey-needs px-3 py-2 text-[13px] leading-snug text-note-ink">
+                    <span className="rounded-lg bg-journey-needs px-3 py-2 text-sm leading-snug text-note-ink">
                       {note.text}
                     </span>
                     <Leader toward="right" />
@@ -171,7 +175,7 @@ export function EngineAudit({
                   >
                     <Leader toward="left" />
                     <span
-                      className={`rounded-lg px-3 py-2 text-[13px] leading-snug ${
+                      className={`rounded-lg px-3 py-2 text-sm leading-snug ${
                         note.emphasis
                           ? "bg-primary text-primary-foreground"
                           : "bg-journey-pain text-note-ink"
@@ -202,7 +206,7 @@ export function EngineAudit({
                 <motion.li
                   key={item}
                   variants={v.cell}
-                  className="max-w-prose rounded-lg border border-foreground/30 bg-card px-3 py-2 text-center text-[13px] leading-snug"
+                  className="max-w-prose rounded-lg border border-foreground/30 bg-card px-3 py-2 text-center text-sm leading-snug"
                 >
                   {item}
                 </motion.li>
@@ -210,7 +214,7 @@ export function EngineAudit({
             </ul>
           </div>
 
-          <p className="mt-8 max-w-prose text-[13px] leading-relaxed text-muted-foreground">
+          <p className="mt-8 max-w-prose text-sm leading-relaxed text-muted-foreground">
             <span
               aria-hidden="true"
               className="mr-2 inline-block size-2.5 translate-y-px rounded-[0.25rem] bg-primary"

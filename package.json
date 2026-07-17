@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/check-case-studies.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "check:case-studies": "node scripts/check-case-studies.mjs",
     "video:studio": "remotion studio src/remotion/index.ts --config remotion.config.ts --no-open",
     "video:render": "mkdir -p out/remotion && remotion render src/remotion/index.ts FundingFinderHero out/remotion/funding-finder-hero.mp4 --config remotion.config.ts --codec=h264 --pixel-format=yuv420p",
     "video:still": "mkdir -p out/remotion && remotion still src/remotion/index.ts FundingFinderHero --config remotion.config.ts --frame=90 --scale=0.5 out/remotion/funding-finder-hero-frame.png"

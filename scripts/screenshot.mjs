@@ -18,6 +18,12 @@
 //   --reduced-motion    emulate prefers-reduced-motion: reduce
 //   --hash=<id>         after warm-up, scrollIntoView(#id) and capture that
 //                       scrolled state (viewport only, ignores --no-full)
+//   --anchor=<id>       after warm-up, reproduce the in-page anchor jump
+//                       (useAnchorScroll): scroll so #id's top sits at its own
+//                       scroll-margin-top below the viewport edge, then log the
+//                       measured gap in px and capture (viewport only). This is
+//                       the faithful test of the "lands 1cm from the edge"
+//                       behaviour — unlike --hash, which centres.
 //   --scroll=<px>       after warm-up, scroll to an absolute Y offset and
 //                       capture that state (viewport only)
 //   --hover=<selector>  after warm-up, real-hover the element and capture
@@ -98,6 +104,96 @@ for (const width of widths) {
       await page.waitForTimeout(400);
     }
 
+    // Faithful reproduction of the in-page anchor jump (useAnchorScroll):
+    // land the element's top at its own scroll-margin-top below the viewport
+    // edge, then report the gap actually achieved. Instant scroll (the global
+    // auto override is in force), so this measures the resting landing with no
+    // smooth-scroll overshoot — isolating whether the offset itself resolves.
+    if (opts.anchor) {
+      // Smooth variant re-enables scroll-behavior on html (html's specificity
+      // beats the global `*` auto override regardless of order) so the jump
+      // eases exactly like the live hook, catching any overshoot/snap that only
+      // shows under smooth scrolling.
+      if (opts["anchor-smooth"]) {
+        await page.addStyleTag({
+          content: "html { scroll-behavior: smooth !important; }",
+        });
+      }
+      const gap = await page.evaluate(
+        ({ id, smooth }) => {
+          const el = document.getElementById(id);
+          if (!el) return null;
+          const marginTop =
+            parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+          if (!smooth) {
+            const top =
+              el.getBoundingClientRect().top + window.scrollY - marginTop;
+            window.scrollTo(0, Math.max(0, top));
+          } else {
+            // Approximates useAnchorScroll's live-retargeting behaviour: an rAF
+            // ease that re-reads the element position each frame, so it self-
+            // corrects through the page's mid-scroll reflow. This is a rough
+            // exponential lerp (delta * 0.2), NOT the hook's exact curve — the
+            // real hook eases on a motionEase.inOut bezier with a short overshoot
+            // lobe, so use this to sanity-check the resting landing, not to
+            // verify the precise settle. Runs to completion in the page.
+            const target = () => {
+              const top =
+                el.getBoundingClientRect().top + window.scrollY - marginTop;
+              const max =
+                document.documentElement.scrollHeight - window.innerHeight;
+              return Math.max(0, Math.min(top, max));
+            };
+            const startedAt = performance.now();
+            const step = () => {
+              const t = target();
+              const current = window.scrollY;
+              const delta = t - current;
+              if (Math.abs(delta) <= 0.5 || performance.now() - startedAt > 1400) {
+                window.scrollTo({ top: t, behavior: "instant" });
+                return;
+              }
+              window.scrollTo({ top: current + delta * 0.2, behavior: "instant" });
+              requestAnimationFrame(step);
+            };
+            requestAnimationFrame(step);
+          }
+          return {
+            marginTop,
+            measuredTop: Math.round(el.getBoundingClientRect().top),
+          };
+        },
+        { id: opts.anchor, smooth: Boolean(opts["anchor-smooth"]) }
+      );
+      // Longer settle for smooth so the eased scroll (and any pin snap) finishes.
+      await page.waitForTimeout(opts["anchor-smooth"] ? 1600 : 400);
+      // Re-measure after settle in case a late layout shift moved the target.
+      const settled = await page.evaluate((id) => {
+        const el = document.getElementById(id);
+        const marginTop = el
+          ? parseFloat(getComputedStyle(el).scrollMarginTop) || 0
+          : 0;
+        const targetY = el
+          ? Math.round(
+              el.getBoundingClientRect().top + window.scrollY - marginTop
+            )
+          : null;
+        return {
+          top: el ? Math.round(el.getBoundingClientRect().top) : null,
+          scrollY: Math.round(window.scrollY),
+          targetY,
+          maxScroll: Math.round(
+            document.documentElement.scrollHeight - window.innerHeight
+          ),
+        };
+      }, opts.anchor);
+      console.log(
+        `  anchor #${opts.anchor} @${width}px — scroll-margin-top ${gap?.marginTop}px, ` +
+          `element top after jump ${gap?.measuredTop}px, after settle ${settled.top}px ` +
+          `(scrollY ${settled.scrollY}, targetY-now ${settled.targetY}, maxScroll ${settled.maxScroll})`
+      );
+    }
+
     // Absolute scroll position (viewport capture), for pinning down a
     // scroll-linked effect at an exact offset.
     if (opts.scroll !== undefined) {
@@ -117,9 +213,9 @@ for (const width of widths) {
     }
 
     const slug = route === "/" ? "home" : route.replace(/^\/|\/$/g, "").replace(/\//g, "-");
-    const suffix = [opts.dark && "dark", opts["reduced-motion"] && "rm", opts.hash && `hash-${opts.hash}`, opts.scroll !== undefined && `y${opts.scroll}`, (opts.hover || opts.focus) && "state"].filter(Boolean).join("-");
+    const suffix = [opts.dark && "dark", opts["reduced-motion"] && "rm", opts.hash && `hash-${opts.hash}`, opts.anchor && `anchor-${opts.anchor}`, opts.scroll !== undefined && `y${opts.scroll}`, (opts.hover || opts.focus) && "state"].filter(Boolean).join("-");
     const file = path.join(outDir, `${slug}-${width}${suffix ? `-${suffix}` : ""}.png`);
-    const viewportOnly = opts.hash || opts.scroll !== undefined;
+    const viewportOnly = opts.hash || opts.anchor || opts.scroll !== undefined;
     await page.screenshot({ path: file, fullPage: viewportOnly ? false : fullPage });
 
     const overflow = await page.evaluate(

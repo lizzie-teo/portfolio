@@ -4,11 +4,21 @@ import { ArtifactSection } from "@/app/components/ArtifactSection";
 import { ArtifactViewer } from "@/app/components/ArtifactViewer";
 import { CaseStatement } from "@/app/components/CaseStatement";
 import { CaseStudyShell } from "@/app/components/CaseStudyShell";
-import { Chapter, chapterGap, tileGap } from "@/app/components/Chapter";
+import {
+  Chapter,
+  chapterGap,
+  LeafPlate,
+  readingTilePadding,
+  tileGap,
+} from "@/app/components/Chapter";
 import { ChapterMarker } from "@/app/components/ChapterMarker";
 import { InsightCallout } from "@/app/components/InsightCallout";
 import { MediaFrame } from "@/app/components/MediaFrame";
-import { MotionReveal } from "@/app/components/MotionReveal";
+import {
+  MotionReveal,
+  MotionRevealGroup,
+  MotionRevealItem,
+} from "@/app/components/MotionReveal";
 import { Tile } from "@/app/components/Tile";
 import {
   Accordion,
@@ -16,11 +26,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  CaseStudyRail,
-  type CaseChapter,
-} from "@/app/components/CaseStudyRail";
+import { type CaseChapter } from "@/app/components/CaseStudyRail";
+import { ChapterDock } from "@/app/components/ChapterDock";
 import { caseStudyMetadata, getCaseStudy } from "../projects";
+import { CriteriaScorecard } from "./CriteriaScorecard";
 import { EngineAudit } from "./EngineAudit";
 import { IaFlow } from "./IaFlow";
 import { JourneyMap } from "./JourneyMap";
@@ -37,6 +46,7 @@ const chapters: CaseChapter[] = [
   {
     id: "approach",
     title: "The Approach",
+    defaultExpanded: true,
     sections: [
       { id: "engine-audit", title: "AI Engine Audit" },
       { id: "landscape-review", title: "Landscape Review" },
@@ -57,15 +67,6 @@ const chapters: CaseChapter[] = [
       { id: "roadmap", title: "The Roadmap" },
     ],
   },
-];
-
-const successMetrics = [
-  "Completion rate: reach the 60–70% industry benchmark",
-  "Task success: achieve 78%+ task success rate and resolve all severity 3–4 issues",
-  "Drop-off: no single step loses more than 20% of users",
-  "Health literacy: users can understand medical terms and instructions without assistance",
-  "Accessibility: meet WCAG 2.1 AA compliance",
-  "Confidence: users feel guided and supported throughout the assessment",
 ];
 
 const approachActivities = [
@@ -197,7 +198,7 @@ function PullQuote({
         “{quote}”
       </blockquote>
       {attribution ? (
-        <figcaption className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+        <figcaption className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-foreground">
           {attribution}
         </figcaption>
       ) : null}
@@ -207,9 +208,10 @@ function PullQuote({
 
 function BulletList({ items }: { items: string[] }) {
   return (
-    <ul className="max-w-prose space-y-3">
+    <MotionRevealGroup as="ul" className="max-w-prose space-y-3">
       {items.map((item) => (
-        <li
+        <MotionRevealItem
+          as="li"
           key={item}
           className="flex gap-3 text-base leading-relaxed text-foreground md:text-lg"
         >
@@ -218,9 +220,9 @@ function BulletList({ items }: { items: string[] }) {
             className="mt-[0.75em] h-px w-4 shrink-0 bg-foreground/40"
           />
           <span>{item}</span>
-        </li>
+        </MotionRevealItem>
       ))}
-    </ul>
+    </MotionRevealGroup>
   );
 }
 
@@ -249,46 +251,62 @@ export default function HealthdirectSymptomCheckerPage() {
   return (
     <CaseStudyShell
       slug="healthdirect-symptom-checker"
+      chip="Public Health"
       hideTagline
       heroId="introduction"
       heroCorners="top"
+      reserveNavLane={false}
       intro={{
         text: (
           <>
-            Healthdirect is Australia&apos;s government funded health information
-            service, reaching{" "}
-            <span className="font-semibold text-leaf-highlight">
-              millions of people
-            </span>{" "}
-            across digital and phone channels. Its Symptom Checker helps people
-            make sense of their symptoms and decide where to go for care. I{" "}
-            <span className="font-semibold text-leaf-highlight">
-              redesigned the experience
-            </span>{" "}
-            from early discovery through delivery, then stayed on for a second
-            phase exploring how{" "}
-            <span className="font-semibold text-leaf-highlight">
-              the wider service ecosystem
-            </span>{" "}
-            could work better for the people who need it most.
+            <p>
+              Healthdirect is Australia&apos;s government funded health
+              information service, reaching{" "}
+              <span className="font-semibold text-leaf-highlight">
+                millions of Australians
+              </span>{" "}
+              across digital and phone channels.
+            </p>
+            <p>
+              This project was a full redesign of their legacy product,{" "}
+              <span className="font-semibold text-leaf-highlight">
+                Symptom Checker
+              </span>
+              . It&apos;s a triage tool that helps people assess their
+              symptoms and decide on next steps for care.
+            </p>
+            <p>
+              Working across a cross-functional team, I{" "}
+              <span className="font-semibold text-leaf-highlight">
+                led UX across two phases
+              </span>
+              : a product redesign integrating Infermedica&apos;s AI engine,
+              followed by a broader CX and service design initiative across
+              Healthdirect&apos;s ecosystem.
+            </p>
           </>
         ),
         meta: [
-          { label: "Role", value: "Senior Product Designer" },
           {
-            label: "Phase 1 — The redesign",
-            items: [
-              "UX design, discovery to delivery",
-              "Content strategy and accessibility",
-              "Stakeholder alignment across teams",
-            ],
-          },
-          {
-            label: "Phase 2 — The ecosystem",
-            items: [
-              "Consumer research and synthesis",
-              "Service design and ecosystem mapping",
-              "Concept prototyping for strategy",
+            label: "My role",
+            groups: [
+              {
+                label: "Phase 1 — The redesign",
+                items: [
+                  "End-to-end UX design from light discovery through delivery",
+                  "Content strategy and accessibility compliance",
+                  "Information architecture and UI design",
+                  "Stakeholder alignment and cross-functional facilitation",
+                ],
+              },
+              {
+                label: "Phase 2 — The ecosystem",
+                items: [
+                  "Consumer research and synthesis",
+                  "Service design and ecosystem mapping",
+                  "Concept prototyping for strategy",
+                ],
+              },
             ],
           },
         ],
@@ -335,16 +353,23 @@ export default function HealthdirectSymptomCheckerPage() {
               title="The problem"
               leafCorners="top"
               lede="Only 45% of people finished the check — most dropped off before they ever saw care guidance."
+              leafPlate={
+                /* tangled cube: the broken assessment where people lost
+                   their way */
+                <LeafPlate
+                  src="/assets/chapter-illustrations/problem-alpha.webp"
+                  width={705}
+                  height={767}
+                />
+              }
             >
-              <Tile immersive corners="bottom">
+              <Tile immersive corners="bottom" className={readingTilePadding}>
                 <MotionReveal>
-                  <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                  <h3 className="whitespace-nowrap font-heading text-[clamp(0.85rem,4.2vw,2.25rem)] font-semibold leading-[1.15] tracking-[-0.02em] text-foreground">
                     What success had to look like
                   </h3>
-                  <div className="mt-4">
-                    <BulletList items={successMetrics} />
-                  </div>
                 </MotionReveal>
+                <CriteriaScorecard className="mt-8 md:mt-10" />
               </Tile>
             </Chapter>
 
@@ -353,12 +378,23 @@ export default function HealthdirectSymptomCheckerPage() {
               title="The approach"
               leafCorners="top"
               lede="Evidence before pixels: an audit of the AI engine, a map of the real journey, then a rebuilt architecture, tested twice."
+              leafPlate={
+                /* cube studies: the same problem worked five ways until it
+                   resolves */
+                <LeafPlate
+                  src="/assets/chapter-illustrations/approach-alpha.webp"
+                  width={971}
+                  height={306}
+                />
+              }
             >
               <EngineAudit id="engine-audit" corners="none" />
               <LandscapeReview id="landscape-review" corners="none" />
               <JourneyMap id="user-journey" corners="none" />
               <ArtifactSection
                 id="sketches"
+                headingLevel={2}
+                roomy
                 title="Sketches"
                 corners="none"
                 takeaway="Rough concepts kept early debate on flow and framing, not visual polish."
@@ -383,6 +419,8 @@ export default function HealthdirectSymptomCheckerPage() {
               <IaFlow id="information-architecture" corners="none" />
               <ArtifactSection
                 id="usability-testing"
+                headingLevel={2}
+                roomy
                 title="Usability testing"
                 corners="none"
                 takeaway="Twelve sessions across two rounds produced eleven recommendations, all implemented."
@@ -515,14 +553,12 @@ export default function HealthdirectSymptomCheckerPage() {
             >
               <Tile immersive corners="none">
                 <div className="space-y-6 md:space-y-8">
-                  <MotionReveal>
-                    <BulletList
-                      items={[
-                        "Met high consumer demand for digital triage across jurisdictions",
-                        "Facilitated workshops reducing project delays by approximately 20%",
-                      ]}
-                    />
-                  </MotionReveal>
+                  <BulletList
+                    items={[
+                      "Met high consumer demand for digital triage across jurisdictions",
+                      "Facilitated workshops reducing project delays by approximately 20%",
+                    ]}
+                  />
                   <Prose>
                     The redesign also became the evidence base for what came next: a
                     native-app concept with a follow-up care plan for managing symptoms
@@ -571,35 +607,33 @@ export default function HealthdirectSymptomCheckerPage() {
                     confidence is unevenly distributed, and while users accept AI, they
                     want human oversight. Those findings became design principles:
                   </Prose>
-                  <MotionReveal>
-                    <BulletList items={stressPrinciples} />
-                  </MotionReveal>
+                  <BulletList items={stressPrinciples} />
                 </div>
               </Tile>
               <ArtifactSection
                 id="research-themes"
+                headingLevel={2}
+                roomy
                 title="Research themes"
                 corners="none"
                 takeaway="Four gaps consumers quietly navigate around."
               >
-                <MotionReveal>
-                  <div className="grid gap-8 sm:grid-cols-2 md:gap-10">
-                    {researchThemes.map((theme) => (
-                      <div
-                        key={theme.title}
-                        className="flex flex-col gap-3 border-t border-border pt-5"
-                      >
-                        <h4 className="text-base font-semibold">{theme.title}</h4>
-                        <p className="text-sm leading-relaxed text-muted-foreground">
-                          {theme.body}
-                        </p>
-                        <div className="mt-auto pt-2">
-                          <PullQuote quote={theme.quote} />
-                        </div>
+                <MotionRevealGroup className="grid gap-8 sm:grid-cols-2 md:gap-10">
+                  {researchThemes.map((theme) => (
+                    <MotionRevealItem
+                      key={theme.title}
+                      className="flex flex-col gap-3 border-t border-border pt-5"
+                    >
+                      <h3 className="text-base font-semibold">{theme.title}</h3>
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        {theme.body}
+                      </p>
+                      <div className="mt-auto pt-2">
+                        <PullQuote quote={theme.quote} />
                       </div>
-                    ))}
-                  </div>
-                </MotionReveal>
+                    </MotionRevealItem>
+                  ))}
+                </MotionRevealGroup>
               </ArtifactSection>
               <Tile immersive corners="none">
                 <MotionReveal>
@@ -613,6 +647,8 @@ export default function HealthdirectSymptomCheckerPage() {
               </Tile>
               <ArtifactSection
                 id="service-concepts"
+                headingLevel={2}
+                roomy
                 title="Service concepts"
                 corners="none"
                 takeaway="Two concepts built to provoke discussion, not to ship."
@@ -690,35 +726,34 @@ export default function HealthdirectSymptomCheckerPage() {
               </ArtifactSection>
               <ArtifactSection
                 id="roadmap"
+                headingLevel={2}
+                roomy
                 title="The roadmap"
                 corners="none"
                 takeaway="Five focus areas to anchor government funding discussions."
               >
-                <MotionReveal>
-                  <ol>
-                    {roadmapFocusAreas.map((area, areaIndex) => (
-                      <li
-                        key={area.title}
-                        className="flex gap-4 border-t border-border py-5 md:gap-6"
-                      >
-                        <span className="pt-0.5 text-xs font-medium tabular-nums text-primary">
-                          {String(areaIndex + 1).padStart(2, "0")}
-                        </span>
-                        <div className="max-w-prose space-y-1.5">
-                          <h4 className="text-base font-semibold">{area.title}</h4>
-                          <p className="text-sm leading-relaxed text-muted-foreground">
-                            {area.body}
-                          </p>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                </MotionReveal>
+                <MotionRevealGroup as="ol">
+                  {roadmapFocusAreas.map((area, areaIndex) => (
+                    <MotionRevealItem
+                      as="li"
+                      key={area.title}
+                      className="flex gap-4 border-t border-border py-5 md:gap-6"
+                    >
+                      <span className="pt-0.5 text-xs font-medium tabular-nums text-primary">
+                        {String(areaIndex + 1).padStart(2, "0")}
+                      </span>
+                      <div className="max-w-prose space-y-1.5">
+                        <h3 className="text-base font-semibold">{area.title}</h3>
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                          {area.body}
+                        </p>
+                      </div>
+                    </MotionRevealItem>
+                  ))}
+                </MotionRevealGroup>
               </ArtifactSection>
               <Tile immersive corners="none">
-                <MotionReveal>
-                  <BulletList items={phase2Outcomes} />
-                </MotionReveal>
+                <BulletList items={phase2Outcomes} />
               </Tile>
               <Tile immersive corners="bottom">
                 <ProcessDisclosure
@@ -738,7 +773,7 @@ export default function HealthdirectSymptomCheckerPage() {
               </Tile>
             </Chapter>
       </div>
-      <CaseStudyRail chapters={chapters} className="hidden xl:block" />
+      <ChapterDock chapters={chapters} className="hidden xl:block" />
     </CaseStudyShell>
   );
 }

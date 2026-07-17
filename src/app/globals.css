@@ -89,7 +89,10 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 96px;
+  /* No global anchor inset: each anchored section owns its own scroll-margin so
+     the landing offset never stacks. Case-study sections use anchorScrollOffset
+     (Chapter.tsx) for a 1cm landing; home's #work/#contact carry their own
+     header-clearance scroll-mt. */
 }
 
 body {
@@ -103,6 +106,17 @@ body {
 
 .project-card-media {
   transform-origin: center;
+}
+
+/* Anchor-jump focus targets. useAnchorScroll moves keyboard focus onto the
+   landed section (tabindex="-1") so Tab continues from there — but the section
+   wraps a rounded tile, so a rectangular focus outline reads as broken. Only
+   suppress it when this is *not* a genuine focus-visible state (i.e. the
+   scripted focus after a jump, or a pointer): keyboard focus-visible outlines
+   everywhere else are untouched, and arrival feedback comes from the coral
+   ArrivalCue overlay plus the scroll itself. */
+[tabindex="-1"]:focus:not(:focus-visible) {
+  outline: none;
 }
 
 /* Frosted-glass label panel on home project cards. A borderless translucent
