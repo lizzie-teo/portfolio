@@ -35,6 +35,17 @@ type ChapterProps = {
    * and re-centres with the rest of the leaf content.
    */
   leafPlate?: ReactNode;
+  /**
+   * Set when the chapter's first child is a same-tone, full-bleed band — today
+   * that means a dark `FeatureChips` showcase (the "Key design decisions"
+   * chapter). The rule: a chapter leaf directly followed by such a band squares
+   * its *bottom* corners (keeping the standalone top radius) so its lower edge
+   * meets the flat band cleanly. The standard grout beneath the leaf is kept, so
+   * the leaf and band read as related surfaces with the page's usual gap between
+   * them. Leave off for every ordinary chapter whose content is a stack of
+   * distinct rounded tiles.
+   */
+  bandBelow?: boolean;
   children?: ReactNode;
 };
 
@@ -76,11 +87,51 @@ export const tilePadding = "p-6 sm:p-8 md:p-10 lg:p-12";
 export const sectionHeading =
   "text-2xl font-semibold tracking-[-0.03em] md:text-3xl lg:text-4xl";
 
-/* A nested subsection heading (ArtifactSection with headingLevel 3): one size
-   step down from sectionHeading in the same display family, so nesting reads
-   as heading and subheading without ever reverting to an eyebrow. */
+/* The chapter-leaf title — the largest section heading, worn only by a chapter
+   opener plate on its dark leaf surface. It is a top-level `h2` like every other
+   section, but a chapter opener is a distinct display role and steps up above
+   `sectionHeading` in the same family (28 → 52px). Named, not inline, so a leaf
+   title can never drift from this one size. */
+export const leafHeading =
+  "text-[clamp(1.75rem,3.6vw,3.25rem)] font-semibold leading-[1.12] tracking-[-0.03em] text-leaf-foreground";
+
+/* A nested subsection heading (ArtifactSection with headingLevel 3, and every
+   content-level h3 — persona cards, roadmap items, scorecard titles): a clear
+   two steps down from sectionHeading at desktop (h2 36px → h3 24px) so a nested
+   heading reads unmistakably below its section, never as a second h2, and never
+   reverting to an eyebrow. This is the single content-h3 style — do not size
+   nested headings ad hoc; reach for this token. */
 export const subsectionHeading =
-  "text-xl font-semibold tracking-[-0.03em] md:text-2xl lg:text-3xl";
+  "text-lg font-semibold tracking-[-0.03em] md:text-xl lg:text-2xl";
+
+/* The canonical lede that sits directly beneath a sectionHeading /
+   subsectionHeading — the sentence or short paragraph that frames the section
+   (an ArtifactSection takeaway, or the intro paragraph a self-tiled module
+   renders under its own heading, e.g. EngineAudit, LandscapeReview). One
+   treatment so the heading→lede pairing never drifts in size, colour, measure,
+   or the gap above it: full-strength foreground reading text (§4 — the lede is
+   primary reading copy, not muted metadata) at the same body size as the
+   case-study cover intro (CaseStudyShell), i.e. text-base with no desktop
+   step-up, capped to a reading measure. Apply it to the single element that
+   immediately follows the heading — do not add a competing top margin on a
+   wrapper. Diagram modules (JourneyMap, IaFlow) are exempt: their heading is
+   followed by a legend or persona block, not a lede. See .docs/style-rules.md
+   §"Section heading + lede". */
+export const sectionLede =
+  "mt-3 max-w-prose text-base leading-relaxed text-foreground";
+
+/* The well below a section's heading+lede block, before its artifact or
+   content. One shared gap (56px on desktop) so the heading→lede pairing reads
+   as finished and the diagram beneath it clearly gets its own attention — a
+   deliberate pause, wider than the gaps inside the diagram.
+   Shared so it never drifts per module: ArtifactSection and the self-tiled
+   diagram modules that carry a lede (EngineAudit, LandscapeReview) all
+   reference it. Theme-scale only (§2) — 40/56px land exactly on mt-10/mt-14, so
+   never hand-set an arbitrary value here. Out of scope: chapter leaves, and the
+   lede-exempt diagram modules (JourneyMap, IaFlow) whose heading is followed by
+   a legend/persona rather than a lede. See .docs/style-rules.md
+   §"Section heading + lede". */
+export const sectionContentGap = "mt-10 md:mt-14";
 
 /* Wider grout between chapter slabs and standalone panels at the page level,
    so each chapter reads as one grouped block with its own cap corners rather
@@ -127,10 +178,18 @@ export function LeafPlate({
   src,
   width,
   height,
+  heightClass = "h-24",
 }: {
   src: string;
   width: number;
   height: number;
+  /**
+   * Tailwind height for the rendered plate; the default `h-24` suits the
+   * compact, dense openers. Override it for a wide, sparse composition (e.g.
+   * a row of separate studies) whose fine linework would otherwise fall to
+   * sub-pixel and wash out at `h-24`.
+   */
+  heightClass?: string;
 }) {
   return (
     <Image
@@ -146,7 +205,7 @@ export function LeafPlate({
          alpha directly keeps the knockout crisp — the §6 "unless a technical
          constraint requires otherwise" exception. */
       unoptimized
-      className="h-24 w-auto max-w-full select-none object-contain"
+      className={`${heightClass} w-auto max-w-full select-none object-contain`}
     />
   );
 }
@@ -170,6 +229,7 @@ export function Chapter({
   lede,
   leafCorners = "all",
   leafPlate,
+  bandBelow = false,
   children,
 }: ChapterProps) {
   // With a plate the leaf reads top to bottom like a book chapter opening, so
@@ -207,7 +267,7 @@ export function Chapter({
   // CollapsingLeaf's floor wins and the collapse stops happening at all. Mobile
   // takes the smallest step because it pays the most — a multi-line lede at 320px
   // is already most of the screen.
-  const headingGap = hasPlate ? "mt-12 md:mt-24 lg:mt-32" : "mt-5";
+  const headingGap = hasPlate ? "mt-6 md:mt-20 lg:mt-28" : "mt-5";
   // The book rule: a centred hairline in the leaf's own ink, sitting between
   // the plate and the chapter eyebrow. It lives with the eyebrow inside a
   // fit-content wrapper so its length always matches the eyebrow text.
@@ -217,6 +277,12 @@ export function Chapter({
   ) : null;
   const eyebrowWrap = hasPlate ? "mx-auto w-fit" : "";
 
+  // A leaf that sits above a same-tone band squares its bottom (keeping the
+  // standalone top radius) so its lower edge meets the flat band cleanly; the
+  // standard grout beneath the leaf stays, so the two read as related surfaces
+  // with the page's usual breathing gap between them. See `bandBelow`.
+  const leafCornerClass = bandBelow ? "rounded-t-3xl" : cornerClasses[leafCorners];
+
   return (
     <section
       id={id}
@@ -225,7 +291,7 @@ export function Chapter({
     >
       <CollapsingLeaf
         pinTopPx={0}
-        className={`flex flex-col justify-start ${leafAlign} ${cornerClasses[leafCorners]} bg-leaf px-5 py-10 sm:px-8 sm:py-12 md:px-12 md:py-16 lg:px-16 lg:py-20 xl:py-24`}
+        className={`flex flex-col justify-start ${leafAlign} ${leafCornerClass} bg-leaf px-5 py-10 sm:px-8 sm:py-12 md:px-12 md:py-16 lg:px-16 lg:py-20 xl:py-24`}
         staticClassName="min-h-[100svh]"
       >
         {hasPlate ? (
@@ -251,7 +317,7 @@ export function Chapter({
             <MotionReveal delay={ledeDelay}>
               <h2
                 id={`${id}-heading`}
-                className={`${headingGap} ${headingMeasure} text-[clamp(1.75rem,3.6vw,3.25rem)] font-semibold leading-[1.12] tracking-[-0.03em] text-leaf-foreground`}
+                className={`${headingGap} ${headingMeasure} ${leafHeading}`}
               >
                 {lede}
               </h2>
@@ -263,7 +329,7 @@ export function Chapter({
               {rule}
               <h2
                 id={`${id}-heading`}
-                className={`${headingMeasure} text-[clamp(1.75rem,3.6vw,3.25rem)] font-semibold leading-[1.12] tracking-[-0.03em] text-leaf-foreground`}
+                className={`${headingMeasure} ${leafHeading}`}
               >
                 {title}
               </h2>

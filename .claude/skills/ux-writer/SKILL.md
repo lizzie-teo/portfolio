@@ -36,6 +36,8 @@ Run every intro paragraph through these. Failing any one is grounds to cut or fo
 ## Voice
 
 - Plain language, active voice, contractions welcome. Confident but not salesy.
+- Let the writing flow in full, natural paragraphs. Keep sentences grounded, conversational, and sincere, and let thoughts run on where they naturally would rather than chopping them into stiff, short fragments.
+- Avoid a corporate, academic, or overly formal tone. If a line feels dense or clause-heavy, rephrase it so it reads naturally instead of breaking it into choppy sentences.
 - No hyphens, em dashes, or en dashes in prose. Rephrase dash asides as comma clauses or separate sentences; drop compound-modifier hyphens ("plain language explanations"). Exception: established label separators in small uppercase component patterns (e.g. "Role — Phase 1").
 - No emoji anywhere in UI copy.
 - First person plural for team work, first person singular only for clearly individual contributions.

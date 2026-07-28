@@ -4,7 +4,9 @@ import {
   cornerClasses,
   readingTilePadding,
   tilePadding,
+  sectionContentGap,
   sectionHeading,
+  sectionLede,
   subsectionHeading,
   type TileCorners,
 } from "./Chapter";
@@ -39,6 +41,13 @@ type ArtifactSectionProps = {
    * only the Healthdirect page turns it on. Horizontal padding is unchanged.
    */
   roomy?: boolean;
+  /**
+   * Reading surface for the tile. Defaults to "card" (white). Pass "secondary"
+   * to flood the section with the project's quiet tint instead — for a
+   * self-contained artifact that reads better on a coloured band than framed on
+   * white.
+   */
+  surface?: "card" | "secondary";
   children?: ReactNode;
 };
 
@@ -74,17 +83,19 @@ export function ArtifactSection({
   corners = "all",
   headingLevel = 3,
   roomy = false,
+  surface = "card",
   children,
 }: ArtifactSectionProps) {
   const Heading = headingLevel === 2 ? "h2" : "h3";
   const padding = roomy
     ? readingTilePadding
     : tilePadding;
+  const surfaceClass = surface === "secondary" ? "bg-secondary" : "bg-card";
   return (
     <section id={id} className={anchorScrollOffset}>
       <CollapsingLeaf
         pinTopPx={0}
-        className={`flex flex-col justify-start ${cornerClasses[corners]} border border-border bg-card shadow-card ${padding}`}
+        className={`flex flex-col justify-start ${cornerClasses[corners]} border border-border ${surfaceClass} shadow-card ${padding}`}
       >
         <MotionReveal>
           <Heading
@@ -94,12 +105,12 @@ export function ArtifactSection({
           </Heading>
         </MotionReveal>
         <MotionReveal delay={0.05}>
-          <p className="mt-3 max-w-prose text-base leading-relaxed text-muted-foreground md:mt-4 md:text-lg">
-            {takeaway}
-          </p>
+          <p className={sectionLede}>{takeaway}</p>
         </MotionReveal>
         {children ? (
-          <div className="mt-6 space-y-6 md:mt-8 md:space-y-8">{children}</div>
+          <div className={`${sectionContentGap} space-y-6 md:space-y-8`}>
+            {children}
+          </div>
         ) : null}
       </CollapsingLeaf>
     </section>

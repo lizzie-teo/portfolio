@@ -265,37 +265,37 @@ export function StatementHero() {
                 active={activeKeyword === "complexity"}
                 dark={dark}
                 src="/assets/my-capabilities/complexity.mp4"
-                poster="/assets/my-capabilities/complexity-poster.jpg"
+                poster="/assets/my-capabilities/complexity-poster.webp"
               />
               <HeroKeywordVideo
                 active={activeKeyword === "users"}
                 dark={dark}
                 src="/assets/my-capabilities/interface-detailing.mp4"
-                poster="/assets/my-capabilities/interface-detailing-poster.jpg"
+                poster="/assets/my-capabilities/interface-detailing-poster.webp"
               />
               <HeroKeywordVideo
                 active={activeKeyword === "vibeCoder"}
                 dark={dark}
                 src="/assets/my-capabilities/ai-v2.mp4"
-                poster="/assets/my-capabilities/ai-v2-poster.jpg"
+                poster="/assets/my-capabilities/ai-v2-poster.webp"
               />
               <HeroKeywordVideo
                 active={activeKeyword === "designSystems"}
                 dark={dark}
                 src="/assets/my-capabilities/design-system.mp4"
-                poster="/assets/my-capabilities/design-system-poster.jpg"
+                poster="/assets/my-capabilities/design-system-poster.webp"
               />
               <HeroKeywordVideo
                 active={activeKeyword === "figmaToCode"}
                 dark={dark}
                 src="/assets/my-capabilities/design-to-code.mp4"
-                poster="/assets/my-capabilities/design-to-code-poster.jpg"
+                poster="/assets/my-capabilities/design-to-code-poster.webp"
               />
               <HeroKeywordVideo
                 active={activeKeyword === "stakeholders"}
                 dark={dark}
                 src="/assets/my-capabilities/stakeholders.mp4"
-                poster="/assets/my-capabilities/stakeholders-poster.jpg"
+                poster="/assets/my-capabilities/stakeholders-poster.webp"
               />
             </div>
           )}

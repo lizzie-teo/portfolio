@@ -71,7 +71,10 @@ export function AnnotatedFrame({
       </header>
 
       <div className="mt-4 grid gap-5 md:mt-6 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,21rem)] lg:gap-10">
-        <div className="min-w-0 self-start overflow-hidden rounded-2xl">
+        {/* Small-radius clip envelope: matches the crisp screenshot radius its
+            MediaFrame steps carry, so the swap-crossfade never rounds the
+            captures' corners back up to a card radius. */}
+        <div className="min-w-0 self-start overflow-hidden rounded-xs">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={index}

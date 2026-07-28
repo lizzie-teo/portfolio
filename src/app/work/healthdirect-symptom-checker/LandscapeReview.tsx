@@ -8,7 +8,9 @@ import {
   anchorScrollOffset,
   cornerClasses,
   readingTilePadding,
+  sectionContentGap,
   sectionHeading,
+  sectionLede,
   type TileCorners,
 } from "@/app/components/Chapter";
 import { CollapsingLeaf } from "@/app/components/CollapsingLeaf";
@@ -116,22 +118,12 @@ export function LandscapeReview({
         >
           <h2 className={sectionHeading}>Landscape review</h2>
 
-          <motion.div variants={v.cell} className="mt-8 max-w-prose">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-foreground">
-              Product studied — Ada Symptom Check
-            </p>
-            <p className="mt-2 text-base font-semibold leading-snug">
-              One of the products reviewed to learn what people already expected
-              from digital triage
-            </p>
-            <p className="mt-3 text-base leading-relaxed text-foreground">
-              We ran full assessments through Ada and noted which conventions
-              helped and which added anxiety, as evidence for the patterns our
-              own flow should adopt or avoid.
-            </p>
-          </motion.div>
+          <motion.p variants={v.cell} className={sectionLede}>
+            I ran a competitor analysis on a few symptom checkers, and Ada was
+            one of them.
+          </motion.p>
 
-          <div className="mt-8 md:mt-10 lg:grid lg:grid-cols-[minmax(0,13rem)_repeat(3,minmax(0,1fr))] lg:gap-x-6 xl:grid-cols-[minmax(0,15rem)_repeat(3,minmax(0,1fr))] xl:gap-x-8">
+          <div className={`${sectionContentGap} lg:grid lg:grid-cols-[minmax(0,13rem)_repeat(3,minmax(0,1fr))] lg:gap-x-6 xl:grid-cols-[minmax(0,15rem)_repeat(3,minmax(0,1fr))] xl:gap-x-8`}>
             <motion.figure
               variants={v.cell}
               className="mx-auto w-full max-w-52 lg:mx-0 lg:max-w-none"

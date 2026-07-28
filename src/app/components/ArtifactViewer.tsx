@@ -177,11 +177,24 @@ export function ArtifactViewer({
   const controlClassName =
     "flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card disabled:pointer-events-none disabled:opacity-40";
 
+  // Controls inside the floating glass chip: no border (the glass is the
+  // container), leaf-foreground icons, a leaf focus offset so the white ring
+  // reads against the dark glass rather than the light card. Hover/press tint
+  // from --primary (the project's action hue — teal here, AP+ purple / Radar
+  // slate elsewhere), not neutral white: a white wash over the dark teal glass
+  // read as a disconnected grey smudge, whereas a primary wash lifts the button
+  // as a brighter shard of the same material. Kept off the coral --rail-tile-active,
+  // which means "current" on the travelling marker.
+  const chipControlClassName =
+    "flex min-h-11 min-w-11 items-center justify-center rounded-full text-leaf-foreground outline-none transition-colors hover:bg-primary/35 active:bg-primary/50 focus-visible:ring-2 focus-visible:ring-leaf-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-leaf disabled:pointer-events-none disabled:opacity-40";
+
   // Camera transform, in measured pixels so drag (which deals in pixel
   // deltas) and the step animation share one coordinate system. After
   // `translate(t) scale(s)` with origin 0 0, an image point p lands at
   // t + s·p; solving for the region centre at the viewport centre gives
-  // t = (0.5 − s·centre) × viewport size.
+  // t = (0.5 − s·centre) × viewport size. The viewport keeps the artifact's
+  // aspect at every width, so the image maps 1:1 to the box and the authored
+  // region coordinates frame the same crop on a phone as on desktop.
   const scale = step?.scale ?? 1;
   const centerX = step ? clampCenter(step.x, scale) : 50;
   const centerY = step ? clampCenter(step.y, scale) : 50;
@@ -324,98 +337,92 @@ export function ArtifactViewer({
               {hasTour && src ? (
                 <>
                   <div
-                    ref={viewportRef}
+                    className="relative mx-auto w-full"
                     style={{
-                      aspectRatio: ratio,
-                      // Cap the camera window by viewport height (keeping
-                      // the artifact's aspect) instead of shrinking the
-                      // whole dialog; width binds on mobile, height on
-                      // desktop.
+                      // Cap the camera window by viewport height (keeping the
+                      // artifact's aspect) instead of shrinking the whole
+                      // dialog; width binds on mobile, height on desktop.
                       maxWidth: `calc(72dvh * ${ratio})`,
                     }}
-                    className="relative mx-auto w-full overflow-hidden rounded-2xl border border-border bg-secondary"
                   >
-                    <motion.div
-                      className={`absolute inset-0 ${
-                        scale > 1 ? "cursor-grab active:cursor-grabbing" : ""
-                      }`}
-                      style={{ originX: 0, originY: 0, x: cameraX, y: cameraY }}
-                      animate={{ x: targetX, y: targetY, scale }}
-                      transition={cameraTransition}
-                      drag={scale > 1}
-                      dragConstraints={dragConstraints}
-                      dragElastic={0.08}
-                      dragMomentum={false}
+                    <div
+                      ref={viewportRef}
+                      style={{ aspectRatio: ratio }}
+                      className="relative w-full overflow-hidden rounded-2xl border border-border bg-secondary"
                     >
-                      <Image
-                        src={src}
-                        alt={label}
-                        fill
-                        sizes="92vw"
-                        className="object-cover"
-                        draggable={false}
-                      />
-                    </motion.div>
-
-                    {scale > 1 ? (
-                      <div
-                        aria-hidden="true"
-                        style={{ aspectRatio: ratio }}
-                        className="pointer-events-none absolute bottom-3 right-3 hidden w-24 overflow-hidden rounded-md border border-border bg-card/90 backdrop-blur-sm sm:block"
+                      <motion.div
+                        className={`absolute inset-0 ${
+                          scale > 1 ? "cursor-grab active:cursor-grabbing" : ""
+                        }`}
+                        style={{ originX: 0, originY: 0, x: cameraX, y: cameraY }}
+                        animate={{ x: targetX, y: targetY, scale }}
+                        transition={cameraTransition}
+                        drag={scale > 1}
+                        dragConstraints={dragConstraints}
+                        dragElastic={0.08}
+                        dragMomentum={false}
                       >
                         <Image
                           src={src}
-                          alt=""
+                          alt={label}
                           fill
-                          sizes="96px"
-                          className="object-cover opacity-60"
+                          sizes="92vw"
+                          className="object-cover"
+                          draggable={false}
                         />
-                        <motion.div
-                          style={{ left: minimapLeftPct, top: minimapTopPct }}
-                          animate={{
-                            width: `${100 / scale}%`,
-                            height: `${100 / scale}%`,
-                          }}
-                          transition={cameraTransition}
-                          className="absolute rounded-sm border-2 border-primary"
-                        />
-                      </div>
-                    ) : null}
-                  </div>
+                      </motion.div>
 
-                  <div className="flex flex-col gap-4 pt-4 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
-                    <div aria-live="polite" className="max-w-prose sm:min-w-0">
-                      <AnimatePresence mode="wait" initial={false}>
-                        <motion.div
-                          key={stepIndex}
-                          initial={{ opacity: 0 }}
-                          animate={{
-                            opacity: 1,
-                            transition: {
-                              duration: shouldReduce
-                                ? 0.01
-                                : motionDuration.fast,
-                              ease: motionEase.out,
-                            },
-                          }}
-                          exit={{
-                            opacity: 0,
-                            transition: {
-                              duration: shouldReduce
-                                ? 0.01
-                                : motionDuration.instant,
-                              ease: motionEase.in,
-                            },
-                          }}
+                      {scale > 1 ? (
+                        <div
+                          aria-hidden="true"
+                          style={{ aspectRatio: ratio }}
+                          className="pointer-events-none absolute bottom-3 right-3 hidden w-24 overflow-hidden rounded-md border border-border bg-card/90 backdrop-blur-sm sm:block"
                         >
-                          <p className="text-sm font-semibold">{step.title}</p>
-                          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                            {step.caption}
-                          </p>
-                        </motion.div>
-                      </AnimatePresence>
+                          <Image
+                            src={src}
+                            alt=""
+                            fill
+                            sizes="96px"
+                            className="object-cover opacity-60"
+                          />
+                          <motion.div
+                            style={{ left: minimapLeftPct, top: minimapTopPct }}
+                            animate={{
+                              width: `${100 / scale}%`,
+                              height: `${100 / scale}%`,
+                            }}
+                            transition={cameraTransition}
+                            className="absolute rounded-sm border-2 border-primary"
+                          />
+                        </div>
+                      ) : null}
                     </div>
-                    <div className="flex shrink-0 items-center justify-end gap-2">
+
+                    {/* Liquid-glass control chip: one shard of the dock's leaf
+                        material carrying the guided tour's prev / step-dots /
+                        next. From md up it floats over the artifact's lower edge
+                        — one floating-chrome language across the page. Below md
+                        the viewport is a short landscape strip with no lower
+                        margin to spare, so the chip drops just beneath the media
+                        instead of over it, leaving the zoomed screen fully
+                        visible. Position is carried by which dot the coral marker
+                        sits on (it glides between steps, matching the dock's "you
+                        are here" pip), never a number; the step's name reads
+                        below the media either way. */}
+                    <div className="pointer-events-none mt-3 flex justify-center md:absolute md:inset-x-0 md:bottom-3 md:z-10 md:mt-0">
+                    <motion.div
+                      initial={{ opacity: 0, y: shouldReduce ? 0 : 8 }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                        transition: {
+                          duration: shouldReduce ? 0.01 : motionDuration.fast,
+                          ease: motionEase.out,
+                          delay: shouldReduce ? 0 : motionDuration.base,
+                        },
+                      }}
+                      className="tour-glass-chip pointer-events-auto flex items-center gap-0 rounded-full p-1 text-leaf-foreground sm:gap-0.5 sm:p-1.5"
+                    >
                       <button
                         type="button"
                         aria-label="Previous region"
@@ -423,10 +430,52 @@ export function ArtifactViewer({
                         onClick={() =>
                           setStepIndex((current) => Math.max(0, current - 1))
                         }
-                        className={controlClassName}
+                        className={chipControlClassName}
                       >
                         <ArrowLeftIcon aria-hidden="true" className="size-4" />
                       </button>
+                      <span
+                        aria-hidden="true"
+                        className="mx-0.5 hidden h-4 w-px bg-leaf-foreground/15 sm:block"
+                      />
+                      <ol className="flex items-center">
+                        {steps.map((item, itemIndex) => {
+                          const isActive = itemIndex === stepIndex;
+                          return (
+                            <li key={item.title}>
+                              <button
+                                type="button"
+                                aria-label={item.title}
+                                aria-current={isActive ? "step" : undefined}
+                                onClick={() => setStepIndex(itemIndex)}
+                                className="group flex min-h-11 min-w-11 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-leaf-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-leaf"
+                              >
+                                {isActive ? (
+                                  <motion.span
+                                    layoutId={`${layoutId}-tour-dot`}
+                                    layout={!shouldReduce}
+                                    transition={{
+                                      layout: {
+                                        duration: shouldReduce
+                                          ? 0
+                                          : motionDuration.fast,
+                                        ease: motionEase.inOut,
+                                      },
+                                    }}
+                                    className="block size-2.5 rounded-full bg-rail-tile-active"
+                                  />
+                                ) : (
+                                  <span className="block size-2 rounded-full bg-leaf-foreground/40 transition-colors group-hover:bg-leaf-foreground/75" />
+                                )}
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                      <span
+                        aria-hidden="true"
+                        className="mx-0.5 hidden h-4 w-px bg-leaf-foreground/15 sm:block"
+                      />
                       <button
                         type="button"
                         aria-label="Next region"
@@ -436,37 +485,47 @@ export function ArtifactViewer({
                             Math.min(steps.length - 1, current + 1)
                           )
                         }
-                        className={controlClassName}
+                        className={chipControlClassName}
                       >
                         <ArrowRightIcon aria-hidden="true" className="size-4" />
                       </button>
+                    </motion.div>
                     </div>
                   </div>
 
-                  <ol className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
-                    {steps.map((item, itemIndex) => {
-                      const isActive = itemIndex === stepIndex;
-                      return (
-                        <li key={item.title}>
-                          <button
-                            type="button"
-                            aria-current={isActive ? "step" : undefined}
-                            onClick={() => setStepIndex(itemIndex)}
-                            className={`flex min-h-11 items-center gap-2 rounded-full border px-4 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card ${
-                              isActive
-                                ? "border-primary bg-primary text-primary-foreground"
-                                : "border-border text-muted-foreground hover:bg-muted"
-                            }`}
-                          >
-                            <span className="tabular-nums">
-                              {itemIndex + 1}
-                            </span>
-                            {item.title}
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ol>
+                  {/* Reading text sits below the media, crisp on the card —
+                      never glassed. The chip carries position; this names the
+                      step (and stays the accessible label the live region
+                      announces). */}
+                  <div aria-live="polite" className="max-w-prose pt-4">
+                    <AnimatePresence mode="wait" initial={false}>
+                      <motion.div
+                        key={stepIndex}
+                        initial={{ opacity: 0 }}
+                        animate={{
+                          opacity: 1,
+                          transition: {
+                            duration: shouldReduce ? 0.01 : motionDuration.fast,
+                            ease: motionEase.out,
+                          },
+                        }}
+                        exit={{
+                          opacity: 0,
+                          transition: {
+                            duration: shouldReduce
+                              ? 0.01
+                              : motionDuration.instant,
+                            ease: motionEase.in,
+                          },
+                        }}
+                      >
+                        <p className="text-sm font-semibold">{step.title}</p>
+                        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                          {step.caption}
+                        </p>
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
                 </>
               ) : (
                 <>

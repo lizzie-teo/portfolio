@@ -306,7 +306,7 @@ export function IaFlow({
         pinTopPx={0}
         className={`flex flex-col justify-start ${cornerClasses[corners]} border border-border bg-card shadow-card ${readingTilePadding}`}
       >
-        <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <header className="flex flex-col gap-8 md:gap-10">
           <h2 className={sectionHeading}>Information architecture</h2>
           <ul aria-label="Legend" className="flex flex-wrap items-center gap-x-4 gap-y-1">
             {legend.map((item) => (
@@ -326,7 +326,7 @@ export function IaFlow({
           </ul>
         </header>
 
-        <div className="mx-auto mt-8 w-full max-w-2xl space-y-2 md:mt-10">
+        <div className="mx-auto mt-4 w-full max-w-2xl space-y-2 md:mt-5">
           <FlowStage
             v={v}
             title="The way in"

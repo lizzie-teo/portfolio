@@ -47,31 +47,17 @@
   --secondary: oklch(0.9553 0.007 88.64); /* #F2F0EB */
   --secondary-foreground: oklch(0.4341 0.0117 72.51); /* #55504A — 7.0:1 */
   --muted: oklch(0.9646 0.0057 84.57); /* #F5F3EF */
-  --muted-foreground: oklch(0.5064 0.0191 79.25); /* #6B6459 — 5.3:1 on muted, 5.8:1 on bg */
+  /* Small-text quiet tone, held to the §4 7:1 bar on every reading surface it is
+     inherited on (was #6B6459 at ~5.3–5.8:1, which washed out at text-xs/sm).
+     #55504A measured on each theme's lightest reading surface:
+       neutral bg #FEFEFC 7.9:1 · card #FFFFFF 8.0:1
+       Healthdirect card #F6F9F9 7.5:1 · bg #F3F7F7 7.4:1
+       AP+ bg #f6f4fd 7.3:1 · Macquarie bg #f5f7f8 7.4:1
+     Stays clearly quieter than --foreground (11.7:1) so body-vs-supporting still
+     reads. Inherited by all light project scopes (none override it). */
+  --muted-foreground: oklch(0.4341 0.0117 72.51); /* #55504A */
   --accent: oklch(0.9347 0.0087 84.57); /* #ECE9E3 */
   --accent-foreground: oklch(0.3931 0.0134 76.45); /* #4A453E — 7.8:1 */
-
-  /* Glass — the frosted label panel that floats over each home card's animated
-     cover. A dark smoked-glass recipe carrying white type: a translucent dark
-     tint plus a wide backdrop blur and a saturation boost so the cover colours
-     stay vivid through the pane. The pane is borderless, defined only by that
-     blur/fill and a soft drop shadow for lift; the title, tagline, and chips
-     sit on it as plain white text (--glass-foreground). The cover still shows
-     through, so the old "ink clears AA over any cover via a heavy tint" promise
-     no longer holds at rest — and on pointer devices the panel fades out on
-     hover anyway. The tint is dark enough to carry white type over the real
-     greyscale covers; the very lightest cover frames are the edge case.
-       --glass-tint          everyday translucent dark fill (backdrop blur present)
-       --glass-tint-strong   no-backdrop fallback: more opaque, still glassy
-       --glass-foreground    the white type/chip colour on the pane
-       --glass-saturate      backdrop saturation so covers stay colourful
-       --glass-shadow        soft drop shadow that floats the pane */
-  --glass-tint: rgb(24 21 18 / 0.52);
-  --glass-tint-strong: rgb(28 25 22 / 0.72);
-  --glass-foreground: #ffffff;
-  --glass-blur: 20px;
-  --glass-saturate: 1.7;
-  --glass-shadow: 0 8px 24px -16px rgb(0 0 0 / 0.5);
 
   /* Note ink — the fixed dark ink for diagram note chips that sit on fixed
      light pastel surfaces (e.g. the Healthdirect journey mint/pink). It is
@@ -309,36 +295,82 @@
 }
 
 [data-project-theme="ap-testing-portal"] {
-  /* Australian Payments Plus (AP+) case-study theme. The four brand values the
-     owner supplied: corporate plum #80225F as the action colour, magenta
-     #C6007E as the vivid accent, warm bone #EDEBE5 as the page, and warm
-     grey-green #373A36 as the dark band surface (leaf/grout — the symptom
-     checker pattern; no separate dark mode). The raw plum already clears AA
-     as text, so --primary uses it unchanged. (The AP+ product-UI palette from
-     the portal Figma — midnight, purple, mint — lives inside the case-study
-     screenshots, not in these page tokens.) */
-  --background: #edebe5; /* supplied warm-bone light theme background */
-  --primary: #80225f; /* AP+ plum, used as-is — 9.1:1 with white */
-  --ring: #80225f;
-  --accent: #f0dce8; /* pale plum hover/focus surface */
-  --accent-foreground: #6e1e50; /* plum deepened — 8.2:1 on accent */
-  --secondary: #efe1ea; /* pale plum quiet panel */
-  --secondary-foreground: #6e1e50; /* 8.5:1 on secondary */
-  --border: #ddced4; /* plum-warmed hairline over the bone page */
-  --input: #ddced4;
-  /* Leaf/grout — the supplied grey-green as the dark band surface, deepened
-     one step for the tile grout behind it. */
-  --leaf: #373a36; /* supplied grey-green — white 11.5:1 */
+  /* Australian Payments Plus (AP+) case-study theme, derived from the real AP+
+     brand palette (same product as the home-card cover: midnight #0d033c under a
+     lavender #dfd8f9 pixel mosaic). The palette divides on role: LAVENDER/PURPLE
+     is identity (page air, links, eyebrows, leaf emphasis) and MINT is
+     interaction (the single bright pop that floods the open chapter, mirroring
+     AP+'s own mint primary button). The signature purple #9e8aef is too light to
+     be AA text on a light page, so light-surface text uses a deepened purple
+     (from the brand's own light-mode action colour, darker-purple #7762cd); the
+     raw lavender only carries type where the surface is dark enough for it (the
+     indigo leaf). The dark bands reuse AP+'s own dark-UI elevation ramp —
+     surfaceLow #1d124e for the leaf, midnight #0d033c for the grout beneath it.
+     No separate dark mode. */
+  --background: #f6f4fd; /* whisper-lavender near-white — foreground 10.9:1, primary 5.7:1 */
+  --primary: #6250bb; /* AP+ purple (from #7762cd) deepened to clear AA — 5.7:1 on background, 6.8:1 with white */
+  --ring: #6250bb;
+  --accent: #ece7fb; /* pale lavender hover/focus surface */
+  --accent-foreground: #5847ae; /* purple deepened — 5.9:1 on accent */
+  --secondary: #efeafb; /* pale lavender quiet panel */
+  --secondary-foreground: #5847ae; /* 6.1:1 on secondary */
+  --border: #e2daf3; /* lavender-warmed hairline over the page */
+  --input: #e2daf3;
+  /* Leaf/grout — AP+'s own dark-UI elevation ramp. surfaceLow indigo for the
+     leaf tile, midnight (deepest brand colour) for the grout one step beneath
+     it (#0d033c is darker than #1d124e, so leaf tiles still lift off the grout). */
+  --leaf: #1d124e; /* AP+ surfaceLow indigo — white 16.8:1 */
   --leaf-foreground: #ffffff;
-  --grout: #2a2c29; /* grey-green deepened behind the tiles — white 14:1 */
+  --grout: #0d033c; /* AP+ midnight, deepest brand colour — white 19.2:1 */
   --grout-foreground: #ffffff;
-  /* Intro emphasis — the accent magenta lightened until it clears AA as text
-     on the grey-green leaf (6.3:1 on #373a36). */
-  --leaf-highlight: #f7a8ce;
-  /* Rail keeps the shell's white wireframe on the plum grout; the brand
-     magenta floods the single open chapter. White on #C6007E is 5.7:1 —
-     clears AA, so no white-on-coral-style exception is needed here. */
-  --rail-tile-active: #c6007e;
+  /* Intro emphasis — the signature AP+ lavender itself, used raw as emphasis
+     text on the indigo leaf where it clears AA (5.9:1 on #1d124e). This is the
+     one place the identity hue survives untouched. */
+  --leaf-highlight: #9e8aef;
+  /* Rail keeps the shell's white wireframe on the midnight grout; AP+'s mint
+     floods the single open chapter with midnight text — this mirrors the AP+
+     primary button (mint fill, midnight label). Midnight on mint is 11.7:1. */
+  --rail-tile-active: #33e2c2;
+  --rail-tile-active-foreground: #0d033c;
+}
+
+[data-project-theme="macquarie-radar"] {
+  /* Macquarie University — MQ Health case-study theme, taken from the MQ Health
+     palette on Global Experience Macquarie (gem.mq.edu.au/guidelines/colour).
+     MQ Health's distinguishing colour is the SLATE BLUE, not the Macquarie red
+     masterbrand, so slate blue leads: it is identity and frame (page air, links,
+     active ring, the deep leaf/grout bands). PURPLE is the brand's energy hue and
+     does the interaction job — it floods the single open rail chapter and, in a
+     lightened tone, carries leaf emphasis. The blue-greys and greys are the quiet
+     surfaces. Slate blue #415364 already clears AAA as text on white (7.9:1), so
+     unlike the other themes its primary is used RAW rather than deepened.
+     Source hexes (from the user, GEM MQ Health): slate blue #415364,
+     purple #80225f, blue grey #cfd4d8, light blue grey #eaebed, light grey #f5f5f6.
+     No separate dark mode (project themes are light-only for now). */
+  --background: #f5f7f8; /* whisper-slate near-white — foreground 10.7:1, primary 7.2:1 */
+  --primary: #415364; /* Macquarie slate blue, raw — 7.2:1 on background, 7.9:1 with white */
+  --ring: #415364;
+  --accent: #eaebed; /* MQ light blue grey — hover/focus surface */
+  --accent-foreground: #37485a; /* slate deepened — 7.9:1 on accent */
+  --secondary: #f0f2f3; /* pale slate quiet panel (between light-grey and light-blue-grey) */
+  --secondary-foreground: #37485a; /* 8.1:1 on secondary */
+  --border: #dfe3e6; /* slate-cooled hairline (a step lighter than MQ blue grey #cfd4d8) */
+  --input: #dfe3e6;
+  /* Leaf/grout — the slate blue deepened toward ink for the two dark bands.
+     Grout sits one step below the leaf so leaf tiles still lift off it. */
+  --leaf: #26323b; /* slate deepened — white 13.1:1 */
+  --leaf-foreground: #ffffff;
+  --grout: #1a232a; /* deepest slate, below the leaf — white 16.3:1 */
+  --grout-foreground: #ffffff;
+  /* Intro emphasis — the MQ purple #80225f lightened to an orchid tone until it
+     clears WCAG AA as text on the slate leaf (6.4:1 on #26323b). The raw purple is
+     a dark fill and reads as ink on the leaf; lightening keeps the energy hue but
+     lets it carry type, the same move AP+ makes with its lavender. */
+  --leaf-highlight: #e0a3c6;
+  /* Rail keeps the shell's white wireframe on the slate grout; the MQ purple
+     floods the single open chapter with white text — the brand's energy hue doing
+     the one bright interaction pop. White on #80225f is 9.1:1. */
+  --rail-tile-active: #80225f;
   --rail-tile-active-foreground: #ffffff;
 }
 
@@ -358,12 +390,6 @@
   --secondary: oklch(0.32 0.008 70);
   --secondary-foreground: oklch(0.88 0.01 80);
 
-  /* Glass (dark) — the same dark smoked pane carrying white type; blur,
-     saturation, and --glass-foreground inherit the :root values. */
-  --glass-tint: rgb(20 18 16 / 0.55);
-  --glass-tint-strong: rgb(26 23 20 / 0.76);
-  --glass-shadow: 0 8px 24px -16px rgb(0 0 0 / 0.6);
-
   /* Hero keywords — dark colour-scheme resting band. --secondary is a mid-dark
      warm grey here (#36322e), so the deep :root hues would fail; these are
      lightened to clear AA on it. The grout-tone override still applies on
@@ -376,7 +402,13 @@
   --hero-kw-vibe-coder: #f584bf;
   --hero-kw-figma-to-code: #f6c24d;
   --muted: oklch(0.3 0.008 70);
-  --muted-foreground: oklch(0.76 0.012 80);
+  /* Small-text quiet tone for dark mode, held to §4's 7:1 on the dark reading
+     surfaces (project scopes are light-only, so these two are the surfaces):
+     #BBB7AF on card #292521 7.6:1, on bg #211E1B 8.3:1. Lifted from the old
+     oklch(0.76 0.012 80) (#B5B0A9), which sat at a marginal 7.1:1 on the card,
+     to give the same reading-surface headroom as the light token. Quieter than
+     --foreground (14.1:1). */
+  --muted-foreground: oklch(0.78 0.012 80); /* #BBB7AF */
   --accent: oklch(0.34 0.009 70);
   --accent-foreground: oklch(0.9 0.008 80);
 

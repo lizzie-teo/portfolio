@@ -23,6 +23,14 @@ type MediaSurfaceProps = {
    * an exhibit rather than a frame inside a frame.
    */
   variant?: "media" | "document";
+  /**
+   * Corner radius class for the media-variant frame. Defaults to the large
+   * `rounded-2xl` media container. Pass a smaller step (e.g. `rounded-md`) for
+   * product/app screenshots that should read as crisp captured artifacts
+   * rather than soft cards. Applies to the "media" variant only; the
+   * "document" variant owns its own mat-and-inset radii.
+   */
+  radius?: string;
 };
 
 /**
@@ -37,6 +45,7 @@ export function MediaSurface({
   sizes = "(min-width: 640px) 50vw, 100vw",
   fit = "cover",
   variant = "media",
+  radius = "rounded-2xl",
 }: MediaSurfaceProps) {
   if (src && variant === "document") {
     return (
@@ -60,7 +69,7 @@ export function MediaSurface({
     return (
       <div
         style={{ aspectRatio: ratio }}
-        className="relative w-full overflow-hidden rounded-2xl border border-border bg-secondary"
+        className={`relative w-full overflow-hidden ${radius} border border-border bg-secondary`}
       >
         <Image
           src={src}
@@ -75,7 +84,7 @@ export function MediaSurface({
   return (
     <div
       style={{ aspectRatio: ratio }}
-      className="flex w-full items-center justify-center rounded-2xl border border-border bg-secondary p-6"
+      className={`flex w-full items-center justify-center ${radius} border border-border bg-secondary p-6`}
     >
       <span className="max-w-[24ch] text-center text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
         {label}
@@ -98,6 +107,7 @@ export function MediaFrame({
   sizes,
   fit,
   variant,
+  radius,
   className,
 }: MediaFrameProps) {
   return (
@@ -109,6 +119,7 @@ export function MediaFrame({
         sizes={sizes}
         fit={fit}
         variant={variant}
+        radius={radius}
       />
       {caption ? (
         <figcaption className="mt-3 max-w-prose text-sm leading-relaxed text-muted-foreground">

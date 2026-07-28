@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { AnnotatedFrame } from "@/app/components/AnnotatedFrame";
 import { ArtifactSection } from "@/app/components/ArtifactSection";
 import { ArtifactViewer } from "@/app/components/ArtifactViewer";
 import { CaseStatement } from "@/app/components/CaseStatement";
@@ -9,6 +8,8 @@ import {
   chapterGap,
   LeafPlate,
   readingTilePadding,
+  sectionHeading,
+  subsectionHeading,
   tileGap,
 } from "@/app/components/Chapter";
 import { ChapterMarker } from "@/app/components/ChapterMarker";
@@ -19,6 +20,7 @@ import {
   MotionRevealGroup,
   MotionRevealItem,
 } from "@/app/components/MotionReveal";
+import { ArrowUpRight } from "lucide-react";
 import { Tile } from "@/app/components/Tile";
 import {
   Accordion,
@@ -30,10 +32,13 @@ import { type CaseChapter } from "@/app/components/CaseStudyRail";
 import { ChapterDock } from "@/app/components/ChapterDock";
 import { caseStudyMetadata, getCaseStudy } from "../projects";
 import { CriteriaScorecard } from "./CriteriaScorecard";
+import { OutcomeScorecard } from "./OutcomeScorecard";
+import { FeatureChips, type Feature } from "@/app/components/FeatureChips";
 import { EngineAudit } from "./EngineAudit";
 import { IaFlow } from "./IaFlow";
 import { JourneyMap } from "./JourneyMap";
 import { LandscapeReview } from "./LandscapeReview";
+import { UsabilityFindings } from "./UsabilityFindings";
 import { SymptomsHero } from "./SymptomsHero";
 
 const slug = "healthdirect-symptom-checker";
@@ -51,12 +56,12 @@ const chapters: CaseChapter[] = [
       { id: "engine-audit", title: "AI Engine Audit" },
       { id: "landscape-review", title: "Landscape Review" },
       { id: "user-journey", title: "User Journey" },
-      { id: "sketches", title: "Sketches" },
       { id: "information-architecture", title: "Information Architecture" },
+      { id: "sketches", title: "Sketches" },
       { id: "usability-testing", title: "Usability Testing" },
     ],
   },
-  { id: "decisions", title: "Key Decisions" },
+  { id: "decisions", title: "Key Design Decisions" },
   { id: "outcome", title: "The Outcome" },
   {
     id: "phase-2",
@@ -67,31 +72,6 @@ const chapters: CaseChapter[] = [
       { id: "roadmap", title: "The Roadmap" },
     ],
   },
-];
-
-const approachActivities = [
-  "Applied existing user research to inform design",
-  "Adhered to government policies and clinical standards",
-  "Audited Infermedica AI's capabilities",
-  "Conducted landscape review of health products",
-  "User journey and IA to identify gaps",
-  "Ran moderated usability tests with external agency",
-  "Low-fidelity concepts",
-  "Content strategy",
-];
-
-const round1Recommendations = [
-  "Move the urgent care clinic screener from within the assessment into the Service Finder",
-  "Rework the postcode introduction copy so users don't expect instant service recommendations",
-  "Rewrite the outcome page's 'What to do' copy to highlight the recommended service categories",
-  "Restyle and move the SMS link so it stands out on the outcome page",
-  "Add a reference number to the outcome",
-  "Separate symptom and article links on the outcome page, with transparent article names",
-  "Remove 'Example symptoms' from the outcome page's 'Learn more'",
-  "Move the find-a-service widget higher so users reach an outcome earlier",
-  "Add a 'More information' heading to reinforce the link separation",
-  "Add a service distance filter, pending technical feasibility",
-  "Trim the SMS validation toast copy",
 ];
 
 const researchThemes = [
@@ -247,6 +227,264 @@ function ProcessDisclosure({
   );
 }
 
+/* The four decisions that carried the flow, shown as expandable chips beside a
+   frameless screenshot stage (FeatureChips). Copy is the approved AnnotatedFrame
+   step text, rephrased to drop dash asides and compound hyphens (house style);
+   labels are short editorial pills; alt text reuses the original descriptive
+   MediaFrame labels. Dimensions are the assets' real intrinsic pixels so the
+   ratio is reserved before load. */
+const decisionFeatures: Feature[] = [
+  {
+    id: "accessible",
+    label: "Accessible by design",
+    body: [
+      "Tested with people with disability and with users wary of technology, and built to meet WCAG for screen readers and keyboard use.",
+      "Soothing colour schemes stayed sensitive to how someone felt, and AI outputs were framed to support a decision without ever steering it.",
+    ],
+    images: [
+      {
+        src: "/assets/healthdirect/design-decisions/accessibiilty-1.png",
+        alt: "The Background step on mobile with a four-stage progress stepper and health background questions, each answerable in one tap",
+        width: 1080,
+        height: 7866,
+        device: "mobile",
+        displayWidth: 300,
+      },
+      {
+        src: "/assets/healthdirect/design-decisions/accessbility-2.png",
+        alt: "The 'More info' modal explaining diagnosed hypertension in plain language",
+        width: 1440,
+        height: 3200,
+        device: "mobile",
+        displayWidth: 300,
+      },
+    ],
+    // Mobile prototype: the "More info" trigger on the Diagnosed hypertension
+    // row opens its plain-language modal (accessbility-2). Coords are % of the
+    // capture box, verified against the asset (row centres at ~20.2% down).
+    hotspots: [
+      {
+        onImage: 0,
+        x: 4,
+        y: 18.9,
+        w: 92,
+        h: 2.6,
+        popupImage: 1,
+        label: "More info: diagnosed hypertension",
+      },
+    ],
+  },
+  {
+    id: "guided-help",
+    label: "Guided help",
+    body: [
+      "Where a question could trip people up, a 'More info and how to check it' link opened a plain-language explainer.",
+      "It spelled out what the question meant and how to check it, so people could answer with confidence without leaving the flow.",
+    ],
+    images: [
+      {
+        src: "/assets/healthdirect/design-decisions/guided-help-mobile-1.png",
+        alt: "The Assessment step asking whether you often have problems organising regular tasks or activities, with a 'More info and how to check it' link and Yes, No, and Don't know answers",
+        width: 1080,
+        height: 6222,
+        device: "mobile",
+        displayWidth: 300,
+      },
+      {
+        src: "/assets/healthdirect/design-decisions/guided-help-mobile-2.png",
+        alt: "The 'More info' modal explaining what the question means and how to check it in plain language",
+        width: 1080,
+        height: 2400,
+        device: "mobile",
+        displayWidth: 300,
+      },
+    ],
+    // Mobile prototype: the "More info and how to check it" link opens its
+    // explainer modal (guided-help-mobile-2). Link centres at ~20% down.
+    hotspots: [
+      {
+        onImage: 0,
+        x: 5,
+        y: 18.7,
+        w: 76,
+        h: 2.6,
+        popupImage: 1,
+        label: "More info and how to check it",
+      },
+    ],
+  },
+  {
+    id: "advice",
+    label: "Actionable advice",
+    body: [
+      "There was a bigger goal behind the results page: take pressure off emergency departments by steering people toward virtual care and urgent care clinics when those could safely treat them.",
+      "Results surfaced the information people actually weigh when choosing care: wait times, cost, and appointment requirements.",
+      "Clinics were numbered in order of recommendation, with essentials like 'No fee' and distance highlighted on each service card.",
+    ],
+    images: [
+      {
+        src: "/assets/healthdirect/design-decisions/actionable-1.png",
+        alt: "'Seek immediate medical care' outcome page listing care options in order of recommendation — Virtual Care Clinic (no fee), Urgent Care Clinics, then Emergency Departments — above a Find a service search",
+        width: 1080,
+        height: 12910,
+        device: "mobile",
+        note: "This prototype is tappable. Info icons open an explainer for each care option, and the Find links open that service's search.",
+      },
+      {
+        src: "/assets/healthdirect/design-decisions/actionable-vcc.png",
+        alt: "'Learn more' explainer for Virtual Care Clinics covering how care is delivered, whether an appointment is needed, wait times, and cost (free for Medicare card holders)",
+        width: 1080,
+        height: 2400,
+        device: "mobile",
+        note: "Ok or the X takes you back to the care options.",
+      },
+      {
+        src: "/assets/healthdirect/design-decisions/actionable-find-vcc.png",
+        alt: "Service Finder results for Virtual Care in Bowden, with care-type filter chips and a single virtual care clinic result",
+        width: 1080,
+        height: 2409,
+        device: "mobile",
+        note: "Service Finder, healthdirect's clinic locator, opens in a new window in the live product. Use the arrows to go back.",
+        // Desktop curation: the stage shows the two explainers that differentiate
+        // the virtual/urgent-care pathways plus one finder; the full prototype
+        // walk (this VCC finder, plus the ED explainer and ED finder below) stays
+        // on the mobile carousel.
+        desktopHidden: true,
+      },
+      {
+        src: "/assets/healthdirect/design-decisions/actionable-3.png",
+        alt: "'Learn more' explainer for Urgent Care Clinics covering in-person care that cannot wait for a GP appointment, walk-ins, wait times, and cost (many bulk-billed)",
+        width: 1080,
+        height: 2400,
+        device: "mobile",
+        note: "Ok or the X takes you back to the care options.",
+      },
+      {
+        src: "/assets/healthdirect/design-decisions/actionable-find-ucc.png",
+        alt: "Service Finder results for Urgent Care in Bowden, ordered by nearest, each clinic card showing accessibility, bulk billing, opening hours, and distance",
+        width: 1080,
+        height: 15705,
+        device: "mobile",
+        note: "Service Finder, healthdirect's clinic locator, opens in a new window in the live product. Use the arrows to go back.",
+      },
+      {
+        src: "/assets/healthdirect/design-decisions/actionable-3b.png",
+        alt: "'Learn more' explainer for Emergency Departments covering severe or life-threatening injuries or illness, walk-ins always accepted, wait times, and cost (free for Medicare card holders)",
+        width: 1080,
+        height: 2400,
+        device: "mobile",
+        note: "Ok or the X takes you back to the care options.",
+        // Desktop curation: ED is the pathway the design steers people AWAY from,
+        // so its explainer sits out of the desktop stage; it stays in the mobile
+        // walk.
+        desktopHidden: true,
+      },
+      {
+        src: "/assets/healthdirect/design-decisions/actionable-find-ed.png",
+        alt: "Service Finder results for Emergency department services in Bowden, ordered by nearest, each hospital card showing opening hours and distance",
+        width: 1080,
+        height: 14781,
+        device: "mobile",
+        note: "Service Finder, healthdirect's clinic locator, opens in a new window in the live product. Use the arrows to go back.",
+        // Desktop curation: the ED finder stays on the mobile walk only.
+        desktopHidden: true,
+      },
+    ],
+    // Mobile prototype: on the outcome page (actionable-1) each care option
+    // carries two triggers, matching the product. The "info" icon beside the
+    // heading opens its Learn more modal as a popup (headings verified against
+    // the capture — Virtual Care ~13.5%, Urgent Care ~19.1%, Emergency
+    // Departments ~24.9% down), and the "Find a …" link below its bullets pages
+    // the carousel to that service's Service Finder results (links at ~17.8%,
+    // ~23.5%, ~29.6% down). Images interleave modal-then-finder per service so
+    // the arrow walk reads option by option.
+    hotspots: [
+      {
+        onImage: 0,
+        x: 3,
+        y: 12.6,
+        w: 72,
+        h: 1.9,
+        popupImage: 1,
+        label: "More info: Virtual Care Clinic",
+      },
+      {
+        onImage: 0,
+        x: 9.5,
+        y: 17.35,
+        w: 56,
+        h: 1.15,
+        goToImage: 2,
+        label: "Find a Virtual Care Clinic",
+      },
+      {
+        onImage: 0,
+        x: 3,
+        y: 18.6,
+        w: 75,
+        h: 1.9,
+        popupImage: 3,
+        label: "More info: Urgent Care Clinics",
+      },
+      {
+        onImage: 0,
+        x: 9.5,
+        y: 23,
+        w: 59,
+        h: 1.1,
+        goToImage: 4,
+        label: "Find an Urgent Care Clinic",
+      },
+      {
+        onImage: 0,
+        x: 3,
+        y: 24.2,
+        w: 89,
+        h: 2.0,
+        popupImage: 5,
+        label: "More info: Emergency Departments",
+      },
+      {
+        onImage: 0,
+        x: 9.5,
+        y: 29.1,
+        w: 72,
+        h: 1.3,
+        goToImage: 6,
+        label: "Find an Emergency Department",
+      },
+    ],
+  },
+  {
+    id: "momentum",
+    label: "Keeping momentum",
+    body: [
+      "Usability testing showed the encouragement screen added a human voice and propelled users forward.",
+      "Steppers and clear instructions eased anxiety through a long clinical questionnaire.",
+    ],
+    images: [
+      {
+        src: "/assets/healthdirect/design-decisions/conclusion_screen0.png",
+        alt: "Background step on desktop with a four-stage progress stepper across Background, Symptoms, Assessment, and Results, above the health background questions",
+        // PNG master (was conclusion-background.webp, a top crop of this file).
+        // Top-aligned and hard-clipped at the stage floor, so the footer below
+        // the Next button bleeds off — the visible stepper/form is identical.
+        width: 1440,
+        height: 2658,
+        device: "desktop",
+      },
+      {
+        src: "/assets/healthdirect/design-decisions/conclusion_screen.png",
+        alt: "'First step done' encouragement screen thanking the user before the symptoms questions",
+        // PNG master (was conclusion-encouragement.webp, identical dimensions).
+        width: 1080,
+        height: 2400,
+        device: "mobile",
+      },
+    ],
+  },
+];
+
 export default function HealthdirectSymptomCheckerPage() {
   return (
     <CaseStudyShell
@@ -328,19 +566,19 @@ export default function HealthdirectSymptomCheckerPage() {
             statsEyebrow="The result"
             stats={[
               {
-                value: "86.5%",
-                label: "Completion rate, 2024 release",
-                detail: "Up from a 45% baseline",
+                value: "84%",
+                label: "Completed their check",
+                detail: "Up from 49% before the AI redesign",
               },
               {
-                value: "68%",
-                label: "Completion rate by end of 2023",
-                detail: "First release after the redesign",
+                value: "2M",
+                label: "Checks a year",
+                detail: "Across Australian jurisdictions",
               },
               {
-                value: "20%",
-                label: "Reduction in project delays",
-                detail: "Through cross-functional workshops",
+                value: "2×",
+                label: "More than the helpline",
+                detail: "Australians now choose digital first",
               },
             ]}
           >
@@ -352,7 +590,7 @@ export default function HealthdirectSymptomCheckerPage() {
               id="problem"
               title="The problem"
               leafCorners="top"
-              lede="Only 45% of people finished the check — most dropped off before they ever saw care guidance."
+              lede="Only 49% of people finished the check, and most dropped off before they ever saw care guidance."
               leafPlate={
                 /* tangled cube: the broken assessment where people lost
                    their way */
@@ -365,9 +603,9 @@ export default function HealthdirectSymptomCheckerPage() {
             >
               <Tile immersive corners="bottom" className={readingTilePadding}>
                 <MotionReveal>
-                  <h3 className="whitespace-nowrap font-heading text-[clamp(0.85rem,4.2vw,2.25rem)] font-semibold leading-[1.15] tracking-[-0.02em] text-foreground">
+                  <h2 className={sectionHeading}>
                     What success had to look like
-                  </h3>
+                  </h2>
                 </MotionReveal>
                 <CriteriaScorecard className="mt-8 md:mt-10" />
               </Tile>
@@ -391,6 +629,7 @@ export default function HealthdirectSymptomCheckerPage() {
               <EngineAudit id="engine-audit" corners="none" />
               <LandscapeReview id="landscape-review" corners="none" />
               <JourneyMap id="user-journey" corners="none" />
+              <IaFlow id="information-architecture" corners="none" />
               <ArtifactSection
                 id="sketches"
                 headingLevel={2}
@@ -400,7 +639,7 @@ export default function HealthdirectSymptomCheckerPage() {
                 takeaway="Rough concepts kept early debate on flow and framing, not visual polish."
               >
                 <MotionReveal>
-                  <div className="grid gap-6 sm:grid-cols-2 md:gap-8">
+                  <div className="grid gap-6 md:gap-8">
                     <MediaFrame
                       label="Hand-drawn sketch of the tool introduction and basic questions flow"
                       caption="The tool introduction and basic questions flow, sketched before any UI."
@@ -416,154 +655,103 @@ export default function HealthdirectSymptomCheckerPage() {
                   </div>
                 </MotionReveal>
               </ArtifactSection>
-              <IaFlow id="information-architecture" corners="none" />
               <ArtifactSection
                 id="usability-testing"
                 headingLevel={2}
                 roomy
+                surface="secondary"
                 title="Usability testing"
-                corners="none"
-                takeaway="Twelve sessions across two rounds produced eleven recommendations, all implemented."
+                corners="bottom"
+                takeaway="Twelve users across two rounds (four priority, four culturally and linguistically diverse, two with disability, two general) produced eleven recommendations, all implemented."
               >
-                <Prose>
-                  Testing with an external agency targeted the language on the
-                  prototype: two rounds of moderated 1:1 sessions, with
-                  refinement in between, on Figma prototypes we developed
-                  in-house. The twelve sessions were weighted toward the people
-                  the tool most needs to serve — four priority users, four
-                  culturally and linguistically diverse users, two people with
-                  disability, and two general users.
-                </Prose>
-                <Prose>
-                  Round 1 surfaced three themes: users were unsure of their
-                  next step, expectations of the tool&apos;s outcome
-                  weren&apos;t always met, and key functionality like SMS and
-                  the service finder lacked clarity.
-                </Prose>
-                <Prose>
-                  Round 2 validated the direction — users read the outcome page
-                  as triage, recommending next steps — and pushed us to cut
-                  wordiness that could overwhelm people in an emergency, new
-                  arrivals, and users with lower English literacy.
-                </Prose>
-                <MotionReveal>
-                  <div className="max-w-prose">
-                    <PullQuote
-                      quote="I don't need a full explanation — give me some options and if I want to read more I will. I don't want to read through a large amount of text."
-                      attribution="Participant 5 — round 2, on the urgent care outcome page"
-                    />
-                  </div>
-                </MotionReveal>
+                <UsabilityFindings />
               </ArtifactSection>
-              <Tile immersive corners="bottom">
-                <ProcessDisclosure
-                  items={[
-                    {
-                      value: "round-1",
-                      trigger: "All eleven round-1 recommendations",
-                      content: <BulletList items={round1Recommendations} />,
-                    },
-                    {
-                      value: "approach",
-                      trigger: "The full research and design approach",
-                      content: <BulletList items={approachActivities} />,
-                    },
-                  ]}
-                />
-              </Tile>
             </Chapter>
 
             <Chapter
               id="decisions"
-              title="Key decisions"
-              leafCorners="top"
+              title="Key design decisions"
+              leafCorners="all"
+              bandBelow
               lede="Every screen had one job: keep an anxious person moving toward care."
-            >
-              <MotionReveal>
-                <AnnotatedFrame
-                  label="Assessment flow decisions"
-                  corners="bottom"
-                  steps={[
-                    {
-                      title: "Motivation through a long assessment",
-                      caption:
-                        "Usability testing showed the encouragement screen added a human voice and propelled users forward. Steppers and clear instructions eased anxiety through a long clinical questionnaire.",
-                      media: (
-                        <MediaFrame
-                          label="Symptoms step with a four-stage progress stepper, beside the 'First step done' encouragement screen"
-                          ratio={4 / 3}
-                          fit="contain"
-                          src="/assets/healthdirect/symptoms-and-conclusion.webp"
-                          sizes="(min-width: 1024px) 60vw, 100vw"
-                        />
-                      ),
-                    },
-                    {
-                      title: "Actionable care advice",
-                      caption:
-                        "Results surfaced the decision-making info people actually weigh — wait times, cost, appointment requirements — with clinics numbered in order of recommendation and essentials like 'No fee' and distance highlighted on service cards.",
-                      media: (
-                        <MediaFrame
-                          label="'Seek immediate medical care' outcome page with numbered care options, 'Learn more' explainers, and service finder results showing fees and distance"
-                          ratio={4 / 3}
-                          fit="contain"
-                          src="/assets/healthdirect/content-strategy.webp"
-                          sizes="(min-width: 1024px) 60vw, 100vw"
-                        />
-                      ),
-                    },
-                    {
-                      title: "Microcopy tested with users",
-                      caption:
-                        "Language was iterated through moderated testing until medical terms and instructions could be understood without assistance — the health-literacy bar the project set.",
-                      media: (
-                        <MediaFrame
-                          label="Health background question screen beside its 'More info' modal explaining diagnosed hypertension in plain language"
-                          ratio={4 / 3}
-                          fit="contain"
-                          src="/assets/healthdirect/health-literacy.webp"
-                          sizes="(min-width: 1024px) 60vw, 100vw"
-                        />
-                      ),
-                    },
-                    {
-                      title: "Accessible, non-directive by design",
-                      caption:
-                        "Tested with people with disability and tech-wary users; WCAG-compliant for screen readers and keyboard; soothing colour schemes sensitive to user emotion; AI outputs framed to support decisions without feeling directive.",
-                      media: (
-                        <MediaFrame
-                          label="The redesigned Symptoms step shown side by side on desktop and mobile, with calm colour and one clear task per screen"
-                          ratio={4 / 3}
-                          fit="contain"
-                          src="/assets/healthdirect/symptoms-step-desktop-mobile.webp"
-                          sizes="(min-width: 1024px) 60vw, 100vw"
-                        />
-                      ),
-                    },
-                  ]}
+              leafPlate={
+                /* cube studies: each screen resolved a different way — one
+                   nested, one inscribed, one layered — until the flow held */
+                <LeafPlate
+                  src="/assets/chapter-illustrations/decisions-alpha.webp"
+                  width={1200}
+                  height={600}
+                  heightClass="h-32 md:h-40"
                 />
-              </MotionReveal>
+              }
+            >
+              {/* Full-bleed band on the hero's slate-teal stage (tone="dark"):
+                  the chips read on the reading column while the screenshot stage
+                  breaks out edge to edge, so the product shots land noticeably
+                  larger and closer than the reading-column AnnotatedFrame
+                  allowed, sharing the SymptomsHero's dark visual language. The
+                  Chapter above owns the "Key design decisions" title, so no
+                  heading/lede is passed here (no duplicate); the chapter owns the
+                  #decisions anchor, so no id. */}
+              <FeatureChips
+                id="decisions-showcase"
+                features={decisionFeatures}
+                tone="dark"
+              />
             </Chapter>
 
             <Chapter
               id="outcome"
               title="The outcome"
               leafCorners="top"
-              lede="Completion nearly doubled — from 45% to 86.5% within two releases."
+              lede="Completion climbed from 49% to 84%, clearing the industry benchmark the redesign set out to hit."
+              leafPlate={
+                /* the cube resolves: two dashed scaffolds on the left settle
+                   into one solid, fully drawn figure on the right — the result
+                   standing clear */
+                <LeafPlate
+                  src="/assets/chapter-illustrations/outcome-alpha.webp"
+                  width={1200}
+                  height={600}
+                  heightClass="h-32 md:h-40"
+                />
+              }
             >
+              {/* Reframe-manner payoff: the statement line echoes the intro
+                  treatment, quieter so the one page hero line still leads. The
+                  headline numbers live once, up top under "The result"; the
+                  proof here is the system-level outcomes those numbers
+                  unlocked. */}
               <Tile immersive corners="none">
-                <div className="space-y-6 md:space-y-8">
-                  <BulletList
-                    items={[
-                      "Met high consumer demand for digital triage across jurisdictions",
-                      "Facilitated workshops reducing project delays by approximately 20%",
-                    ]}
+                <MotionReveal>
+                  <span
+                    aria-hidden="true"
+                    className="block h-1 w-10 rounded-full bg-primary md:w-12"
                   />
+                  <p className="mt-6 max-w-[15em] font-heading text-[clamp(1.5rem,3.6vw,2.75rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-foreground">
+                    People finished the check, and left knowing what to do next.
+                  </p>
+                </MotionReveal>
+                <OutcomeScorecard className="mt-10 md:mt-14" />
+              </Tile>
+              <Tile immersive corners="none">
+                <div className="space-y-6">
                   <Prose>
                     The redesign also became the evidence base for what came next: a
                     native-app concept with a follow-up care plan for managing symptoms
                     at home, and the broader service-design initiative in Phase 2.
                   </Prose>
+                  <MotionReveal>
+                    <a
+                      href="https://about.healthdirect.gov.au/resources/news/healthdirect-symptom-checker-gen2-paves-the-way-to-the-national-virtual-front-door"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      Read Healthdirect&apos;s announcement of Gen 2
+                      <ArrowUpRight aria-hidden="true" className="size-4" />
+                    </a>
+                  </MotionReveal>
                 </div>
               </Tile>
               <Tile immersive corners="bottom">
@@ -624,8 +812,8 @@ export default function HealthdirectSymptomCheckerPage() {
                       key={theme.title}
                       className="flex flex-col gap-3 border-t border-border pt-5"
                     >
-                      <h3 className="text-base font-semibold">{theme.title}</h3>
-                      <p className="text-sm leading-relaxed text-muted-foreground">
+                      <h3 className={subsectionHeading}>{theme.title}</h3>
+                      <p className="text-sm leading-relaxed text-foreground">
                         {theme.body}
                       </p>
                       <div className="mt-auto pt-2">
@@ -743,8 +931,8 @@ export default function HealthdirectSymptomCheckerPage() {
                         {String(areaIndex + 1).padStart(2, "0")}
                       </span>
                       <div className="max-w-prose space-y-1.5">
-                        <h3 className="text-base font-semibold">{area.title}</h3>
-                        <p className="text-sm leading-relaxed text-muted-foreground">
+                        <h3 className={subsectionHeading}>{area.title}</h3>
+                        <p className="text-sm leading-relaxed text-foreground">
                           {area.body}
                         </p>
                       </div>

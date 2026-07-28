@@ -3,7 +3,15 @@
 A recipe for making dark footage dissolve into the page instead of sitting in
 a hard-edged box. Extracted from `src/app/components/HeroKeywordVideo.tsx`
 (the canonical implementation: the "vibe coder" hover clip in the homepage
-hero). No canvas, no shaders, no re-encoding the footage — two CSS moves.
+hero). No canvas, no shaders, no preprocessing the footage — two CSS moves.
+
+> **"No preprocessing" means the recipe needs no encode step — not that the
+> clip may never be re-encoded.** Compressing a clip for weight is safe, and
+> measured: at CRF 23 no pixel of the empty field lifts above the backdrop by
+> more than the 2/255 that a *near-lossless* encode also produces. Read
+> `.docs/asset-weight.md` before re-encoding anything blended; it carries the
+> gate. What this doc does rule out is baking visuals into the file — see
+> "What not to reach for".
 
 ## When this recipe applies
 

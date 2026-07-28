@@ -63,7 +63,7 @@ export const workEntries: WorkEntry[] = [
     title: "Healthdirect Symptom Checker",
     tagline:
       "Reframing a clinical path so people could complete it with confidence.",
-    size: "standard",
+    size: "tall",
     industry: "Healthcare",
     tags: ["Health", "Service design"],
     media: { cover: "symptom-checker" },

@@ -1,0 +1,212 @@
+#!/usr/bin/env node
+/**
+ * Re-encode a raw-shipped asset and prove it is undamaged before writing it.
+ *
+ *   node scripts/shrink-asset.mjs public/assets/**\/*.mp4          # dry run
+ *   node scripts/shrink-asset.mjs --blend public/assets/x.mp4      # + blend gate
+ *   node scripts/shrink-asset.mjs --blend --write public/assets/x.mp4
+ *
+ * Read `.docs/asset-weight.md` first. The short version:
+ *
+ *   - Only raw-shipped assets are worth this (`<video>`, `poster=`,
+ *     `unoptimized`, plain `<img>`). Anything through `next/image` is already
+ *     resized per request — shrinking the source moves nothing for visitors.
+ *   - The lever is BITRATE, not dimensions. Never downscale, never regenerate.
+ *   - Never point this at a master. It overwrites in place under --write.
+ *
+ * Two gates, both of which must pass or nothing is written:
+ *
+ *   content   SSIM >= 0.99 against the original.
+ *   blend     (--blend, for the mix-blend-mode:lighten recipe in
+ *             .docs/video-blend.md) no "open-field" pixel lifted more than
+ *             3/255 above the backdrop token.
+ *
+ * On the 3/255 threshold: it is NOT slack. Near-lossless CRF 18 produces the
+ * same 2/255 residue as CRF 23 — it is the yuv420p round-trip floor (chroma
+ * subsampling + 8-bit quantisation), not compression damage. A zero-tolerance
+ * gate fails a near-lossless encode, which means the gate is wrong. Gate on
+ * amplitude, never on count. See .docs/asset-weight.md §3.
+ */
+
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, rmSync, statSync, copyFileSync, existsSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, extname, basename } from "node:path";
+import sharp from "sharp";
+
+const CRF = 23;
+const MAX_LIFT = 3;      // /255 above backdrop, open field. See header.
+const MIN_SSIM = 0.99;
+const FIELD_RADIUS = 10; // px from real glow before a lifted pixel counts as "open field"
+
+const argv = process.argv.slice(2);
+const BLEND = argv.includes("--blend");
+const WRITE = argv.includes("--write");
+const FILES = argv.filter((a) => !a.startsWith("--"));
+
+if (!FILES.length) {
+  console.error("usage: node scripts/shrink-asset.mjs [--blend] [--write] <files…>");
+  process.exit(1);
+}
+
+const sh = (c, a) => execFileSync(c, a, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+const kb = (p) => Math.round(statSync(p).size / 1024);
+
+/* --grout, the backdrop the lighten recipe clamps against. It is the WORST case
+   for headroom: --secondary appears only mid-crossfade and, being lighter,
+   clamps more of the field. Keep in sync with theme.css. */
+function oklchToSrgb(L, C, Hdeg) {
+  const H = (Hdeg * Math.PI) / 180;
+  const a = C * Math.cos(H), b = C * Math.sin(H);
+  const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+  const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+  const s_ = L - 0.0894841775 * a - 1.291485548 * b;
+  const l = l_ ** 3, m = m_ ** 3, s = s_ ** 3;
+  return [
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+  ].map((v) => {
+    const c = v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055;
+    return Math.max(0, Math.min(255, Math.round(c * 255)));
+  });
+}
+const GROUT = oklchToSrgb(0.205, 0.0065, 67.5);
+
+/* Frames are selected BY INDEX, not by `-ss` timestamp: re-encoding moves
+   keyframes, so seeking by time can silently compare two different frames. */
+const grab = (src, n, out) =>
+  sh("ffmpeg", ["-v", "error", "-y", "-i", src, "-vf", `select=eq(n\\,${n})`,
+    "-vsync", "0", "-frames:v", "1", out]);
+
+const frameCount = (p) =>
+  parseInt(sh("ffprobe", ["-v", "error", "-select_streams", "v:0", "-count_frames",
+    "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", p]).trim(), 10);
+
+/**
+ * The only measurement that matters for a blended clip.
+ *
+ * `lighten` keeps the brighter of footage and backdrop per channel, so every
+ * footage pixel darker than the backdrop clamps to exactly the surface colour
+ * and the rectangle vanishes. Compression can only break that by lifting a dark
+ * pixel ABOVE the backdrop. But a lift right beside a glowing line is invisible
+ * (it sits against content already blazing) — only lifts out in the open field,
+ * far from any glow, would read as mud. So: distance-transform from the content
+ * mask, and judge only what is >FIELD_RADIUS away.
+ */
+async function openFieldLift(origPng, encPng) {
+  const O = await sharp(origPng).raw().toBuffer({ resolveWithObject: true });
+  const E = await sharp(encPng).raw().toBuffer({ resolveWithObject: true });
+  const { width: W, height: H, channels: ch } = O.info;
+  const vis = (b, i) => b[i * ch] > GROUT[0] || b[i * ch + 1] > GROUT[1] || b[i * ch + 2] > GROUT[2];
+
+  const content = new Uint8Array(W * H);
+  for (let i = 0; i < W * H; i++) content[i] = vis(O.data, i) ? 1 : 0;
+
+  // two-pass chamfer distance transform from the glow
+  const d = new Float64Array(W * H).fill(1e6);
+  for (let i = 0; i < W * H; i++) if (content[i]) d[i] = 0;
+  const rx = (i, j, w) => { if (d[j] + w < d[i]) d[i] = d[j] + w; };
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = y * W + x;
+    if (y > 0) rx(i, i - W, 1);
+    if (x > 0) rx(i, i - 1, 1);
+    if (y > 0 && x > 0) rx(i, i - W - 1, 1.414);
+    if (y > 0 && x < W - 1) rx(i, i - W + 1, 1.414);
+  }
+  for (let y = H - 1; y >= 0; y--) for (let x = W - 1; x >= 0; x--) {
+    const i = y * W + x;
+    if (y < H - 1) rx(i, i + W, 1);
+    if (x < W - 1) rx(i, i + 1, 1);
+    if (y < H - 1 && x < W - 1) rx(i, i + W + 1, 1.414);
+    if (y < H - 1 && x > 0) rx(i, i + W - 1, 1.414);
+  }
+
+  let count = 0, worst = 0;
+  for (let i = 0; i < W * H; i++) {
+    if (content[i] || d[i] <= FIELD_RADIUS) continue;
+    if (!vis(E.data, i)) continue;
+    let lift = 0;
+    for (let c = 0; c < 3; c++) lift = Math.max(lift, E.data[i * ch + c] - GROUT[c]);
+    count++; worst = Math.max(worst, lift);
+  }
+  return { count, worst };
+}
+
+function ssim(orig, enc) {
+  const out = execFileSync("ffmpeg", ["-v", "error", "-i", enc, "-i", orig,
+    "-lavfi", "ssim=-", "-f", "null", "-"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  const m = out.match(/All:([\d.]+)/);
+  return m ? parseFloat(m[1]) : NaN;
+}
+
+const tmp = mkdtempSync(join(tmpdir(), "shrink-"));
+let totalBefore = 0, totalAfter = 0, anyFail = false;
+
+for (const file of FILES) {
+  if (!existsSync(file)) { console.error(`  missing: ${file}`); anyFail = true; continue; }
+  const ext = extname(file).toLowerCase();
+  const isVideo = ext === ".mp4";
+  const out = join(tmp, basename(file, ext) + (isVideo ? ".mp4" : ".webp"));
+
+  if (isVideo) {
+    const audio = sh("ffprobe", ["-v", "error", "-select_streams", "a",
+      "-show_entries", "stream=codec_name", "-of", "csv=p=0", file]).trim();
+    if (audio) console.warn(`  note: ${basename(file)} HAS audio — -an will strip it`);
+    sh("ffmpeg", ["-v", "error", "-y", "-i", file, "-c:v", "libx264", "-crf", String(CRF),
+      "-preset", "slow", "-pix_fmt", "yuv420p", "-an", "-movflags", "+faststart", out]);
+  } else {
+    await sharp(file).webp({ quality: 80 }).toFile(out);
+  }
+
+  const before = kb(file), after = kb(out);
+  totalBefore += before; totalAfter += after;
+
+  const gates = [];
+  if (isVideo) {
+    const s = ssim(file, out);
+    gates.push({ name: "ssim", ok: s >= MIN_SSIM, detail: s.toFixed(4) });
+  }
+  if (BLEND) {
+    let count = 0, worst = 0;
+    if (isVideo) {
+      const total = frameCount(file);
+      for (const p of [0, 0.2, 0.4, 0.6, 0.8, 0.99]) {
+        const n = Math.min(total - 1, Math.floor(p * total));
+        const o = join(tmp, "o.png"), e = join(tmp, "e.png");
+        grab(file, n, o); grab(out, n, e);
+        const r = await openFieldLift(o, e);
+        count += r.count; worst = Math.max(worst, r.worst);
+      }
+    } else {
+      const r = await openFieldLift(file, out);
+      count = r.count; worst = r.worst;
+    }
+    gates.push({ name: "blend", ok: worst <= MAX_LIFT, detail: `${count}px, worst lift ${worst}/255` });
+  }
+
+  const pass = gates.every((g) => g.ok);
+  if (!pass) anyFail = true;
+  console.log(
+    `${pass ? "PASS" : "FAIL"}  ${basename(file).padEnd(28)} ${String(before).padStart(5)}KB -> ${String(after).padStart(5)}KB` +
+    `  (-${(((before - after) / before) * 100).toFixed(0)}%)   ${gates.map((g) => `${g.name} ${g.detail}${g.ok ? "" : " <-- FAILED"}`).join("   ")}`
+  );
+
+  if (pass && WRITE) {
+    // NOTE: overwrites in place. Never point --write at a master; see §4.
+    const dest = isVideo ? file : file.replace(/\.(jpe?g|png)$/i, ".webp");
+    copyFileSync(out, dest);
+    console.log(`      wrote ${dest}`);
+  }
+}
+
+rmSync(tmp, { recursive: true, force: true });
+
+console.log(`\ntotal ${totalBefore}KB -> ${totalAfter}KB  (saved ${totalBefore - totalAfter}KB, ${(((totalBefore - totalAfter) / totalBefore) * 100).toFixed(0)}%)`);
+if (!WRITE) console.log("dry run — nothing written. Re-run with --write to install.");
+if (anyFail) {
+  console.log("\nSomething failed its gate. Before believing it, get a CONTROL:");
+  console.log("  re-encode at --crf 18 (near-lossless). If the same 'damage' appears there,");
+  console.log("  the gate is wrong, not the asset. See .docs/asset-weight.md §3.");
+  process.exit(1);
+}

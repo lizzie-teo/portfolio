@@ -41,8 +41,11 @@ const opts = Object.fromEntries(
   args
     .filter((a) => a.startsWith("--"))
     .map((a) => {
-      const [k, v] = a.replace(/^--/, "").split("=");
-      return [k, v ?? true];
+      // Split on the FIRST "=" only: values are often selectors that contain
+      // their own, e.g. --focus=a[href="/work/x"].
+      const body = a.replace(/^--/, "");
+      const eq = body.indexOf("=");
+      return eq === -1 ? [body, true] : [body.slice(0, eq), body.slice(eq + 1)];
     })
 );
 const routes = args.filter((a) => !a.startsWith("--"));
@@ -71,8 +74,9 @@ const browser = await chromium.launch();
 const saved = [];
 
 for (const width of widths) {
+  const height = opts.height ? parseInt(String(opts.height), 10) : heights[width] ?? 900;
   const context = await browser.newContext({
-    viewport: { width, height: heights[width] ?? 900 },
+    viewport: { width, height },
     colorScheme: opts.dark ? "dark" : "light",
     reducedMotion: opts["reduced-motion"] ? "reduce" : "no-preference",
     deviceScaleFactor: 1,
@@ -203,19 +207,99 @@ for (const width of widths) {
 
     // Real hover / focus, for capturing pointer- or keyboard-driven states
     // (e.g. the home hero's keyword payoff). Settles the resulting motion.
+    // --settle=<ms> overrides the post-hover/focus wait for ambient cover
+    // moments whose ramp runs past the 700ms default (e.g. a 1.6s bloom).
+    const settleMs = opts.settle !== undefined ? parseInt(opts.settle, 10) : 700;
+    // Real click, for capturing state that only appears after a toggle
+    // (accordion expand, tab switch). Playwright auto-scrolls the target into
+    // view; we then centre its section so the resulting panel/media is framed.
+    // Accepts any Playwright selector, e.g. --click='button:has-text("Advice")'.
+    if (opts.click) {
+      // Multiple selectors may be chained with " && " and are clicked in order
+      // (e.g. open one accordion item then another to frame a default-open one).
+      for (const sel of String(opts.click).split(" && ")) {
+        await page.click(sel.trim());
+        await page.waitForTimeout(200);
+      }
+      await page.evaluate(() => {
+        const el = document.activeElement;
+        (el?.closest("section") ?? el)?.scrollIntoView({ block: "center" });
+      });
+      await page.waitForTimeout(settleMs);
+    }
+
+    // Scroll an internal overflow container (e.g. a dropdown/menu with its
+    // own overflow-y-auto) to its bottom, then measure the gap between the
+    // first/last "row" elements and the container's own top/bottom edge in
+    // viewport pixels. Useful for verifying padding survives scroll-to-end
+    // (Chrome/Safari drop a scroll container's own padding-bottom at the
+    // scroll limit, which is why padding belongs on an inner wrapper).
+    // --scroll-el=<container selector> --scroll-el-rows=<row selector>
+    if (opts["scroll-el"]) {
+      const containerSel = String(opts["scroll-el"]);
+      const rowsSel = String(opts["scroll-el-rows"] ?? `${containerSel} *`);
+      const measure = async () =>
+        page.evaluate(
+          ({ containerSel, rowsSel }) => {
+            const container = document.querySelector(containerSel);
+            const rows = Array.from(document.querySelectorAll(rowsSel));
+            if (!container || rows.length === 0) return null;
+            const cRect = container.getBoundingClientRect();
+            const first = rows[0].getBoundingClientRect();
+            const last = rows[rows.length - 1].getBoundingClientRect();
+            return {
+              topGap: Math.round(first.top - cRect.top),
+              bottomGap: Math.round(cRect.bottom - last.bottom),
+              scrollTop: container.scrollTop,
+              scrollHeight: container.scrollHeight,
+              clientHeight: container.clientHeight,
+            };
+          },
+          { containerSel, rowsSel }
+        );
+
+      // Top gap: measured at scrollTop 0, so the first row is the one
+      // actually visible at the top edge (meaningless once scrolled away).
+      await page.evaluate((sel) => {
+        const el = document.querySelector(sel);
+        if (el) el.scrollTop = 0;
+      }, containerSel);
+      await page.waitForTimeout(200);
+      const top = await measure();
+
+      // Bottom gap: scroll to the true end (Chrome/Safari's padding-bottom
+      // bug only shows up at the scroll limit), then re-measure. This is the
+      // state the final screenshot captures.
+      await page.evaluate((sel) => {
+        const el = document.querySelector(sel);
+        if (el) el.scrollTop = el.scrollHeight;
+      }, containerSel);
+      await page.waitForTimeout(300);
+      const bottom = await measure();
+
+      console.log(
+        `  scroll-el ${containerSel} @${width}px — ${
+          top && bottom
+            ? `topGap(at top) ${top.topGap}px, bottomGap(at bottom) ${bottom.bottomGap}px (scrollHeight ${bottom.scrollHeight}, clientHeight ${bottom.clientHeight}, scrollTop-at-bottom ${bottom.scrollTop})`
+            : "container or rows not found"
+        }`
+      );
+    }
+
     if (opts.focus) {
       await page.focus(String(opts.focus));
-      await page.waitForTimeout(700);
+      await page.waitForTimeout(settleMs);
     }
     if (opts.hover) {
       await page.hover(String(opts.hover));
-      await page.waitForTimeout(700);
+      await page.waitForTimeout(settleMs);
     }
 
     const slug = route === "/" ? "home" : route.replace(/^\/|\/$/g, "").replace(/\//g, "-");
-    const suffix = [opts.dark && "dark", opts["reduced-motion"] && "rm", opts.hash && `hash-${opts.hash}`, opts.anchor && `anchor-${opts.anchor}`, opts.scroll !== undefined && `y${opts.scroll}`, (opts.hover || opts.focus) && "state"].filter(Boolean).join("-");
+    const suffix = [opts.dark && "dark", opts["reduced-motion"] && "rm", opts.hash && `hash-${opts.hash}`, opts.anchor && `anchor-${opts.anchor}`, opts.scroll !== undefined && `y${opts.scroll}`, opts.click && "click", (opts.hover || opts.focus) && "state", (opts.hover || opts.focus) && opts.settle !== undefined && `s${opts.settle}`].filter(Boolean).join("-");
     const file = path.join(outDir, `${slug}-${width}${suffix ? `-${suffix}` : ""}.png`);
-    const viewportOnly = opts.hash || opts.anchor || opts.scroll !== undefined;
+    const viewportOnly =
+      opts.hash || opts.anchor || opts.scroll !== undefined || opts.click || opts["scroll-el"];
     await page.screenshot({ path: file, fullPage: viewportOnly ? false : fullPage });
 
     const overflow = await page.evaluate(

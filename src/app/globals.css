@@ -58,9 +58,6 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
-  --color-glass-tint: var(--glass-tint);
-  --color-glass-tint-strong: var(--glass-tint-strong);
-  --color-glass-foreground: var(--glass-foreground);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
   --color-leaf: var(--leaf);
@@ -78,6 +75,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --radius-xs: calc(var(--radius) * 0.4);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -104,10 +102,6 @@ body {
   color: var(--primary-foreground);
 }
 
-.project-card-media {
-  transform-origin: center;
-}
-
 /* Anchor-jump focus targets. useAnchorScroll moves keyboard focus onto the
    landed section (tabindex="-1") so Tab continues from there — but the section
    wraps a rounded tile, so a rectangular focus outline reads as broken. Only
@@ -117,30 +111,6 @@ body {
    ArrivalCue overlay plus the scroll itself. */
 [tabindex="-1"]:focus:not(:focus-visible) {
   outline: none;
-}
-
-/* Frosted-glass label panel on home project cards. A borderless translucent
-   pane inset near the card's lower edge with a smaller corner radius than the
-   card, floating over the animated cover like a real sheet of glass: a
-   low-opacity warm-white tint plus a wide backdrop blur with a saturation boost
-   so the cover colours stay vivid through the pane, defined only by that
-   blur/fill and a soft drop shadow — no rim outline. The industry chip and
-   title sit on it as plain elements, not glass-styled. Positioning, radius,
-   and padding live in ProjectCard (Tailwind). */
-.project-card-glass {
-  background-color: var(--glass-tint);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  box-shadow: var(--glass-shadow);
-}
-
-/* Fallback where backdrop-filter is unsupported: no blur means the cover shows
-   through unsoftened, so lift the fill to the more opaque tint for a clean,
-   still-legible frosted pane. */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .project-card-glass {
-    background-color: var(--glass-tint-strong);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -153,6 +123,102 @@ body {
     transition-duration: 0.01ms !important;
   }
 
+}
+
+/* ChapterDock — Liquid Glass surface (xl+ only).
+   The dock's resting spine and revealed slab are a tinted-glass version of the
+   case study's own dark leaf material, so they still "belong to the page" while
+   reading as premium glass, not a flat blur card. Everything is derived from the
+   inherited --leaf / --leaf-foreground tokens via color-mix, so each project
+   scope (coral symptom-checker teal, mint AP+ indigo) tints its own glass with
+   zero per-scope wiring. Legibility first: the tint stays near-opaque (~78%) so
+   white labels and the coral pip never wash out over lighter content scrolling
+   behind. Motion is untouched — only material changes here.
+
+   Fallback: browsers without backdrop-filter get the near-opaque solid leaf
+   surface (the dock's original material), so labels stay readable without blur.
+   These are the fallback declarations; the @supports block below layers on the
+   glass only where backdrop-filter is available. */
+.chapter-dock-glass {
+  background-color: var(--leaf);
+  box-shadow: var(--shadow-elevated);
+}
+.chapter-dock-spine {
+  background-color: var(--leaf);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  /* Revealed slab: soft generous blur, saturation boost so colour behind glows
+     through, a lifted top-left sheen, a feathered specular top glow, a whisper
+     rim, a denser leaf pool at the foot for volume, and the elevated drop shadow
+     lifting it off the grout. The rim and specular are kept faint and feathered
+     so the panel dissolves gently into the page rather than reading as a crisp
+     outlined card. */
+  .chapter-dock-glass {
+    background-color: color-mix(in oklab, var(--leaf) 78%, transparent);
+    background-image: linear-gradient(
+      158deg,
+      color-mix(in oklab, var(--leaf-foreground) 15%, transparent) 0%,
+      color-mix(in oklab, var(--leaf-foreground) 4%, transparent) 24%,
+      transparent 58%
+    );
+    border: 1px solid color-mix(in oklab, var(--leaf-foreground) 8%, transparent);
+    -webkit-backdrop-filter: blur(22px) saturate(1.8);
+    backdrop-filter: blur(22px) saturate(1.8);
+    box-shadow:
+      inset 0 1.5px 2px -1px color-mix(in oklab, var(--leaf-foreground) 26%, transparent),
+      inset 0 -26px 46px -30px color-mix(in oklab, var(--leaf) 62%, transparent),
+      var(--shadow-elevated);
+  }
+  /* Resting spine: the same glass, lighter blur to match its small footprint.
+     Keeps its Tailwind ring (resting hairline + focus ring) and elevated
+     shadow — this only swaps the fill and adds the blur, so focus states are
+     untouched. */
+  .chapter-dock-spine {
+    background-color: color-mix(in oklab, var(--leaf) 74%, transparent);
+    background-image: linear-gradient(
+      158deg,
+      color-mix(in oklab, var(--leaf-foreground) 13%, transparent) 0%,
+      transparent 55%
+    );
+    -webkit-backdrop-filter: blur(14px) saturate(1.7);
+    backdrop-filter: blur(14px) saturate(1.7);
+  }
+}
+
+/* Tour control chip — the SAME liquid-glass idiom as the ChapterDock, tuned to a
+   small floating pill. The artifact viewer's guided-tour nav (prev / step dots /
+   next) lives inside one rounded-full shard of the case study's leaf material,
+   floating over the lower edge of the artifact, so the page speaks one
+   floating-chrome language rather than two. Tint, specular gradient and rim are
+   the dock slab's exact legibility-tuned values (78% leaf so white controls hold
+   over any screenshot scrolling behind); only the foot pool is shallower to suit
+   the chip's height, and the radius is a pill. All derived from the inherited
+   --leaf / --leaf-foreground tokens, so each project tints its own chip with zero
+   per-scope wiring. Fallback (no backdrop-filter): near-opaque solid leaf, so the
+   controls stay legible without blur. */
+.tour-glass-chip {
+  background-color: var(--leaf);
+  box-shadow: var(--shadow-elevated);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .tour-glass-chip {
+    background-color: color-mix(in oklab, var(--leaf) 78%, transparent);
+    background-image: linear-gradient(
+      158deg,
+      color-mix(in oklab, var(--leaf-foreground) 15%, transparent) 0%,
+      color-mix(in oklab, var(--leaf-foreground) 4%, transparent) 24%,
+      transparent 58%
+    );
+    border: 1px solid color-mix(in oklab, var(--leaf-foreground) 8%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(1.8);
+    backdrop-filter: blur(18px) saturate(1.8);
+    box-shadow:
+      inset 0 1.5px 2px -1px color-mix(in oklab, var(--leaf-foreground) 26%, transparent),
+      inset 0 -8px 14px -8px color-mix(in oklab, var(--leaf) 62%, transparent),
+      var(--shadow-elevated);
+  }
 }
 
 @layer base {

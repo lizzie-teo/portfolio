@@ -9,6 +9,7 @@ import {
   cornerClasses,
   readingTilePadding,
   sectionHeading,
+  subsectionHeading,
   type TileCorners,
 } from "@/app/components/Chapter";
 import { CollapsingLeaf } from "@/app/components/CollapsingLeaf";
@@ -235,9 +236,7 @@ export function JourneyMap({
               className="size-16 shrink-0 md:size-24"
             />
             <div className="min-w-0 max-w-prose">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-foreground">
-                Persona — &ldquo;Aliya&rdquo;
-              </p>
+              <h3 className={subsectionHeading}>Aliya</h3>
               <p className="mt-2 text-base font-semibold leading-snug">
                 A time-poor parent researching a child&apos;s symptoms
               </p>
@@ -278,7 +277,7 @@ export function JourneyMap({
                   variants={v.cell}
                   className={`${stageCol[stageIndex]} lg:row-start-1 lg:flex lg:items-end lg:justify-between lg:gap-2 lg:border-b lg:border-border lg:pb-3`}
                 >
-                  <p className="text-sm font-semibold leading-snug">
+                  <p className="text-base font-semibold leading-snug">
                     {stage.title}
                   </p>
                   {stageIndex < stages.length - 1 ? (
@@ -316,7 +315,7 @@ export function JourneyMap({
             ))}
           </div>
 
-          <p className="mt-8 max-w-prose text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-8 max-w-prose text-sm leading-relaxed text-foreground">
             <span
               aria-hidden="true"
               className="mr-2 inline-block size-2.5 translate-y-px rounded-[0.25rem] bg-primary"

@@ -7,7 +7,9 @@ import {
   anchorScrollOffset,
   cornerClasses,
   readingTilePadding,
+  sectionContentGap,
   sectionHeading,
+  sectionLede,
   type TileCorners,
 } from "@/app/components/Chapter";
 import { CollapsingLeaf } from "@/app/components/CollapsingLeaf";
@@ -106,10 +108,7 @@ export function EngineAudit({
         >
           <h2 className={sectionHeading}>AI engine audit</h2>
 
-          <motion.p
-            variants={v.cell}
-            className="mt-4 max-w-prose text-base leading-relaxed text-foreground md:text-lg"
-          >
+          <motion.p variants={v.cell} className={sectionLede}>
             The brief was to rebuild the Symptom Checker around Infermedica, a
             new AI triage engine, inside Australia&apos;s strict clinical
             standards, legal constraints, and Healthdirect&apos;s remit to guide
@@ -117,7 +116,7 @@ export function EngineAudit({
             audited what the engine could and couldn&apos;t do.
           </motion.p>
 
-          <div className="mt-8 md:mt-10 lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center lg:gap-x-3 xl:gap-x-4">
+          <div className={`${sectionContentGap} lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center lg:gap-x-3 xl:gap-x-4`}>
             <motion.figure
               variants={v.cell}
               className="mx-auto w-full max-w-xs lg:col-start-2 lg:row-start-1 lg:w-60 xl:w-72"
@@ -214,7 +213,7 @@ export function EngineAudit({
             </ul>
           </div>
 
-          <p className="mt-8 max-w-prose text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-8 max-w-prose text-sm leading-relaxed text-foreground">
             <span
               aria-hidden="true"
               className="mr-2 inline-block size-2.5 translate-y-px rounded-[0.25rem] bg-primary"

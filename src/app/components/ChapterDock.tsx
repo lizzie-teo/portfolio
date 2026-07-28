@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDownIcon } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { useAnchorScroll } from "../lib/use-anchor-scroll";
@@ -9,10 +10,14 @@ import type { CaseChapter } from "./CaseStudyRail";
 
 /**
  * Right-edge "On this page" dock — the rail's alternate. Rather than a generic
- * floating card, the dock is a shard of the case study's own material: a solid
- * leaf slab, the same deep surface as the chapter-divider leaves and the grout
- * the rail sits on, so it belongs to the page's language instead of hovering
- * above it as a pane. Its one crafted flourish is a single coral "you are
+ * floating card, the dock is a shard of the case study's own material: a tinted
+ * "liquid glass" version of the deep leaf surface (the `.chapter-dock-glass` /
+ * `.chapter-dock-spine` classes in globals.css — a soft backdrop blur with a
+ * saturation boost, a specular top edge, and a light rim, all derived from the
+ * inherited leaf tokens so each project tints its own glass). It reads as the
+ * page's own material turned to glass, so it belongs to the page's language
+ * instead of hovering above it as a generic pane. Its one crafted flourish is a
+ * single coral "you are
  * here" pip — the project accent — that physically travels: it glides between
  * chapter rows as the reader scrolls (Motion `layoutId`), and at rest it is the
  * one lit tick on the resting spine. Nothing is numbered; position is carried
@@ -21,10 +26,16 @@ import type { CaseChapter } from "./CaseStudyRail";
  * The dock stays out of the way and reveals on intent (macOS auto-hide-dock
  * style): a slim leaf spine rests at the right edge; pushing the cursor to the
  * edge, focusing into the nav, or tapping the spine on touch slides the full
- * slab out while its chapter labels deal in with a quick top-to-bottom
- * cascade. The current chapter expands inline to its sections (the rail's
- * open-tile behaviour). Auto-collapses on mouse-leave after a grace delay;
- * closes on Escape, on tapping a link, or on an outside tap.
+ * slab — a tall glass capsule (rounded-full ends), the resting spine grown up —
+ * out while its chapter labels deal in with a quick top-to-bottom cascade. On
+ * open the chapter the reader is currently inside auto-discloses its sub-sections,
+ * and any chapter with sections carries a caret that discloses its sub-list in
+ * place, so a sub-step is reachable without navigating into its chapter first.
+ * The disclosure is seeded only while the dock is open, so a click on a parent
+ * chapter jumps and closes without flashing its sub-list open on the way out.
+ * Auto-collapses
+ * on mouse-leave after a grace delay; closes on Escape, on tapping a link, or on
+ * an outside tap.
  *
  * Renders at xl+ as the rail's counterpart; below xl the ChapterMarker pill
  * owns the small-screen path. Anchors stay real `href="#id"` links but a click
@@ -57,6 +68,34 @@ export function ChapterDock({
       chapter.id === activeId ||
       chapter.sections?.some((section) => section.id === activeId)
   );
+
+  // Which chapter has its sub-list disclosed. Any chapter with sections can be
+  // opened in place by tapping its caret (so a reader can reach "Sketches" inside
+  // Approach without first navigating into Approach), and the chapter the reader
+  // is currently inside auto-discloses so that reopening the dock lands on an
+  // already-expanded sub-list.
+  const activeChapterId = chapters[activeChapterIndex]?.id;
+  // Accordion: only one chapter's sub-list is open at a time. Auto-disclosing the
+  // chapter the reader is inside (or opening one by hand) collapses any other, so
+  // the list never stacks two expanded chapters and outgrows the card into a
+  // scroll — the last chapter's sections stay visible without scrolling.
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  // Seed the auto-disclosure only while the dock is open. Clicking a parent
+  // chapter jumps to it and closes the dock (setOpen(false)); without the `open`
+  // gate the newly-active chapter would expand its sub-list mid-close — a
+  // pointless flash, since the reader is already leaving. Gating on `open` keeps
+  // the reveal for where it belongs: the next time the dock opens (by hover,
+  // focus, or tap) it discloses whichever chapter the reader is now inside.
+  useEffect(() => {
+    if (!open || !activeChapterId) {
+      return;
+    }
+    setExpandedIds((prev) =>
+      prev.has(activeChapterId) ? prev : new Set([activeChapterId])
+    );
+  }, [open, activeChapterId]);
+  const toggleChapter = (id: string) =>
+    setExpandedIds((prev) => (prev.has(id) ? new Set() : new Set([id])));
 
   const clearCloseTimer = () => {
     if (closeTimer.current) {
@@ -169,6 +208,29 @@ export function ChapterDock({
     },
   };
 
+  // Sub-list disclosure. Animating height (not just opacity) grows and shrinks
+  // the sub-list within the document flow, so the chapter rows below travel
+  // smoothly instead of snapping when a caret is tapped — and with the accordion,
+  // one chapter's collapse and another's expand reflow in sync. A quicker opacity
+  // fade layers on top. Under reduced motion, height is not animated (opacity
+  // only), matching how the rest of the dock degrades.
+  const sublistDisclosure = shouldReduce
+    ? {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
+        transition: { duration: 0.01 },
+      }
+    : {
+        initial: { height: 0, opacity: 0 },
+        animate: { height: "auto", opacity: 1 },
+        exit: { height: 0, opacity: 0 },
+        transition: {
+          height: { duration: motionDuration.base, ease: motionEase.inOut },
+          opacity: { duration: motionDuration.fast, ease: motionEase.out },
+        },
+      };
+
   const linkFocus =
     "outline-none focus-visible:ring-2 focus-visible:ring-leaf-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-leaf";
 
@@ -202,7 +264,7 @@ export function ChapterDock({
           animate={{ opacity: open ? 0 : 1 }}
           transition={{ duration: shouldReduce ? 0.01 : motionDuration.fast }}
           style={{ pointerEvents: open ? "none" : "auto" }}
-          className="chapter-dock-spine absolute right-2 top-1/2 flex -translate-y-1/2 cursor-pointer items-center rounded-full bg-grout px-2.5 py-3.5 shadow-elevated outline-none ring-1 ring-leaf-foreground/10 focus-visible:ring-2 focus-visible:ring-leaf-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="chapter-dock-spine absolute right-2 top-1/2 flex -translate-y-1/2 cursor-pointer items-center rounded-full px-2.5 py-3.5 shadow-elevated outline-none ring-1 ring-leaf-foreground/10 focus-visible:ring-2 focus-visible:ring-leaf-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <span className="flex flex-col items-center gap-2.5">
             {chapters.map((chapter, index) => (
@@ -219,9 +281,12 @@ export function ChapterDock({
           </span>
         </motion.button>
 
-        {/* Revealed slab — the leaf shard grown out, chapters dealt in. Always
-            mounted so keyboard focus can enter it and trigger the reveal; kept
-            invisible and non-interactive at rest. */}
+        {/* Revealed slab — the leaf shard grown out, chapters dealt in. A
+            content-sized glass card, vertically centred against the right edge,
+            hugging its rows; the internal overflow-y-auto handles the taller
+            case when a chapter is expanded. Always mounted so keyboard focus can
+            enter it and trigger the reveal; kept invisible and non-interactive
+            at rest. */}
         <motion.nav
           id="chapter-dock-panel"
           aria-label="On this page"
@@ -229,65 +294,69 @@ export function ChapterDock({
           variants={slabVariants}
           animate={open ? "open" : "closed"}
           style={{ pointerEvents: open ? "auto" : "none" }}
-          className="absolute right-3 top-1/2 max-h-[70vh] w-56 -translate-y-1/2 overflow-y-auto rounded-2xl bg-grout p-2 text-leaf-foreground shadow-elevated ring-1 ring-leaf-foreground/10"
+          className="chapter-dock-glass absolute right-3 top-1/2 max-h-[70vh] w-56 -translate-y-1/2 overflow-y-auto rounded-2xl px-2 text-leaf-foreground"
         >
-          <ul className="flex flex-col">
+          {/* Vertical padding on the inner list, not the scroll container:
+              Chrome/Safari drop a scroll container's padding-bottom once scrolled
+              to the end, which would leave the last chapter flush to the card
+              edge. As list padding it scrolls with the content. */}
+          <ul className="flex flex-col py-2">
             {chapters.map((chapter, index) => {
               const isActive = index === activeChapterIndex;
-              // The current chapter always expands to its sections; a chapter
-              // flagged defaultExpanded (the deep "Approach" chapter) keeps its
-              // sections visible whenever the dock is open, so its sub-steps are
-              // reachable without first scrolling into it.
-              const showSections =
-                Boolean(chapter.sections?.length) &&
-                (isActive || Boolean(chapter.defaultExpanded));
+              const hasSections = Boolean(chapter.sections?.length);
+              // Disclosed when the reader is inside it (auto, seeded above) or
+              // when they have opened it by hand via the caret. defaultExpanded
+              // is deliberately no longer read here.
+              const expanded = hasSections && expandedIds.has(chapter.id);
+              const sectionsId = `${chapter.id}-sections`;
               return (
-                <motion.li
-                  key={chapter.id}
-                  variants={rowVariants}
-                  layout={!shouldReduce}
-                  transition={{
-                    layout: {
-                      duration: motionDuration.fast,
-                      ease: motionEase.inOut,
-                    },
-                  }}
-                >
-                  <a
-                    href={`#${chapter.id}`}
-                    aria-current={
-                      activeId === chapter.id ? "location" : undefined
-                    }
-                    onClick={(event) => {
-                      handleAnchor(event, chapter.id);
-                      setOpen(false);
-                    }}
-                    className={`${linkFocus} flex min-h-11 items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold leading-snug transition-colors ${
-                      isActive
-                        ? "text-leaf-foreground"
-                        : "text-leaf-foreground/55 hover:bg-leaf-foreground/5 hover:text-leaf-foreground"
-                    }`}
-                  >
-                    <span className="flex w-2 shrink-0 items-center justify-center">
-                      {isActive ? (
-                        activePip
-                      ) : (
-                        <span className="block h-1 w-1 rounded-full bg-leaf-foreground/25" />
-                      )}
-                    </span>
-                    <span className="min-w-0 flex-1">{chapter.title}</span>
-                  </a>
+                <motion.li key={chapter.id} variants={rowVariants}>
+                  <div className="flex items-center gap-1">
+                    <a
+                      href={`#${chapter.id}`}
+                      aria-current={
+                        activeId === chapter.id ? "location" : undefined
+                      }
+                      onClick={(event) => {
+                        handleAnchor(event, chapter.id);
+                        setOpen(false);
+                      }}
+                      className={`${linkFocus} flex min-h-12 min-w-0 flex-1 items-center gap-2.5 rounded-lg px-3 text-sm font-semibold leading-snug text-leaf-foreground transition-colors hover:bg-black/10`}
+                    >
+                      <span className="flex w-2 shrink-0 items-center justify-center">
+                        {isActive ? (
+                          activePip
+                        ) : (
+                          <span className="block h-1 w-1 rounded-full bg-leaf-foreground/25" />
+                        )}
+                      </span>
+                      <span className="min-w-0 flex-1">{chapter.title}</span>
+                    </a>
+                    {hasSections ? (
+                      <button
+                        type="button"
+                        aria-expanded={expanded}
+                        aria-controls={sectionsId}
+                        aria-label={`${expanded ? "Hide" : "Show"} sections in ${chapter.title}`}
+                        onClick={() => toggleChapter(chapter.id)}
+                        className={`${linkFocus} flex h-12 w-9 shrink-0 items-center justify-center rounded-lg text-leaf-foreground/70 transition-colors hover:bg-black/10 hover:text-leaf-foreground`}
+                      >
+                        <ChevronDownIcon
+                          aria-hidden="true"
+                          className={`size-4 transition-transform ${
+                            expanded ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                    ) : null}
+                  </div>
                   <AnimatePresence initial={false}>
-                    {showSections ? (
+                    {expanded ? (
                       <motion.ul
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{
-                          duration: shouldReduce ? 0.01 : motionDuration.fast,
-                          ease: motionEase.out,
-                        }}
-                        className="mb-1 ml-[1.05rem] flex flex-col border-l border-leaf-foreground/15 pl-3"
+                        key="sections"
+                        id={sectionsId}
+                        {...sublistDisclosure}
+                        className="mb-1 ml-[1.05rem] flex flex-col overflow-hidden pl-3"
                       >
                         {chapter.sections?.map((section) => {
                           const isSectionCurrent = activeId === section.id;
@@ -302,11 +371,7 @@ export function ChapterDock({
                                   handleAnchor(event, section.id);
                                   setOpen(false);
                                 }}
-                                className={`${linkFocus} flex min-h-9 items-center rounded-md px-2 text-xs font-medium leading-snug transition-colors ${
-                                  isSectionCurrent
-                                    ? "text-leaf-foreground"
-                                    : "text-leaf-foreground/50 hover:bg-leaf-foreground/5 hover:text-leaf-foreground"
-                                }`}
+                                className={`${linkFocus} flex min-h-10 items-center rounded-md px-2.5 text-xs font-medium leading-snug text-leaf-foreground transition-colors hover:bg-black/10`}
                               >
                                 {section.title}
                               </a>
