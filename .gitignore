@@ -50,3 +50,7 @@ scratchpad/
 
 # agent worktrees
 .claude/worktrees/
+
+# Local design explorations — kept on disk, never committed or deployed.
+# The shader/dither tuner at src/app/dev/dither is deliberately NOT here.
+/src/app/explore/
