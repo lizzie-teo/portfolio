@@ -68,6 +68,15 @@ const VEIL_BACK = "rgb(15, 14, 12)";
 const VEIL_PEAK = "rgb(52, 42, 32)";
 const VEIL_MID = "rgb(31, 27, 22)";
 
+/* The veil's settled body tone — between VEIL_BACK and VEIL_MID, which is what
+   the field reads as away from its warm peaks. Exported because the masthead
+   above the hero has to flood to the SAME ink when the band inverts: the
+   --grout token is a different, lighter warm ink (~rgb(43,39,35)) and painting
+   the bar with it left a visibly lighter slab sitting on top of the hero
+   instead of one continuous dark stage. Scene artwork, not a shell token —
+   HeroInkVeil owns it, SiteHeader borrows it, nothing else should. */
+export const HERO_VEIL_INK = "rgb(22, 20, 16)";
+
 /* Speeds — tuned visually against screenshots. REST is a slow paper drift; the
    VEIL flows fast enough that the hover wash reads as moving ink, not a crawl. */
 const REST_SPEED = 0.17;

@@ -48,8 +48,13 @@
  * brand ink from projectFields.ts), so a glyph never hardcodes its own tone.
  */
 
-/** The size the card renders every mark at. Weights below are derived from it,
- *  so a mark keeps its hairline if the card ever resizes the box. */
+/** The size the card renders every mark at, and the default for the `sizePx`
+ *  prop. Weights below are derived from it, so a mark keeps its hairline if the
+ *  card ever resizes the box — which is exactly what `sizePx` is for: a caller
+ *  drawing a mark much larger than 32px (WireframeProjectCard blows one up to
+ *  roughly 160px as the card's hero) passes its real render size, and the stroke
+ *  and dot geometry re-derive so the figure stays line work instead of scaling
+ *  into a fat outline. Without it a mark at 160px would render a 5.5px stroke. */
 const GLYPH_PX = 32;
 /** Rendered stroke weight. Fine enough to read as drawn line rather than ink,
  *  heavy enough to hold at 1x on a light field. */
@@ -61,23 +66,33 @@ const HAIRLINE_PX = 1.1;
 const DOT_PX = 2.4;
 
 type Box = { x: number; y: number; size: number };
-type GlyphProps = { className?: string };
+
+/** How heavy the mark should render, and at what size. Defaults are the card's
+ *  terminal mark; a caller drawing at another scale passes its own so the family
+ *  keeps one rendered weight rather than one viewBox number. */
+type Weight = { sizePx: number; strokePx: number };
+const DEFAULT_WEIGHT: Weight = { sizePx: GLYPH_PX, strokePx: HAIRLINE_PX };
+
+type GlyphProps = { className?: string; weight?: Weight };
 
 /** Shared stroke defaults, scaled to the glyph's own box so the whole family
  *  lands on one rendered hairline. */
-function hair(box: Box) {
+function hair(box: Box, weight: Weight) {
   return {
     fill: "none",
     stroke: "currentColor",
-    strokeWidth: (HAIRLINE_PX * box.size) / GLYPH_PX,
+    strokeWidth: (weight.strokePx * box.size) / weight.sizePx,
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
   };
 }
 
-/** Point radius in the glyph's own units, matched to the same rendered size. */
-function point(box: Box) {
-  return (DOT_PX * box.size) / (2 * GLYPH_PX);
+/** Point radius in the glyph's own units, matched to the same rendered size. The
+ *  dot keeps its 2.4-to-1.1 ratio against the stroke at any weight, so the
+ *  reason for that ratio (a point has no length to read by, so it needs more
+ *  diameter than a line needs width) survives a rescale. */
+function point(box: Box, weight: Weight) {
+  return (DOT_PX * (weight.strokePx / HAIRLINE_PX) * box.size) / (2 * weight.sizePx);
 }
 
 /** Square viewBox cropped to each mark's own drawn bounds, padded ~8% so the
@@ -111,7 +126,7 @@ function Frame({
  *  beside it; narrowing the bars to 16 buys back the difference and leaves each
  *  one clearly a bar rather than a ring. */
 const FINANCIAL_BOX: Box = { x: 40, y: 45, size: 120 };
-function FinancialGlyph({ className }: GlyphProps) {
+function FinancialGlyph({ className, weight = DEFAULT_WEIGHT }: GlyphProps) {
   const bars: [number, number][] = [
     [50, 112],
     [92, 84],
@@ -119,7 +134,7 @@ function FinancialGlyph({ className }: GlyphProps) {
   ];
   return (
     <Frame className={className} box={FINANCIAL_BOX}>
-      <g {...hair(FINANCIAL_BOX)}>
+      <g {...hair(FINANCIAL_BOX, weight)}>
         {bars.map(([x, y]) => (
           <rect key={x} x={x} y={y} width={16} height={160 - y} rx={8} />
         ))}
@@ -130,7 +145,7 @@ function FinancialGlyph({ className }: GlyphProps) {
 
 /** Healthcare — a dot-matrix cross: care plus screening. */
 const HEALTHCARE_BOX: Box = { x: 34, y: 34, size: 132 };
-function HealthcareGlyph({ className }: GlyphProps) {
+function HealthcareGlyph({ className, weight = DEFAULT_WEIGHT }: GlyphProps) {
   const dots: [number, number][] = [
     [100, 44],
     [100, 72],
@@ -146,7 +161,7 @@ function HealthcareGlyph({ className }: GlyphProps) {
     <Frame className={className} box={HEALTHCARE_BOX}>
       <g fill="currentColor">
         {dots.map(([cx, cy]) => (
-          <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={point(HEALTHCARE_BOX)} />
+          <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={point(HEALTHCARE_BOX, weight)} />
         ))}
       </g>
     </Frame>
@@ -155,10 +170,10 @@ function HealthcareGlyph({ className }: GlyphProps) {
 
 /** Payments — two interlocking rings: value moving between parties. */
 const PAYMENTS_BOX: Box = { x: 30, y: 30, size: 140 };
-function PaymentsGlyph({ className }: GlyphProps) {
+function PaymentsGlyph({ className, weight = DEFAULT_WEIGHT }: GlyphProps) {
   return (
     <Frame className={className} box={PAYMENTS_BOX}>
-      <g {...hair(PAYMENTS_BOX)}>
+      <g {...hair(PAYMENTS_BOX, weight)}>
         <circle cx="76" cy="100" r="38" />
         <circle cx="124" cy="100" r="38" />
       </g>
@@ -168,18 +183,18 @@ function PaymentsGlyph({ className }: GlyphProps) {
 
 /** Higher education — a geometric mortarboard: study. */
 const EDUCATION_BOX: Box = { x: 32, y: 30, size: 138 };
-function EducationGlyph({ className }: GlyphProps) {
+function EducationGlyph({ className, weight = DEFAULT_WEIGHT }: GlyphProps) {
   return (
     <Frame className={className} box={EDUCATION_BOX}>
-      <g {...hair(EDUCATION_BOX)}>
+      <g {...hair(EDUCATION_BOX, weight)}>
         {/* the board */}
         <path d="M40 86 L100 62 L160 86 L100 110 Z" />
         {/* tassel off the right corner */}
         <path d="M160 86 L160 128" />
       </g>
       <g fill="currentColor">
-        <circle cx="100" cy="86" r={point(EDUCATION_BOX)} />
-        <circle cx="160" cy="134" r={point(EDUCATION_BOX)} />
+        <circle cx="100" cy="86" r={point(EDUCATION_BOX, weight)} />
+        <circle cx="160" cy="134" r={point(EDUCATION_BOX, weight)} />
       </g>
     </Frame>
   );
@@ -187,7 +202,7 @@ function EducationGlyph({ className }: GlyphProps) {
 
 /** Neutral fallback — a quiet dot cluster for any unmapped industry. */
 const FALLBACK_BOX: Box = { x: 74, y: 74, size: 52 };
-function FallbackGlyph({ className }: GlyphProps) {
+function FallbackGlyph({ className, weight = DEFAULT_WEIGHT }: GlyphProps) {
   const dots: [number, number][] = [
     [78, 78],
     [122, 78],
@@ -199,7 +214,7 @@ function FallbackGlyph({ className }: GlyphProps) {
     <Frame className={className} box={FALLBACK_BOX}>
       <g fill="currentColor">
         {dots.map(([cx, cy]) => (
-          <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={point(FALLBACK_BOX)} />
+          <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={point(FALLBACK_BOX, weight)} />
         ))}
       </g>
     </Frame>
@@ -216,17 +231,21 @@ function slugify(industry: string): string {
  * component and calling it as `<Glyph />` is what the react-hooks
  * static-components rule (rightly) objects to.
  */
-export function IndustryGlyph({ industry, className }: GlyphProps & { industry?: string }) {
+export function IndustryGlyph({
+  industry,
+  className,
+  weight,
+}: GlyphProps & { industry?: string }) {
   switch (industry ? slugify(industry) : "") {
     case "financial-services":
-      return <FinancialGlyph className={className} />;
+      return <FinancialGlyph className={className} weight={weight} />;
     case "healthcare":
-      return <HealthcareGlyph className={className} />;
+      return <HealthcareGlyph className={className} weight={weight} />;
     case "payments":
-      return <PaymentsGlyph className={className} />;
+      return <PaymentsGlyph className={className} weight={weight} />;
     case "higher-education":
-      return <EducationGlyph className={className} />;
+      return <EducationGlyph className={className} weight={weight} />;
     default:
-      return <FallbackGlyph className={className} />;
+      return <FallbackGlyph className={className} weight={weight} />;
   }
 }

@@ -14,12 +14,6 @@ export type CaseChapter = {
   id: string;
   title: string;
   sections?: CaseSection[];
-  /**
-   * Dock only: keep this chapter's sections expanded whenever the dock is
-   * open, not just when it is the active chapter — for a deep chapter whose
-   * sub-steps should be reachable on open without scrolling into it first.
-   */
-  defaultExpanded?: boolean;
 };
 
 /**

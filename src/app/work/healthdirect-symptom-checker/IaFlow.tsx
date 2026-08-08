@@ -12,6 +12,7 @@ import {
   type TileCorners,
 } from "@/app/components/Chapter";
 import { CollapsingLeaf } from "@/app/components/CollapsingLeaf";
+import { MaskReveal } from "@/app/components/MaskReveal";
 
 /**
  * The Symptom Checker information architecture, rebuilt as a native
@@ -307,7 +308,13 @@ export function IaFlow({
         className={`flex flex-col justify-start ${cornerClasses[corners]} border border-border bg-card shadow-card ${readingTilePadding}`}
       >
         <header className="flex flex-col gap-8 md:gap-10">
-          <h2 className={sectionHeading}>Information architecture</h2>
+          <MaskReveal
+            as="h2"
+            mode="word"
+            duration="fast"
+            className={sectionHeading}
+            text="Information architecture"
+          />
           <ul aria-label="Legend" className="flex flex-wrap items-center gap-x-4 gap-y-1">
             {legend.map((item) => (
               <li

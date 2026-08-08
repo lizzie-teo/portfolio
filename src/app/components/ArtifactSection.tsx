@@ -11,6 +11,7 @@ import {
   type TileCorners,
 } from "./Chapter";
 import { CollapsingLeaf } from "./CollapsingLeaf";
+import { MaskReveal } from "./MaskReveal";
 import { MotionReveal } from "./MotionReveal";
 
 type ArtifactSectionProps = {
@@ -97,13 +98,23 @@ export function ArtifactSection({
         pinTopPx={0}
         className={`flex flex-col justify-start ${cornerClasses[corners]} border border-border ${surfaceClass} shadow-card ${padding}`}
       >
-        <MotionReveal>
-          <Heading
-            className={headingLevel === 2 ? sectionHeading : subsectionHeading}
-          >
-            {title}
-          </Heading>
-        </MotionReveal>
+        {/* Only a top-level section title gets the word slip — that gesture is
+            what marks a heading as a heading, and spending it on a nested h3
+            makes every title on the page slip and none of them read as the
+            section head. A level-3 title keeps the standard fade-up. */}
+        {headingLevel === 2 ? (
+          <MaskReveal
+            as={Heading}
+            mode="word"
+            duration="fast"
+            className={sectionHeading}
+            text={title}
+          />
+        ) : (
+          <MotionReveal>
+            <Heading className={subsectionHeading}>{title}</Heading>
+          </MotionReveal>
+        )}
         <MotionReveal delay={0.05}>
           <p className={sectionLede}>{takeaway}</p>
         </MotionReveal>

@@ -7,6 +7,7 @@ import {
   DoorOpen,
   type LucideIcon,
 } from "lucide-react";
+import { CountUp } from "@/app/components/CountUp";
 import { motionDuration, motionEase } from "@/app/lib/motion";
 
 /**
@@ -22,6 +23,9 @@ import { motionDuration, motionEase } from "@/app/lib/motion";
  * context icon and lets the statement carry the weight. Both marks sit in the
  * deep leaf teal (--leaf #183947, 10.9:1 on the bg-secondary mint) at the same
  * large scale as the bar scorecard, so the pair reads as one matched system.
+ *
+ * Figures count up from zero every time they scroll into view (CountUp), on
+ * the cell stagger's own cadence, so the result lands as it arrives.
  *
  * Rhythm mirrors the bar exactly: eyebrow at the top, a deliberate mt-6/8 gap
  * to the dominant mark, the supporting line coupled tight beneath (gap-3), all
@@ -112,7 +116,7 @@ export function OutcomeScorecard({ className }: { className?: string }) {
       variants={v.grid}
       className={`grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-3 ${className ?? ""}`}
     >
-      {outcomes.map((o) => (
+      {outcomes.map((o, index) => (
         <motion.div
           key={o.label}
           variants={v.cell}
@@ -121,9 +125,11 @@ export function OutcomeScorecard({ className }: { className?: string }) {
           <dt className={eyebrow}>{o.label}</dt>
           {o.kind === "metric" ? (
             <dd className="mt-6 flex flex-col gap-3 md:mt-8">
-              <span className="text-4xl font-semibold leading-[0.95] tracking-[-0.02em] tabular-nums text-leaf break-words md:text-5xl">
-                {o.value}
-              </span>
+              <CountUp
+                value={o.value}
+                delay={shouldReduce ? 0 : index * 0.05}
+                className="text-4xl font-semibold leading-[0.95] tracking-[-0.02em] text-leaf break-words md:text-5xl"
+              />
               <span className="text-sm leading-relaxed text-muted-foreground">
                 {o.detail}
               </span>

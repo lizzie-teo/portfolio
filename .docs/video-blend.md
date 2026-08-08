@@ -117,9 +117,12 @@ const EDGE_FADE =
   video must never `play()`). Generate it from a strong frame of the clip:
 
   ```sh
-  ffmpeg -ss 1.5 -i public/assets/<dir>/<clip>.mp4 -frames:v 1 -q:v 3 \
-    public/assets/<dir>/<clip>-poster.jpg
+  ffmpeg -ss 1.5 -i public/assets/<dir>/<clip>.mp4 -frames:v 1 -q:v 80 \
+    public/assets/<dir>/<clip>-poster.webp
   ```
+
+  WebP rather than JPEG, per `asset-weight.md` §2, and it is what the shipped
+  posters already are.
 
 - **Regenerate the poster whenever the clip is replaced** — a stale poster
   flashes old footage on first paint.

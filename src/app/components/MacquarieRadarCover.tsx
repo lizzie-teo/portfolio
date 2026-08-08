@@ -18,11 +18,20 @@ const FIELD = "#2b0d20";
 /* Near-white halftone ink with a whisper of the field's rose (see cover-effects). */
 const DOT_INK = "#F4E3EC";
 
-/* Halftone grid: the resting flat plum field breaks into a fixed dot matrix
-   whose dot size follows a synthesized field luminance. Its own character is a
-   radar ping — the dots assemble and scatter as a ring travelling out from the
-   centre rather than the even scatter (Symptom) or left-to-right sweep (AP). */
-const GRID_COLS = 84;
+/* Halftone grid: the resting flat plum field breaks into a dot matrix whose dot
+   size follows a synthesized field luminance. Its own character is a radar ping —
+   the dots scatter as a ring travelling out from the centre rather than the even
+   burst (Symptom) or left-to-right sweep (AP).
+
+   THE RULING IS A CELL SIZE, NOT A COLUMN COUNT, and matches SymptomCheckerCover
+   so the two round-dot covers read as one press with two patterns. A fixed
+   column count made the screen finer as the artwork got smaller, which is
+   backwards for a ruling and is why the small instances read as static rather
+   than as a field coming apart: a 970px feature plate now lands 60 columns (16px
+   cells) and a 290px card 28 (10px), against 12px and 3.5px before. */
+const CELL_PX = 13;
+const MIN_COLS = 28;
+const MAX_COLS = 60;
 const LUM_CUTOFF = 0.06;
 const DOT_MAX = 0.6;
 
@@ -33,9 +42,39 @@ const DOT_MAX = 0.6;
 const DOTIFY_MS = 300;
 const SCATTER_MS = 800;
 /* Portion of scatter progress used to stagger dots by radius (the ping front),
-   and how far each dot drifts outward while scattered, as a portion of width. */
-const SCATTER_DELAY = 0.4;
-const SCATTER_DRIFT = 0.18;
+   and how far each dot drifts outward while scattered, as a portion of width.
+
+   THE PING RAN BACKWARDS. A dot's local progress is (settle - delay) over the
+   remaining span and `settle` counts DOWN from 1, so a LARGER delay departs
+   EARLIER. Ordering the delay by radius therefore sent the OUTER ring first and
+   collapsed the field inward — an implosion, the exact opposite of a ping, on
+   the one cover whose whole idea is a signal leaving a transmitter. It is now
+   ordered by (1 - radius): the centre goes first and the cleared void expands
+   outward, with the drift still pointing outward so the ring and the dots travel
+   the same way.
+
+   The drift also nearly doubled, and DRIFT_MIN / DRIFT_SPREAD widen the per-dot
+   magnitude range (0.25x to 1.2x, against a former 0.4x to 1.0x) so the ring
+   front has depth instead of expanding as one rigid shell. */
+const SCATTER_DELAY = 0.5;
+const SCATTER_DRIFT = 0.34;
+const DRIFT_MIN = 0.25;
+const DRIFT_SPREAD = 0.95;
+
+/* MOTION TRAIL — the cue that actually says "flying". A dot drawn at a new place
+   each frame has MOVED; it never reads as MOVING. So a travelling dot is drawn as
+   a round-capped comet swept back along its own drift vector, at TRAIL_ALPHA of
+   its own alpha and TRAIL_WIDTH of its own width (narrower than the head, or an
+   even wake silhouettes as a capsule rather than a taper), with the dot filled on
+   top. The length is the derivative of the position ramp (3(1 - local)^2, zero at
+   rest so the assembled halftone is untouched) scaled by TRAIL_SCALE and capped
+   at TRAIL_MAX_R dot radii. On this cover every drift vector points away from the
+   centre, so every wake points back AT it: the ping is drawn by the artwork
+   rather than asserted in a comment. */
+const TRAIL_SCALE = 0.022;
+const TRAIL_ALPHA = 0.3;
+const TRAIL_WIDTH = 0.62;
+const TRAIL_MAX_R = 3;
 
 /* Hook-line cascade from .docs/style-rules.md: `slow` items, 0.06s interval. */
 const LINE_STAGGER = 0.06;
@@ -139,14 +178,28 @@ export function MacquarieRadarCover({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const cols = GRID_COLS;
+    /* Ruling from the CSS width, not the device-pixel width, so the cell stays
+       the same physical size on a retina screen (see CELL_PX). */
+    const cols = Math.max(
+      MIN_COLS,
+      Math.min(MAX_COLS, Math.round(rect.width / CELL_PX)),
+    );
     const cellW = w / cols;
     const rows = Math.max(1, Math.round(h / cellW));
 
     /* Precompute the static plum-field luminance per cell, plus a radial ping
        table: delay ordered by distance from centre (the ping front) with light
        jitter, and drift pointing outward from centre, so dots ping out as a
-       ring rather than a random scatter. */
+       ring rather than a random scatter.
+
+       THE RADIUS IS MEASURED IN PIXELS, not in normalised (u, v). Taking the
+       distance in normalised space squashes it by the plate's aspect, so on a
+       portrait plate the "ring" came out as a tall lozenge and on a 2:1 band as a
+       flat one. A radar ping is round at any crop, so v is scaled by the aspect
+       before the distance is taken and the delay is normalised against the real
+       corner distance. */
+    const aspect = h / w;
+    const maxDist = Math.hypot(0.5, 0.5 * aspect);
     const field = new Float32Array(cols * rows);
     const scatter = new Float32Array(cols * rows * 3);
     for (let row = 0; row < rows; row++) {
@@ -156,16 +209,17 @@ export function MacquarieRadarCover({
         const v = (row + 0.5) / rows;
         field[i] = fieldLum(u, v);
         const nx = u - 0.5;
-        const ny = v - 0.5;
+        const ny = (v - 0.5) * aspect;
         const dist = Math.hypot(nx, ny) || 0.0001;
-        const drift = (0.4 + Math.random() * 0.6) * SCATTER_DRIFT * w;
+        const drift = (DRIFT_MIN + Math.random() * DRIFT_SPREAD) * SCATTER_DRIFT * w;
         scatter[i * 3] = (nx / dist) * drift;
         scatter[i * 3 + 1] = (ny / dist) * drift;
-        /* Radius (0 centre .. ~1 corner) sets the ping delay, with jitter so
-           the ring front is soft rather than a hard circle. */
+        /* (1 - radius) sets the ping delay, so the CENTRE carries the largest
+           delay and departs first and the front travels outward (see
+           SCATTER_DELAY). Jitter keeps the ring soft rather than a hard circle. */
         scatter[i * 3 + 2] =
-          Math.min(1, dist / 0.7071) * SCATTER_DELAY * 0.8 +
-          Math.random() * SCATTER_DELAY * 0.2;
+          (1 - Math.min(1, dist / maxDist)) * SCATTER_DELAY * 0.72 +
+          Math.random() * SCATTER_DELAY * 0.28;
       }
     }
 
@@ -173,14 +227,20 @@ export function MacquarieRadarCover({
   }, []);
 
   /* Draws one halftone frame; settle=1 is fully assembled, lower values ping
-     each dot outward on its radius-ordered schedule. */
-  const drawFrame = useCallback((settle: number) => {
+     each dot outward on its radius-ordered schedule. `dir` is +1 while the dots
+     are flying out and -1 while they are flying home on hover-out: the motion
+     smear has to lie BEHIND the direction of travel, and on the way home that is
+     the far side of the dot, not the near one. Without it a reversed ping draws
+     every wake pointing the way the dot is going. */
+  const drawFrame = useCallback((settle: number, dir: number) => {
     const scene = sceneRef.current;
     if (!scene) return;
     const { ctx, w, h, cols, rows, cellW, cellH, field, scatter } = scene;
 
     ctx.clearRect(0, 0, w, h);
     ctx.fillStyle = DOT_INK;
+    ctx.strokeStyle = DOT_INK;
+    ctx.lineCap = "round";
     const maxRadius = cellW * DOT_MAX;
 
     for (let row = 0; row < rows; row++) {
@@ -197,11 +257,34 @@ export function MacquarieRadarCover({
               );
         if (local <= 0) continue;
         const eased = easeOutCubic(local);
-        const x = (col + 0.5) * cellW + scatter[i * 3] * (1 - eased);
-        const y = (row + 0.5) * cellH + scatter[i * 3 + 1] * (1 - eased);
-        ctx.globalAlpha = eased * (0.3 + 0.7 * lum);
+        const dx = scatter[i * 3];
+        const dy = scatter[i * 3 + 1];
+        const x = (col + 0.5) * cellW + dx * (1 - eased);
+        const y = (row + 0.5) * cellH + dy * (1 - eased);
+        const radius = maxRadius * Math.sqrt(lum) * (0.6 + 0.4 * eased);
+        /* sqrt(eased), not eased: on the deep plum a linear alpha spends the dot
+           before it has travelled far enough to be seen travelling. */
+        const alpha = Math.sqrt(eased) * (0.3 + 0.7 * lum);
+        const speed = 3 * (1 - local) ** 2 * TRAIL_SCALE * dir;
+        let tx = dx * speed;
+        let ty = dy * speed;
+        const trail = Math.hypot(tx, ty);
+        const cap = radius * TRAIL_MAX_R;
+        if (trail > cap) {
+          tx = (tx / trail) * cap;
+          ty = (ty / trail) * cap;
+        }
+        if (trail > 1) {
+          ctx.globalAlpha = alpha * TRAIL_ALPHA;
+          ctx.lineWidth = radius * 2 * TRAIL_WIDTH;
+          ctx.beginPath();
+          ctx.moveTo(x - tx, y - ty);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = alpha;
         ctx.beginPath();
-        ctx.arc(x, y, maxRadius * Math.sqrt(lum) * (0.55 + 0.45 * eased), 0, Math.PI * 2);
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -252,7 +335,9 @@ export function MacquarieRadarCover({
       }
 
       if (dotify > 0 && scatter < 1) {
-        drawFrame(1 - scatter);
+        /* Flying out while hovered, flying home while not — the motion smear
+           follows the direction of travel (see drawFrame). */
+        drawFrame(1 - scatter, hoveredRef.current ? 1 : -1);
       } else {
         const scene = sceneRef.current;
         scene?.ctx.clearRect(0, 0, scene.w, scene.h);

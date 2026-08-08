@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { ArtifactSection } from "@/app/components/ArtifactSection";
-import { ArtifactViewer } from "@/app/components/ArtifactViewer";
 import { CaseStatement } from "@/app/components/CaseStatement";
 import { CaseStudyShell } from "@/app/components/CaseStudyShell";
 import {
@@ -9,25 +8,14 @@ import {
   LeafPlate,
   readingTilePadding,
   sectionHeading,
-  subsectionHeading,
   tileGap,
 } from "@/app/components/Chapter";
 import { ChapterMarker } from "@/app/components/ChapterMarker";
-import { InsightCallout } from "@/app/components/InsightCallout";
+import { MaskReveal } from "@/app/components/MaskReveal";
 import { MediaFrame } from "@/app/components/MediaFrame";
-import {
-  MotionReveal,
-  MotionRevealGroup,
-  MotionRevealItem,
-} from "@/app/components/MotionReveal";
+import { MotionReveal } from "@/app/components/MotionReveal";
 import { ArrowUpRight } from "lucide-react";
 import { Tile } from "@/app/components/Tile";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { type CaseChapter } from "@/app/components/CaseStudyRail";
 import { ChapterDock } from "@/app/components/ChapterDock";
 import { caseStudyMetadata, getCaseStudy } from "../projects";
@@ -38,7 +26,8 @@ import { EngineAudit } from "./EngineAudit";
 import { IaFlow } from "./IaFlow";
 import { JourneyMap } from "./JourneyMap";
 import { LandscapeReview } from "./LandscapeReview";
-import { UsabilityFindings } from "./UsabilityFindings";
+import { NativeConceptFlow } from "./NativeConceptFlow";
+import { usabilityFindings } from "./UsabilityFindings";
 import { SymptomsHero } from "./SymptomsHero";
 
 const slug = "healthdirect-symptom-checker";
@@ -51,7 +40,6 @@ const chapters: CaseChapter[] = [
   {
     id: "approach",
     title: "The Approach",
-    defaultExpanded: true,
     sections: [
       { id: "engine-audit", title: "AI Engine Audit" },
       { id: "landscape-review", title: "Landscape Review" },
@@ -59,173 +47,159 @@ const chapters: CaseChapter[] = [
       { id: "information-architecture", title: "Information Architecture" },
       { id: "sketches", title: "Sketches" },
       { id: "usability-testing", title: "Usability Testing" },
+      { id: "what-testing-changed", title: "What Testing Changed" },
     ],
   },
   { id: "decisions", title: "Key Design Decisions" },
   { id: "outcome", title: "The Outcome" },
+  { id: "whats-next", title: "What Came Next" },
+];
+
+/* What round 2 changed, as three before-and-after exhibits on the same chip band
+   the findings above and the decisions below use.
+
+   Four rules govern the presentation, carried over from the tiled exhibit this
+   content used to live in:
+
+   1. **Matched width, always.** Every capture takes the stage's pair track,
+      including the solo one, which keeps that track rather than growing into
+      the space a missing "after" left. Equal width on 1080px-wide captures is
+      equal zoom, so the type in "before" and "after" is the same physical size
+      and the comparison is fair rather than two differently scaled pictures.
+      The track is a percentage rather than a pixel pin so a pair always fits
+      the stage: a comparison the reader has to swipe to complete is not one.
+   2. **Both states cut at the same place.** Every capture starts at the top of
+      its page and runs off the bottom of the band, hard-clipped at the same
+      height by the stage — the band's own treatment, applied equally to both
+      states, so neither is favoured by the framing. The captures are whole
+      pages, so where the two differ in length that difference is real; the band
+      cannot show it, which is why the footnote says it in words.
+   3. **Honest framing.** The one recommendation that has not shipped gets a
+      single state labelled "Today" and no `shipped` accent, rather than a mock
+      in an "after" frame: an absent frame is honest where an invented one would
+      read as delivered work.
+   4. **Nothing load-bearing is trapped in a bitmap.** The claim, the state
+      labels, and the footnotes are real DOM text, so the argument survives at
+      320px where the captures are only legible as structure.
+
+   The bolded phrase in each claim is the load-bearing one, matching the findings
+   band's evidence vocabulary. */
+const testingChangedFeatures: Feature[] = [
   {
-    id: "phase-2",
-    title: "Phase 2 — The Ecosystem",
-    sections: [
-      { id: "research-themes", title: "Research Themes" },
-      { id: "service-concepts", title: "Service Concepts" },
-      { id: "roadmap", title: "The Roadmap" },
+    id: "outcome-page",
+    label: "See a GP outcome",
+    body: [
+      <>
+        Round 2 asked for one change here, a copy edit to “What to do” so the
+        different service categories reached people as a recommendation rather
+        than a paragraph to work through.
+      </>,
+      <>
+        The rebuild <strong>says what to do in a sentence</strong>, then{" "}
+        <strong>lays the services out as numbered options</strong>. Each one says
+        what the service is, what it costs and how you get seen, and links
+        straight to it. Before, the three were bullets in a single list, and one
+        Service Finder link at the top was the only way in.
+      </>,
+    ],
+    footnote:
+      "Both states are shown from the top of the page and run on past the bottom of this band. The new page is the longer of the two: every option now carries the detail that used to sit behind one shared link.",
+    images: [
+      {
+        src: "/assets/healthdirect/before-after/see-doc-before.webp",
+        alt: "The original 'See a doctor within 2 hours' page, from the top of the screen to the end of the options: the pink outcome banner, a 'What to do' heading, two paragraphs of advice, then one bullet list mixing Alternate GPs, Virtual Care Clinics and Urgent Care Clinics with their explanations, closed by a single 'About these services' link.",
+        width: 1080,
+        height: 2530,
+        device: "mobile",
+        state: { label: "Before", summary: "Advice, then one mixed list." },
+      },
+      {
+        src: "/assets/healthdirect/before-after/see-doc-after.webp",
+        alt: "The redesigned page, from the top of the screen to the end of the options: the same outcome banner, a 'What to do' summary card stating you need to see a doctor within the next 2 hours, then three numbered options, 1. Virtual Care Clinics, 2. GP and 3. Urgent Care Clinics, each with bullets on what the service is, what it costs and how you get seen, and its own link.",
+        width: 1080,
+        height: 3970,
+        device: "mobile",
+        state: {
+          label: "After",
+          summary: "A summary, then three options.",
+          shipped: true,
+        },
+      },
+    ],
+  },
+  {
+    id: "guidance-panel",
+    label: "Service guidance",
+    body: [
+      <>
+        Users found this panel helpful, but round 2 heard the same ask twice
+        over: they wanted it more targeted. Several expected it to name the
+        services near them, or give them a number to call.
+      </>,
+      <>
+        The rebuild <strong>scopes the panel to a single service</strong> and{" "}
+        <strong>sets the headings as the questions people asked</strong>: whether
+        an appointment is needed, wait times, cost. Each answer leads with its
+        verdict, so the first word or two is usually the whole answer.
+      </>,
+    ],
+    images: [
+      {
+        src: "/assets/healthdirect/before-after/aboutservices-before.png",
+        alt: "The original panel, titled 'About these services', shown whole: Virtual Care Clinics, Urgent Care Clinics and Emergency Departments each described in a flat paragraph and a bullet list, one after another.",
+        width: 1080,
+        height: 3249,
+        device: "mobile",
+        state: { label: "Before", summary: "Every service, described in turn." },
+      },
+      {
+        src: "/assets/healthdirect/before-after/aboutservices-after.png",
+        alt: "The redesigned panel, titled 'Learn more' and scoped to Virtual Care Clinics, shown whole: a short description, then question headings including 'Do I need an appointment?' answered with 'No' in the first word.",
+        width: 1080,
+        height: 2400,
+        device: "mobile",
+        state: {
+          label: "After",
+          summary: "One service, answered in questions.",
+          shipped: true,
+        },
+      },
+    ],
+  },
+  {
+    id: "service-distance",
+    label: "Service distance",
+    body: [
+      <>
+        Round 2 asked for one thing the redesign has not answered yet: a way to
+        filter services by how far away they are, rather than only sorting by it.
+      </>,
+      <>
+        Sorting by nearest shipped.{" "}
+        <strong>
+          A distance filter is still open, pending technical feasibility.
+        </strong>{" "}
+        Until it lands the list orders results nearest first but nothing bounds
+        how far it reaches, so a search from one Adelaide suburb returns fifty
+        results within 1166km.
+      </>,
+    ],
+    footnote:
+      "Shown as it stands today, with no second frame beside it. It is the one round 2 recommendation without a shipped answer, kept here rather than dropped.",
+    images: [
+      {
+        src: "/assets/healthdirect/before-after/nearest-sort.webp",
+        alt: "The live service results for Urgent Care in Bowden: a Filter button, a 'Sort by: Nearest' control, then a 'Search results' heading reading '50 results within 1166km', followed by the whole first result card, Total Urgent Care Norwood, at 3.0km.",
+        width: 1080,
+        height: 2115,
+        device: "mobile",
+        // No `shipped`: this state is the present, not an answer. The accent
+        // means "and here is what shipped", and nothing has.
+        state: { label: "Today", summary: "Sorted by nearest, unbounded." },
+      },
     ],
   },
 ];
-
-const researchThemes = [
-  {
-    title: "Confidence to manage symptoms is low",
-    body: "Health is complex, and most consumers outsource decisions to professionals. Even with extensive information online, a capability gap remains around safe self-care.",
-    quote:
-      "Oh I'm not really sure, health is really complex, so I'm not really sure.",
-  },
-  {
-    title: "System literacy is low",
-    body: "Newer pathways like urgent care clinics and virtual ED aren't widely understood — and new migrants default to the behaviours of the health system they came from.",
-    quote:
-      "In Dubai they only have private — you can go to the hospital, max 30 minutes maybe.",
-  },
-  {
-    title: "Time is value",
-    body: "Consumers are hyper-aware of time as the currency of healthcare. Waits keep growing, and the pathways with capacity are rarely their regular GP.",
-    quote:
-      "Hard to see a GP these days because there's a shortage in Bendigo. Nearly two weeks to get an appointment.",
-  },
-  {
-    title: "The digital divide",
-    body: "One in four Australians is digitally excluded — with First Nations people living remotely, low-income households, new migrants and refugees, and people over 65 most at risk.",
-    quote:
-      "I prefer telehealth because I live rurally and travel time is an issue. If I don't have to drive an hour I will jump at it.",
-  },
-];
-
-const roadmapFocusAreas = [
-  {
-    title: "Building confidence in health decisions",
-    body: "Step-by-step guidance in plain language, AI-assisted triage that escalates to human oversight, and follow-up prompts — so people feel reassured rather than overwhelmed.",
-  },
-  {
-    title: "Strengthening continuity of care",
-    body: "Digital summaries consumers can share with GPs, pre-consultation preparation, and post-engagement check-ins — so care feels connected across services.",
-  },
-  {
-    title: "Improving equity and access",
-    body: "A multilingual symptom checker, real-time translation for helpline conversations, and partnerships with community, welfare, and immigration services.",
-  },
-  {
-    title: "Making system navigation simpler",
-    body: "A recognisable digital front door, cross-directory wayfinding, and visibility of service availability and cost — so people reach appropriate care faster.",
-  },
-  {
-    title: "Supporting preventive and ongoing self-care",
-    body: "Screening reminders, medication and adherence support, and trusted, nationally consistent health information — fewer crises through long-term management.",
-  },
-];
-
-const phase2Purposes = [
-  "Identify system-level gaps between consumer needs, service intent, and actual behaviour",
-  "Surface future-state opportunities across services and channels",
-  "Use research and prototyping to inform strategic decisions and funding discussions",
-  "Explore how AI-assisted support could responsibly enhance human-led services",
-];
-
-const phase2Contributions = [
-  "Conducting consumer interviews across prioritised cohorts",
-  "Synthesising qualitative insights to surface recurring patterns",
-  "Translating insights into journey maps to make system gaps visible",
-  "Prototyping service and AI-assisted concepts to provoke discussion",
-  "Sharing Phase 1 findings to maintain evidence continuity",
-  "Contributing to research presentations and cross-functional workshops",
-];
-
-const stressPrinciples = [
-  "Design for what people can cope with, not what the system can do",
-  "Explain why a pathway is recommended, not just what to do",
-  "Avoid diagnostic language to prevent anxiety escalation",
-  "Keep human support visible — self-service can feel like abandonment",
-  "Design for the least-resourced user, not the most confident",
-];
-
-const phase2Outcomes = [
-  "Clarified future-state opportunity areas across Healthdirect services",
-  "Informed government funding proposals with evidence-based insights",
-  "Provided leadership with tangible artefacts to evaluate strategic options",
-  "Created alignment across CX, product, and service design teams on priorities",
-];
-
-function Prose({ children }: { children: React.ReactNode }) {
-  return (
-    <MotionReveal>
-      <p className="max-w-prose text-base leading-relaxed text-foreground md:text-lg">
-        {children}
-      </p>
-    </MotionReveal>
-  );
-}
-
-function PullQuote({
-  quote,
-  attribution,
-}: {
-  quote: string;
-  attribution?: string;
-}) {
-  return (
-    <figure className="border-l border-border pl-4">
-      <blockquote className="text-sm leading-relaxed text-muted-foreground">
-        “{quote}”
-      </blockquote>
-      {attribution ? (
-        <figcaption className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-foreground">
-          {attribution}
-        </figcaption>
-      ) : null}
-    </figure>
-  );
-}
-
-function BulletList({ items }: { items: string[] }) {
-  return (
-    <MotionRevealGroup as="ul" className="max-w-prose space-y-3">
-      {items.map((item) => (
-        <MotionRevealItem
-          as="li"
-          key={item}
-          className="flex gap-3 text-base leading-relaxed text-foreground md:text-lg"
-        >
-          <span
-            aria-hidden="true"
-            className="mt-[0.75em] h-px w-4 shrink-0 bg-foreground/40"
-          />
-          <span>{item}</span>
-        </MotionRevealItem>
-      ))}
-    </MotionRevealGroup>
-  );
-}
-
-function ProcessDisclosure({
-  items,
-}: {
-  items: { value: string; trigger: string; content: React.ReactNode }[];
-}) {
-  return (
-    <MotionReveal>
-      <Accordion className="max-w-prose border-t border-border">
-        {items.map((item) => (
-          <AccordionItem key={item.value} value={item.value}>
-            <AccordionTrigger className="min-h-11 text-xs font-medium uppercase tracking-[0.16em]">
-              {item.trigger}
-            </AccordionTrigger>
-            <AccordionContent>{item.content}</AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
-    </MotionReveal>
-  );
-}
 
 /* The four decisions that carried the flow, shown as expandable chips beside a
    frameless screenshot stage (FeatureChips). Copy is the approved AnnotatedFrame
@@ -238,9 +212,13 @@ const decisionFeatures: Feature[] = [
     id: "accessible",
     label: "Accessible by design",
     body: [
-      "Tested with people with disability and with users wary of technology, and built to meet WCAG for screen readers and keyboard use.",
-      "Soothing colour schemes stayed sensitive to how someone felt, and AI outputs were framed to support a decision without ever steering it.",
+      "Every question is one row and one decision, with three targets big enough for a thumb. No dropdowns, no typing, nothing that needs a steady hand.",
+      "'Don't know' sits beside Yes and No, so nobody has to guess their way forward and the engine gets an honest gap instead of an invented answer.",
+      "The four stages stay named at the top of every screen. Tested with people with disability and with users wary of technology, and built to meet WCAG for screen readers and keyboard use.",
     ],
+    // One capture, no hotspot: the 'More info' explainer story (and its modal
+    // capture) belongs to Guided help below, which is the decision it evidences.
+    // This chip is about the answer row itself.
     images: [
       {
         src: "/assets/healthdirect/design-decisions/accessibiilty-1.png",
@@ -249,28 +227,6 @@ const decisionFeatures: Feature[] = [
         height: 7866,
         device: "mobile",
         displayWidth: 300,
-      },
-      {
-        src: "/assets/healthdirect/design-decisions/accessbility-2.png",
-        alt: "The 'More info' modal explaining diagnosed hypertension in plain language",
-        width: 1440,
-        height: 3200,
-        device: "mobile",
-        displayWidth: 300,
-      },
-    ],
-    // Mobile prototype: the "More info" trigger on the Diagnosed hypertension
-    // row opens its plain-language modal (accessbility-2). Coords are % of the
-    // capture box, verified against the asset (row centres at ~20.2% down).
-    hotspots: [
-      {
-        onImage: 0,
-        x: 4,
-        y: 18.9,
-        w: 92,
-        h: 2.6,
-        popupImage: 1,
-        label: "More info: diagnosed hypertension",
       },
     ],
   },
@@ -398,6 +354,15 @@ const decisionFeatures: Feature[] = [
     // the carousel to that service's Service Finder results (links at ~17.8%,
     // ~23.5%, ~29.6% down). Images interleave modal-then-finder per service so
     // the arrow walk reads option by option.
+    //
+    // All six carry a `demoStep`, so this feature's phone frame runs the auto
+    // demo (Hotspot.demoStep / useHotspotDemo). It is the flow that needs one
+    // most — the capture is 1080×12910, so every trigger here sits ~430px below
+    // the fold of the phone screen and a reader who never scrolls the capture
+    // never learns it is tappable — and it is the only flow that exercises both
+    // step kinds, popup explainer and paged navigation. Steps follow the
+    // authored order, so the loop walks the results page option by option.
+    // Every other feature is left reader-only until the pattern is signed off.
     hotspots: [
       {
         onImage: 0,
@@ -406,6 +371,7 @@ const decisionFeatures: Feature[] = [
         w: 72,
         h: 1.9,
         popupImage: 1,
+        demoStep: 1,
         label: "More info: Virtual Care Clinic",
       },
       {
@@ -415,6 +381,7 @@ const decisionFeatures: Feature[] = [
         w: 56,
         h: 1.15,
         goToImage: 2,
+        demoStep: 2,
         label: "Find a Virtual Care Clinic",
       },
       {
@@ -424,6 +391,7 @@ const decisionFeatures: Feature[] = [
         w: 75,
         h: 1.9,
         popupImage: 3,
+        demoStep: 3,
         label: "More info: Urgent Care Clinics",
       },
       {
@@ -433,6 +401,7 @@ const decisionFeatures: Feature[] = [
         w: 59,
         h: 1.1,
         goToImage: 4,
+        demoStep: 4,
         label: "Find an Urgent Care Clinic",
       },
       {
@@ -442,6 +411,7 @@ const decisionFeatures: Feature[] = [
         w: 89,
         h: 2.0,
         popupImage: 5,
+        demoStep: 5,
         label: "More info: Emergency Departments",
       },
       {
@@ -451,6 +421,7 @@ const decisionFeatures: Feature[] = [
         w: 72,
         h: 1.3,
         goToImage: 6,
+        demoStep: 6,
         label: "Find an Emergency Department",
       },
     ],
@@ -514,37 +485,29 @@ export default function HealthdirectSymptomCheckerPage() {
               symptoms and decide on next steps for care.
             </p>
             <p>
-              Working across a cross-functional team, I{" "}
+              The redesign integrated{" "}
               <span className="font-semibold text-leaf-highlight">
-                led UX across two phases
-              </span>
-              : a product redesign integrating Infermedica&apos;s AI engine,
-              followed by a broader CX and service design initiative across
-              Healthdirect&apos;s ecosystem.
+                Infermedica&apos;s AI engine
+              </span>{" "}
+              into a flow an anxious person could actually finish, without it
+              ever sounding like a diagnosis.
             </p>
           </>
         ),
+        /* Flat, not grouped: the role block used to split into Phase 1 and
+           Phase 2 columns, and Phase 2 has been parked (see
+           _parked/Phase2Chapter.tsx). One list of three also drops the hero
+           back to the plain two-column grid the shell uses for Macquarie.
+           Every line states ownership rather than naming a discipline — the IA
+           flow and the screens below already prove she did IA and UI; what the
+           artifacts can't show is that nobody else was making those calls. */
         meta: [
           {
             label: "My role",
-            groups: [
-              {
-                label: "Phase 1 — The redesign",
-                items: [
-                  "End-to-end UX design from light discovery through delivery",
-                  "Content strategy and accessibility compliance",
-                  "Information architecture and UI design",
-                  "Stakeholder alignment and cross-functional facilitation",
-                ],
-              },
-              {
-                label: "Phase 2 — The ecosystem",
-                items: [
-                  "Consumer research and synthesis",
-                  "Service design and ecosystem mapping",
-                  "Concept prototyping for strategy",
-                ],
-              },
+            items: [
+              "Sole designer on the redesign, alongside a product manager, clinical leads, and Infermedica's engine team",
+              "Led it end to end: discovery, architecture, question flow, and final screens",
+              "Set the accessibility and plain language bar, then tested the build against it",
             ],
           },
         ],
@@ -602,11 +565,13 @@ export default function HealthdirectSymptomCheckerPage() {
               }
             >
               <Tile immersive corners="bottom" className={readingTilePadding}>
-                <MotionReveal>
-                  <h2 className={sectionHeading}>
-                    What success had to look like
-                  </h2>
-                </MotionReveal>
+                <MaskReveal
+                  as="h2"
+                  mode="word"
+                  duration="fast"
+                  className={sectionHeading}
+                  text="What success had to look like"
+                />
                 <CriteriaScorecard className="mt-8 md:mt-10" />
               </Tile>
             </Chapter>
@@ -630,12 +595,15 @@ export default function HealthdirectSymptomCheckerPage() {
               <LandscapeReview id="landscape-review" corners="none" />
               <JourneyMap id="user-journey" corners="none" />
               <IaFlow id="information-architecture" corners="none" />
+              {/* Caps the upper slab. The findings band below bleeds edge to
+                  edge, so the run of tiles that opened with the chapter leaf
+                  ends here rather than carrying on past it. */}
               <ArtifactSection
                 id="sketches"
                 headingLevel={2}
                 roomy
                 title="Sketches"
-                corners="none"
+                corners="bottom"
                 takeaway="Rough concepts kept early debate on flow and framing, not visual polish."
               >
                 <MotionReveal>
@@ -655,17 +623,59 @@ export default function HealthdirectSymptomCheckerPage() {
                   </div>
                 </MotionReveal>
               </ArtifactSection>
-              <ArtifactSection
+              {/* The findings run on the same band as the decisions showcase
+                  further down the page — same component, same chip accordion
+                  and collapsing screenshot stage — because they are the two
+                  halves of one argument: what testing found, and what shipped
+                  in answer. A full-bleed band cannot sit inside a bordered tile,
+                  so this is a direct child of the chapter rather than an
+                  ArtifactSection, and it owns the #usability-testing anchor and
+                  its own heading and takeaway.
+
+                  `tone="light"`: the dark band is the decisions chapter's one
+                  signature moment and repeating it here would spend it twice.
+                  Light also keeps the tinted research surface this section
+                  already had, which the "What testing changed" tile below
+                  shares. No `reserveNavLane`, matching the decisions usage —
+                  this page's shell runs `reserveNavLane={false}` and its dock
+                  floats over the page. */}
+              <FeatureChips
                 id="usability-testing"
-                headingLevel={2}
-                roomy
-                surface="secondary"
-                title="Usability testing"
-                corners="bottom"
-                takeaway="Twelve users across two rounds (four priority, four culturally and linguistically diverse, two with disability, two general) produced eleven recommendations, all implemented."
-              >
-                <UsabilityFindings />
-              </ArtifactSection>
+                features={usabilityFindings}
+                heading="Usability testing"
+                lede="Twelve users across two rounds (four priority, four culturally and linguistically diverse, two with disability, two general) produced eleven recommendations, all implemented."
+                tone="light"
+              />
+              {/* The bridge into the decisions chapter: the findings band above
+                  is research, this is what shipped in answer to it. The two run
+                  on the same component for that reason — the reader meets one
+                  finding, then the change it produced, in the same chip-and-stage
+                  gesture, so the pairing is felt rather than argued.
+
+                  `tone="dark"` is what separates them. The findings band is
+                  light because it is research; this one steps onto the leaf
+                  because it is product, and it hands the reader onto the
+                  decisions showcase below, which is the same dark band. The two
+                  dark bands are deliberately adjacent: the chapter leaf between
+                  them is the only pause, and the shared surface is the argument
+                  that what shipped here and what shipped there are one body of
+                  work.
+
+                  A full-bleed band cannot sit inside a bordered tile, so this is
+                  a direct child of the chapter rather than an ArtifactSection.
+                  It owns the #what-testing-changed anchor and its own heading;
+                  the takeaway ArtifactSection would have set below it is folded
+                  into the lede, because FeatureChips leads with its framing
+                  sentence and a closing line under a full-bleed media stage
+                  would land after the reader has already left for the next
+                  chapter. No `reserveNavLane`, matching the two sibling usages. */}
+              <FeatureChips
+                id="what-testing-changed"
+                features={testingChangedFeatures}
+                heading="What testing changed"
+                lede="Round 2 came back as structure: the outcome page turned prose into a decision list, and the guidance panel narrowed to one service answered in questions."
+                tone="dark"
+              />
             </Chapter>
 
             <Chapter
@@ -722,7 +732,13 @@ export default function HealthdirectSymptomCheckerPage() {
                   headline numbers live once, up top under "The result"; the
                   proof here is the system-level outcomes those numbers
                   unlocked. */}
-              <Tile immersive corners="none">
+              {/* One tile closes the chapter: the statement, the outcomes it
+                  unlocked, and the link out to Healthdirect's own announcement
+                  of the shipped release. The native app concept used to trail
+                  this chapter as a flat composite; it now has its own chapter
+                  below, because a future state prototype should not be read as
+                  part of the result. */}
+              <Tile immersive corners="bottom">
                 <MotionReveal>
                   <span
                     aria-hidden="true"
@@ -733,233 +749,49 @@ export default function HealthdirectSymptomCheckerPage() {
                   </p>
                 </MotionReveal>
                 <OutcomeScorecard className="mt-10 md:mt-14" />
-              </Tile>
-              <Tile immersive corners="none">
-                <div className="space-y-6">
-                  <Prose>
-                    The redesign also became the evidence base for what came next: a
-                    native-app concept with a follow-up care plan for managing symptoms
-                    at home, and the broader service-design initiative in Phase 2.
-                  </Prose>
-                  <MotionReveal>
-                    <a
-                      href="https://about.healthdirect.gov.au/resources/news/healthdirect-symptom-checker-gen2-paves-the-way-to-the-national-virtual-front-door"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
-                    >
-                      Read Healthdirect&apos;s announcement of Gen 2
-                      <ArrowUpRight aria-hidden="true" className="size-4" />
-                    </a>
-                  </MotionReveal>
-                </div>
-              </Tile>
-              <Tile immersive corners="bottom">
                 <MotionReveal>
-                  <MediaFrame
-                    label="Native app concept screens: family profiles, guided basic-info questions, a 'See a GP today' care plan, and a five-day self-care timeline"
-                    caption="Future-state prototype pitched alongside motion design explorations — a home for follow-up care plans and managing symptoms at home."
-                    ratio={2500 / 1521}
-                    src="/assets/healthdirect/mobile-native.webp"
-                  />
+                  <a
+                    href="https://about.healthdirect.gov.au/resources/news/healthdirect-symptom-checker-gen2-paves-the-way-to-the-national-virtual-front-door"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-10 inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline md:mt-14"
+                  >
+                    Read Healthdirect&apos;s announcement of Gen 2
+                    <ArrowUpRight aria-hidden="true" className="size-4" />
+                  </a>
                 </MotionReveal>
               </Tile>
             </Chapter>
 
+            {/* The coda. No leaf plate: the four chapters above each open on
+                their own engraving, and there is no fifth drawing — opening
+                this one plainly marks it as an epilogue rather than a fifth
+                act, which is also what it is. */}
             <Chapter
-              id="phase-2"
-              title="Phase 2 — the ecosystem"
+              id="whats-next"
+              title="What came next"
               leafCorners="top"
-              lede="Phase 2 stepped back from one product to ask where the whole service system was failing people."
+              lede="The redesign became the evidence base for a native app concept, where the check ends in a care plan you follow at home."
             >
-              <Tile immersive corners="none">
-                <Prose>
-                  Following Phase 1 delivery, the redesign became an input into a
-                  broader, time-boxed CX and service design initiative. We examined
-                  how people experienced digital services, GP advice, and nurse
-                  helplines together, particularly at moments of uncertainty, when
-                  users were trying to understand what help was available and what
-                  to do next.
-                </Prose>
-              </Tile>
-              <Tile surface="secondary" immersive corners="none">
-                <InsightCallout context="Consumer interviews — designing AI for health decisions under stress">
-                  More information doesn&apos;t mean more confidence under stress.
-                </InsightCallout>
-              </Tile>
-              <Tile immersive corners="none">
-                <div className="space-y-6 md:space-y-8">
-                  <Prose>
-                    Australians turn to digital tools when anxious or uncertain —
-                    moments where AI must build trust, not add confusion. Digital
-                    confidence is unevenly distributed, and while users accept AI, they
-                    want human oversight. Those findings became design principles:
-                  </Prose>
-                  <BulletList items={stressPrinciples} />
-                </div>
-              </Tile>
-              <ArtifactSection
-                id="research-themes"
-                headingLevel={2}
-                roomy
-                title="Research themes"
-                corners="none"
-                takeaway="Four gaps consumers quietly navigate around."
-              >
-                <MotionRevealGroup className="grid gap-8 sm:grid-cols-2 md:gap-10">
-                  {researchThemes.map((theme) => (
-                    <MotionRevealItem
-                      key={theme.title}
-                      className="flex flex-col gap-3 border-t border-border pt-5"
-                    >
-                      <h3 className={subsectionHeading}>{theme.title}</h3>
-                      <p className="text-sm leading-relaxed text-foreground">
-                        {theme.body}
-                      </p>
-                      <div className="mt-auto pt-2">
-                        <PullQuote quote={theme.quote} />
-                      </div>
-                    </MotionRevealItem>
-                  ))}
-                </MotionRevealGroup>
-              </ArtifactSection>
-              <Tile immersive corners="none">
-                <MotionReveal>
-                  <MediaFrame
-                    label="Five-step process diagram: discovery research, insights and opportunities, generating ideas, prototyping, and validating with stakeholder and consumer workshops"
-                    caption="The prototypes came out of a workshop cycle — consumer interviews and nurse workshops fed generative sessions, and the CX team turned the outputs into testable concepts."
-                    ratio={1340 / 729}
-                    src="/assets/healthdirect/project-progress-diagram.webp"
-                  />
-                </MotionReveal>
-              </Tile>
-              <ArtifactSection
-                id="service-concepts"
-                headingLevel={2}
-                roomy
-                title="Service concepts"
-                corners="none"
-                takeaway="Two concepts built to provoke discussion, not to ship."
-              >
-                <MotionReveal>
-                  <div className="grid gap-6 sm:grid-cols-2 md:gap-8">
-                  <ArtifactViewer
-                    label="Service concept — AI health assistant"
-                    src="/assets/healthdirect/prototype-showcase-1.webp"
-                    ratio={2000 / 1204}
-                    variant="document"
-                    caption="Probing attitudes toward AI-assisted symptom checks during escalation."
-                    regions={[
-                      {
-                        title: "The concept",
-                        caption:
-                          "An in-app AI assistant that runs a conversational symptom check — one question at a time, in plain language.",
-                        x: 30,
-                        y: 55,
-                        scale: 1.9,
-                      },
-                      {
-                        title: "Explaining terms in place",
-                        caption:
-                          "Tapping the info icon explains clinical terms like enlarged lymph nodes on the spot — the health-literacy lesson carried over from Phase 1.",
-                        x: 61,
-                        y: 58,
-                        scale: 2,
-                      },
-                      {
-                        title: "The research questions",
-                        caption:
-                          "Each concept carried its own research intent: attitudes toward AI during symptom escalation, and what people need to feel comfortable self-serving.",
-                        x: 84,
-                        y: 55,
-                        scale: 1.9,
-                      },
-                    ]}
-                  />
-                  <ArtifactViewer
-                    label="Service concept — SMS symptom monitoring"
-                    src="/assets/healthdirect/prototype-showcase-2.webp"
-                    ratio={2000 / 1206}
-                    variant="document"
-                    caption="Remote monitoring over SMS — human reassurance without an app."
-                    regions={[
-                      {
-                        title: "A guided SMS conversation",
-                        caption:
-                          "The service texts the consumer — symptom questions and a temperature check-in over plain SMS, no app required.",
-                        x: 22,
-                        y: 55,
-                        scale: 1.9,
-                      },
-                      {
-                        title: "Advice with an escape hatch",
-                        caption:
-                          "Self-care steps with a clear escalation threshold, plus opt-in reminders that keep a human-feeling presence through recovery.",
-                        x: 60,
-                        y: 55,
-                        scale: 1.9,
-                      },
-                      {
-                        title: "The research questions",
-                        caption:
-                          "Testing attitudes toward monitoring vitals by phone, and toward texting personal health information to a professional.",
-                        x: 88,
-                        y: 50,
-                        scale: 1.9,
-                      },
-                    ]}
-                  />
-                  </div>
-                </MotionReveal>
-              </ArtifactSection>
-              <ArtifactSection
-                id="roadmap"
-                headingLevel={2}
-                roomy
-                title="The roadmap"
-                corners="none"
-                takeaway="Five focus areas to anchor government funding discussions."
-              >
-                <MotionRevealGroup as="ol">
-                  {roadmapFocusAreas.map((area, areaIndex) => (
-                    <MotionRevealItem
-                      as="li"
-                      key={area.title}
-                      className="flex gap-4 border-t border-border py-5 md:gap-6"
-                    >
-                      <span className="pt-0.5 text-xs font-medium tabular-nums text-primary">
-                        {String(areaIndex + 1).padStart(2, "0")}
-                      </span>
-                      <div className="max-w-prose space-y-1.5">
-                        <h3 className={subsectionHeading}>{area.title}</h3>
-                        <p className="text-sm leading-relaxed text-foreground">
-                          {area.body}
-                        </p>
-                      </div>
-                    </MotionRevealItem>
-                  ))}
-                </MotionRevealGroup>
-              </ArtifactSection>
-              <Tile immersive corners="none">
-                <BulletList items={phase2Outcomes} />
-              </Tile>
-              <Tile immersive corners="bottom">
-                <ProcessDisclosure
-                  items={[
-                    {
-                      value: "purposes",
-                      trigger: "Phase 2 purposes",
-                      content: <BulletList items={phase2Purposes} />,
-                    },
-                    {
-                      value: "contributions",
-                      trigger: "What I worked on",
-                      content: <BulletList items={phase2Contributions} />,
-                    },
-                  ]}
+              {/* Not `immersive`: the collapse exists to lift a section that
+                  would otherwise rest small against the grout, and this tile is
+                  already well past a viewport at every width. Wrapping it in
+                  CollapsingLeaf only bought a pool of empty tile below the
+                  phone on tall screens. */}
+              <Tile corners="bottom" className={readingTilePadding}>
+                {/* The module owns the whole composition, heading included: the
+                    concept screens are a 9:20 handset, and a section title set
+                    full width above it would leave the tile's middle empty. It
+                    reads as a spread instead, heading and flow in one column
+                    beside the device. */}
+                <NativeConceptFlow
+                  eyebrow="Concept, not shipped"
+                  heading="Care that keeps going after the check"
+                  lede="It was pitched alongside the redesign and never built. Five screens carry the idea: the app already knows the household, asks the same short questions, then stays for the days after."
                 />
               </Tile>
             </Chapter>
+
       </div>
       <ChapterDock chapters={chapters} className="hidden xl:block" />
     </CaseStudyShell>

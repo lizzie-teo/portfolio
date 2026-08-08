@@ -13,6 +13,7 @@ import {
   type TileCorners,
 } from "@/app/components/Chapter";
 import { CollapsingLeaf } from "@/app/components/CollapsingLeaf";
+import { MaskReveal } from "@/app/components/MaskReveal";
 
 /**
  * The current-state user journey map for the priority persona, rebuilt as a
@@ -222,7 +223,13 @@ export function JourneyMap({
           viewport={{ once: true, margin: "0px 0px -80px 0px" }}
           variants={v.map}
         >
-          <h2 className={sectionHeading}>User journey</h2>
+          <MaskReveal
+            as="h2"
+            mode="word"
+            duration="fast"
+            className={sectionHeading}
+            text="User journey"
+          />
 
           <motion.div
             variants={v.cell}

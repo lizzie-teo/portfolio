@@ -163,6 +163,16 @@ export type ProjectField = {
    * design: near-white ground, mid-tone dot, deep ink. The dots read as the
    * card's own light breaking into print, not a uniform teal. Artwork constant,
    * not a shell token.
+   *
+   * THE SHIPPING CARD NO LONGER READS THIS. LoFiProjectCard derives its dot ink
+   * from the ground its hover resolves to — the payoff panel, exposed until it
+   * clears the resting plate (`halftoneInk` in loFiInk.ts). A hand-picked ink
+   * per project put two colour events in one gesture, and in three of the four
+   * cases two different hues, because nothing tied this value to the panel the
+   * dots were clearing to. The field stays live for ProjectCard, which is the
+   * A/B control on /explore/lofi-cards and keeps its own older colour system
+   * (a luminous pale ground and pale brand panels), where a mid-tone ink is
+   * still the right answer. It is not read anywhere else.
    */
   dot: string;
 };

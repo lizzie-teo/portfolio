@@ -18,18 +18,19 @@ import { useHeroTone } from "./HeroToneContext";
    Figma to code, stakeholders, vibe coder. Hovering or focusing one (desktop
    only, where the blank space to the right exists) does two things at once:
 
-     1. the band inverts to the dark grout stage and the sticky header inverts
-        with it (via HeroToneContext), so header + hero read as one dark stage;
+     1. the band inverts to the dark ink stage and the masthead inverts with it
+        (via HeroToneContext), so header + hero read as one dark stage;
      2. a particle field in the right-hand space reconfigures into a formation
         themed to that word — one system, many arrangements.
 
-   Tone wiring. The header follows the hero only while the hero still sits
-   beneath the header line: `dark = a keyword is active AND the hero is under
-   the header`. Scroll the hero away and `underHeader` goes false, so the
-   header resolves back to light over the white work gallery regardless of any
-   stuck hover. All five keywords share the one dark state, so sweeping between
-   them keeps the band dark continuously; a short debounce on leaving covers
-   the plain text between two keywords so the band never flickers.
+   Tone wiring is now just `dark = a keyword is active`. The masthead is a
+   static element in normal flow directly above this band, so it cannot outlive
+   the hero on screen — scrolling past the hero scrolls past the header too, and
+   the old scroll-position guard (a rAF-throttled listener asking whether the
+   hero still sat under the header line) was left over from when the header was
+   sticky. All six keywords share the one dark state, so sweeping between them
+   keeps the band dark continuously; a short debounce on leaving covers the
+   plain text between two keywords so the band never flickers.
 
    Degradation. Below `lg` there is no room for the field, so the keywords are
    plain text and the band simply stands on its own light — the graceful state
@@ -54,20 +55,12 @@ const FILMED_KEYWORDS = new Set<HeroKeyword | null>([
 export function StatementHero() {
   const reduce = useReducedMotion() ?? false;
   const { setDark } = useHeroTone();
-  const sectionRef = useRef<HTMLElement>(null);
 
   const [activeKeyword, setActiveKeyword] = useState<HeroKeyword | null>(null);
   const [interactive, setInteractive] = useState(false);
 
   const activeRef = useRef<HeroKeyword | null>(null);
-  const underHeaderRef = useRef(true);
   const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // The header is dark only while a keyword is lit AND the hero is still the
-  // thing under the header line.
-  const syncTone = useCallback(() => {
-    setDark(activeRef.current !== null && underHeaderRef.current);
-  }, [setDark]);
 
   const activate = useCallback(
     (id: HeroKeyword) => {
@@ -77,9 +70,9 @@ export function StatementHero() {
       }
       activeRef.current = id;
       setActiveKeyword(id);
-      syncTone();
+      setDark(true);
     },
-    [syncTone],
+    [setDark],
   );
 
   // Debounced clear: crossing the plain text between two keywords must not
@@ -89,10 +82,10 @@ export function StatementHero() {
     clearTimer.current = setTimeout(() => {
       activeRef.current = null;
       setActiveKeyword(null);
-      syncTone();
+      setDark(false);
       clearTimer.current = null;
     }, 150);
-  }, [syncTone]);
+  }, [setDark]);
 
   // Only wire the interaction where the field has room to live (lg+).
   useEffect(() => {
@@ -106,42 +99,13 @@ export function StatementHero() {
         }
         activeRef.current = null;
         setActiveKeyword(null);
-        syncTone();
+        setDark(false);
       }
     };
     apply();
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
-  }, [syncTone]);
-
-  // Track whether the hero still passes beneath the header (threshold-crossing
-  // only, a handful of updates per scroll — never per frame).
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-    const header = document.querySelector("header");
-    let frame = 0;
-    const measure = () => {
-      frame = 0;
-      const headerH = header?.getBoundingClientRect().height ?? 56;
-      const underHeader = section.getBoundingClientRect().bottom > headerH;
-      if (underHeader !== underHeaderRef.current) {
-        underHeaderRef.current = underHeader;
-        syncTone();
-      }
-    };
-    const onScroll = () => {
-      if (!frame) frame = window.requestAnimationFrame(measure);
-    };
-    measure();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
-    return () => {
-      if (frame) window.cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
-  }, [syncTone]);
+  }, [setDark]);
 
   // Reset shared state on unmount.
   useEffect(() => () => setDark(false), [setDark]);
@@ -172,7 +136,6 @@ export function StatementHero() {
 
   return (
     <section
-      ref={sectionRef}
       aria-label="Introduction"
       data-hero-tone={dark ? "dark" : "light"}
       className={`relative overflow-hidden transition-colors duration-500 ${
@@ -206,7 +169,7 @@ export function StatementHero() {
           <div className="min-w-0">
             <motion.h1
               {...entry(reduce ? 0 : 0.06)}
-              className="max-w-[70rem] font-heading font-semibold text-4xl leading-[1.06] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl lg:leading-[1.02] xl:text-9xl xl:leading-none 2xl:text-8xl"
+              className="max-w-[70rem] font-heading font-semibold text-4xl leading-[1.06] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl lg:leading-[1.02] xl:text-8xl xl:leading-none 2xl:text-9xl 2xl:leading-[0.95]"
             >
               A decade designing for {kw("complexity", "complexity")}
             </motion.h1>

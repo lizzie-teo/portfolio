@@ -39,6 +39,7 @@ export function CaseSnapshot({ stats, meta }: CaseSnapshotProps) {
                     value={stat.value}
                     label={stat.label}
                     detail={stat.detail}
+                    delay={index * 0.05}
                   />
                 </dd>
               </div>

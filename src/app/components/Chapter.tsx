@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import { CollapsingLeaf } from "./CollapsingLeaf";
+import { MaskReveal } from "./MaskReveal";
 import { MotionReveal } from "./MotionReveal";
 
 type ChapterProps = {
@@ -103,6 +104,20 @@ export const leafHeading =
    nested headings ad hoc; reach for this token. */
 export const subsectionHeading =
   "text-lg font-semibold tracking-[-0.03em] md:text-xl lg:text-2xl";
+
+/* A content-level h4 — the deepest heading the case-study outline goes (§12:
+   h2 section → h3 subsection → h4, never deeper). It names one part *inside* a
+   subsection: the "Before" and "After" states of a comparison exhibit, and any
+   future peer at that depth. One step below subsectionHeading at desktop
+   (h3 24px → h4 18px) in the same display family, so depth still reads from
+   size alone and an h4 never draws level with the h3 above it.
+
+   This is a heading role, not a label role. The small uppercase tracked eyebrow
+   (§3) remains the right treatment for a caption or kicker that happens to use
+   a heading tag for outline reasons — reach for this token only when the text
+   genuinely titles a block of content. */
+export const minorHeading =
+  "text-base font-semibold tracking-[-0.03em] md:text-lg";
 
 /* The canonical lede that sits directly beneath a sectionHeading /
    subsectionHeading — the sentence or short paragraph that frames the section
@@ -314,27 +329,37 @@ export function Chapter({
                 </p>
               </div>
             </MotionReveal>
-            <MotionReveal delay={ledeDelay}>
-              <h2
-                id={`${id}-heading`}
-                className={`${headingGap} ${headingMeasure} ${leafHeading}`}
-              >
-                {lede}
-              </h2>
-            </MotionReveal>
+            {/* Line rather than word: the lede is a full sentence at display
+                size, and word by word would read as a teleprompter and overrun
+                the 1s display budget. `slow` because a chapter opener is an
+                arrival moment the frequency gate lets be expressive, against
+                the `fast` the section headings below it run at. */}
+            <MaskReveal
+              as="h2"
+              mode="line"
+              duration="slow"
+              delay={ledeDelay}
+              id={`${id}-heading`}
+              className={`${headingGap} ${headingMeasure} ${leafHeading}`}
+              text={lede}
+            />
           </>
         ) : (
-          <MotionReveal delay={eyebrowDelay}>
-            <div className={eyebrowWrap}>
-              {rule}
-              <h2
-                id={`${id}-heading`}
-                className={`${headingMeasure} ${leafHeading}`}
-              >
-                {title}
-              </h2>
-            </div>
-          </MotionReveal>
+          <div className={eyebrowWrap}>
+            {/* The rule keeps its own fade-up: it is not type being set, and
+                slipping it with the title would put two gestures on one small
+                composition. */}
+            {rule ? <MotionReveal delay={eyebrowDelay}>{rule}</MotionReveal> : null}
+            <MaskReveal
+              as="h2"
+              mode="line"
+              duration="slow"
+              delay={eyebrowDelay}
+              id={`${id}-heading`}
+              className={`${headingMeasure} ${leafHeading}`}
+              text={title}
+            />
+          </div>
         )}
       </CollapsingLeaf>
       {children ? <div className={tileGap}>{children}</div> : null}

@@ -1,5 +1,32 @@
 # Chapter dock — glass treatment brief
 
+> **Archived. Do not build from this.** The work it briefs has shipped. The live
+> rules are the code: `.chapter-dock-glass` and `.chapter-dock-spine` at
+> `src/app/globals.css:127-187`, applied in `ChapterDock.tsx` and
+> `ChapterMarker.tsx`, with the same idiom reused by `.tour-glass-chip` at
+> `globals.css:194-222`. The general recipe distilled from all of it lives in
+> `.docs/style-rules.md`.
+>
+> Three parts of what follows are actively wrong about the shipped result. The
+> "clean base" section describes a solid surface with all glass code removed,
+> which has not been true since the build landed. The brief's target of a mostly
+> clear frost with a whisper of tint was tried and abandoned: the shipped tint is
+> near opaque, because that is what keeps white labels and the coral pip legible
+> over light content scrolling behind. The token plan, the `--dock-glass-*`
+> variables and the per scope overrides, was never adopted; values are inlined as
+> `color-mix` from `--leaf`, so per project tinting comes free. The references to
+> `.project-card-glass`, `--glass-saturate` and `--glass-tint-strong` point at
+> code that no longer exists.
+>
+> One requirement here is genuinely outstanding: the opaque fallback was wired to
+> `@supports not (backdrop-filter…)` only. The
+> `@media (prefers-reduced-transparency: reduce)` path this brief also asked for
+> was never built and appears nowhere in the repo. That is an unmet accessibility
+> constraint, not a stale rule.
+>
+> Kept for the reasoning: the rejection history explains why the shipped values
+> are what they are, and the Apple research below is directionally what shipped.
+
 Handoff for a fresh session. Goal: give the symptom-checker chapter dock an
 **Apple-style glass surface** — a real translucent, blurred material (like
 Apple's "liquid glass" / macOS sidebar & control-centre panels), not a flat

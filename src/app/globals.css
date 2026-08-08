@@ -221,6 +221,94 @@ body {
   }
 }
 
+/* Plate ground — the surface a developing plate rests on (DevelopPlate.tsx), and
+   the same ground its scenes paint on so there is no seam inside the plate.
+
+   IT IS DEEPER THAN THE PAGE, BY ONE STEP. Two earlier values were both wrong in
+   opposite directions. Card ink (#2a2724) made the plate a lighter rectangle
+   floating on the grout — it borrowed the "lifted tile" reading that belongs to
+   project cards, which is wrong for a plate and worse in the writing index, where
+   there is no card for that reading to attach to. Matching `--grout` exactly then
+   removed the boundary altogether, and a print with no edge stops being an object
+   on the page.
+
+   So it goes the other way: darker than the section, not lighter. A plate deeper
+   than its page reads as an APERTURE cut into it — unexposed stock, the thing an
+   image develops out of — which is the metaphor the whole component runs on, and
+   it keeps the lifted-tile language reserved for actual cards.
+
+   DERIVED FROM THE GROUT RATHER THAN PICKED. Its job is to sit one step below
+   whatever the section is, so it is expressed as that relationship: it tracks the
+   grout through every theme and follows it into dark mode, where a fixed hex would
+   drift. The step is 0.045 in oklch lightness — visibly separate, and comfortably
+   smaller than the leaf-to-grout step above it, so the plate never reads as a hole
+   punched in the page.
+
+   ONLY LIGHTNESS MOVES, AND THAT IS THE WHOLE POINT. The first attempt did this
+   with `color-mix(in oklab, var(--grout) 78%, #000)`, which is wrong in a way that
+   is easy to miss when writing it and obvious on screen: mixing toward black
+   scales `a` and `b` along with `L`, so it took 22% of the chroma out too. The
+   result was not a darker grout, it was a darker AND greyer colour — the warmth
+   drained as it went down, so it read as a different tint sitting inside a warm
+   dark section rather than as the same ink, deeper.
+
+   Relative colour syntax says the intended thing directly: take the grout, keep
+   its chroma and hue exactly, lower its lightness. Holding `c` constant while `L`
+   falls also means the colour stays proportionally a touch warmer as it darkens,
+   which is what keeps a very dark neutral from sliding to grey.
+
+   The `@supports` gate is not decorative. Because the value contains `var()`, a
+   browser without relative colour syntax would fail at computed-value time and
+   drop the property to `unset` rather than falling back to an earlier declaration
+   — so the fallback has to be the base rule, with the real value layered on top
+   only where it parses. Fallback is the flush-with-the-page grout, which is a
+   worse plate but never a broken one. */
+.develop-plate-ground {
+  background-color: var(--grout);
+}
+
+@supports (background-color: oklch(from red l c h)) {
+  .develop-plate-ground {
+    background-color: oklch(from var(--grout) calc(l - 0.045) c h);
+  }
+}
+
+/* Film grain — the moving texture over a developing plate (DevelopPlate.tsx).
+   Deliberately CSS rather than Motion, and one of the few keyframes in the
+   codebase. §7 bans CSS keyframes for PRODUCT UI motion; this is artwork texture
+   inside a piece of media, the same category as the halftone screen beside it,
+   and it is the one job Motion is genuinely the wrong tool for: an infinite
+   stepped loop driven from JS would run a value update every frame forever on
+   every visible card, where the compositor can own this outright.
+
+   IT STEPS, IT DOES NOT GLIDE. `steps(1, end)` holds each position and jumps to
+   the next, so the grain stutters the way film does. Interpolating between them
+   reads as a texture sliding across the picture, which is the exact thing grain
+   must not look like. Eight stops at 1.2s gives roughly seven jumps a second —
+   near enough to a projector to feel right, far enough from 60fps to stay cheap.
+
+   The layer is rendered at twice the plate's size (`-inset-1/2`) and translated
+   within that slack, so a moving grain field never exposes an edge. Transform
+   only — no layout, no paint.
+
+   Reduced motion needs no rule here: DevelopPlate does not render the element at
+   all when motion is reduced, so there is nothing running to switch off. */
+.develop-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: develop-grain-shift 1.2s steps(1, end) infinite;
+}
+
+@keyframes develop-grain-shift {
+  0% { transform: translate3d(0, 0, 0); }
+  12.5% { transform: translate3d(-7%, 4%, 0); }
+  25% { transform: translate3d(5%, -6%, 0); }
+  37.5% { transform: translate3d(-3%, -2%, 0); }
+  50% { transform: translate3d(6%, 5%, 0); }
+  62.5% { transform: translate3d(-5%, 7%, 0); }
+  75% { transform: translate3d(2%, -4%, 0); }
+  87.5% { transform: translate3d(-6%, -5%, 0); }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

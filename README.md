@@ -1,6 +1,6 @@
 # Lizzie Teo — Portfolio
 
-An employer-first portfolio built to show senior UX/UI design work — Healthdirect Symptom Checker, AP+ Testing Portal, and Funding Finder — with explanatory motion in place of static screenshots. See `docs/portfolio-plan.md` for the full creative and content direction.
+An employer facing portfolio built to show senior UX/UI design work, with explanatory motion in place of static screenshots. The case studies and articles it presents are listed in `src/app/work/projects.ts`, which is the single registry every part of the site reads from. See `.docs/portfolio-strategy.md` for the audiences it is designed around and how to tell whether it is working.
 
 ## Stack
 
@@ -31,5 +31,5 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Project docs
 
-- `docs/portfolio-plan.md` — positioning, IA, motion language, and build phases
-- `docs/style-rules.md` — frontend style rules referenced by `CLAUDE.md`
+- `.docs/portfolio-strategy.md` — positioning, audiences, success criteria, and what is not yet built
+- `.docs/style-rules.md` — frontend style rules referenced by `CLAUDE.md`

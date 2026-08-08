@@ -1,7 +1,8 @@
 ---
 name: visual-qa
 description: >
-  Visual verification of UI changes. Use PROACTIVELY after any frontend change
+  Visual verification of UI changes. Use when the user asks for a visual check,
+  not automatically after every frontend change. When it is wanted, use it
   instead of taking screenshots in the main conversation: this agent captures
   the affected routes with Playwright, looks at the images itself, and returns
   a short text report — so screenshots never enter (or get re-billed in) the

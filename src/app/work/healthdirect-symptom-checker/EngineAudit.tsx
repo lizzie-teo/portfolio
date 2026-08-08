@@ -13,6 +13,7 @@ import {
   type TileCorners,
 } from "@/app/components/Chapter";
 import { CollapsingLeaf } from "@/app/components/CollapsingLeaf";
+import { MaskReveal } from "@/app/components/MaskReveal";
 
 /**
  * The Infermedica engine audit, drawn as a native annotated diagram in the
@@ -106,7 +107,13 @@ export function EngineAudit({
           viewport={{ once: true, margin: "0px 0px -80px 0px" }}
           variants={v.map}
         >
-          <h2 className={sectionHeading}>AI engine audit</h2>
+          <MaskReveal
+            as="h2"
+            mode="word"
+            duration="fast"
+            className={sectionHeading}
+            text="AI engine audit"
+          />
 
           <motion.p variants={v.cell} className={sectionLede}>
             The brief was to rebuild the Symptom Checker around Infermedica, a

@@ -14,6 +14,7 @@ import {
   type TileCorners,
 } from "@/app/components/Chapter";
 import { CollapsingLeaf } from "@/app/components/CollapsingLeaf";
+import { MaskReveal } from "@/app/components/MaskReveal";
 
 /**
  * The landscape-review teardown of Ada Symptom Check, rebuilt as a native
@@ -116,7 +117,13 @@ export function LandscapeReview({
           viewport={{ once: true, margin: "0px 0px -80px 0px" }}
           variants={v.map}
         >
-          <h2 className={sectionHeading}>Landscape review</h2>
+          <MaskReveal
+            as="h2"
+            mode="word"
+            duration="fast"
+            className={sectionHeading}
+            text="Landscape review"
+          />
 
           <motion.p variants={v.cell} className={sectionLede}>
             I ran a competitor analysis on a few symptom checkers, and Ada was

@@ -157,6 +157,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motionDuration, motionEase } from "../lib/motion";
 import { workEntryHref, type WorkEntry } from "../work/projects";
 import { IndustryGlyph } from "./IndustryGlyph";
+import { loFiInk } from "./loFiInk";
 import { getField, type ProjectField } from "./projectFields";
 
 /* HALFTONE DOT DISSOLVE — the card's one expressive hover, read as ONE
@@ -180,7 +181,26 @@ import { getField, type ProjectField } from "./projectFields";
    canvas behaviour is now uniform — every card scatters its dots to clear the
    same way. Only the COLOURS (ground, dot ink) and, for payoff cards, the brand
    panel come per card. These are artwork scene constants, not shell tokens. */
-const GRID_COLS = 84;
+/* THE RULING IS A CELL SIZE, NOT A COLUMN COUNT. A fixed 84 columns made the
+   screen get FINER as the card got smaller, which is backwards — a halftone
+   ruling belongs to the press, not to the size of the print. On the home grid a
+   card runs about 250px wide (three across at `xl`) up to its `max-w-md` cap of
+   448px, so 84 columns landed 3.0px to 5.3px cells and roughly a 3.6px dot,
+   below the size at which an eye can follow one speck: the hover read as a
+   colour flood that turned to snow, and the scatter these constants describe at
+   length was invisible.
+
+   Derived from the container's CSS width (not its device-pixel width) so the
+   cell holds its physical size on a retina screen, and clamped at both ends.
+   CELL_PX and MIN_COLS are the animated covers' — see `.docs/cover-effects.md`
+   and SymptomCheckerCover, which screens a synthesized field exactly like this
+   one at a ruling the eye can count. One press across the site. Every card the
+   grid produces below ~364px is held at MIN_COLS, so cells run 8.9px at the
+   narrowest card and 13.2px at the widest; MAX_COLS is a guard against a wider
+   future card sliding back toward noise, not a working value. */
+const CELL_PX = 13;
+const MIN_COLS = 28;
+const MAX_COLS = 44;
 const LUM_CUTOFF = 0.06;
 const DOT_MAX = 0.6;
 
@@ -201,23 +221,63 @@ const REVEAL_MS = 760;
    breaking apart rather than a single crossfade; the drift is how far each dot
    travels as it flies out. Every card scatters the same way — the payoff cards
    disintegrate exactly like the plain ones, then fade a panel in on top. */
+/* THE DRIFT DOUBLED WITH THE DOTS. At 0.17 a dot travelled about 50px on a 300px
+   card, which at the old 3.6px ruling was fourteen dot widths and read as flight,
+   and at the new one is four and reads as a shiver. The magnitude spread widened
+   too (0.25x..1.20x, against 0.40x..1.00x) so some dots plainly outrun others and
+   the field opens unevenly instead of expanding as one sheet — at high density a
+   uniform random scatter CONSERVES density, which is the other half of why the
+   old dissolve looked like snow rather than flight. */
 const STAGGER = 0.4;
-const SCATTER_DRIFT = 0.17;
+const SCATTER_DRIFT = 0.34;
+const DRIFT_MIN = 0.25;
+const DRIFT_SPREAD = 0.95;
+
+/* THE SCATTER OWNS THE FIRST TWO THIRDS OF PHASE 2, and the plate owns the rest.
+   The dissolve is back loaded by construction: position is drift x (1 -
+   easeOutCubic(local)), so a dot barely moves through the first half of its own
+   schedule and then darts out. Run over the WHOLE reveal ramp that put the travel
+   at reveal 0.6..1.0, underneath a panel already opaque at 0.66 — the panel was
+   doing all the clearing and the scatter never actually cleared anything. It did
+   not show at 3.6px; at 10px it would be the whole effect happening behind a
+   curtain. So the dot maths runs on `reveal / SCATTER_SPAN`, clamped: the field
+   is fully flown and gone at 0.66, and the panel seals onto a plate the dots have
+   genuinely left. */
+const SCATTER_SPAN = 0.66;
+
+/* THE MOTION TRAIL, ported from the covers with the ruling that makes it
+   readable. A dot redrawn at a new position each frame is a dot that has MOVED;
+   it never reads as one that is MOVING. So a dot in flight is stroked back along
+   its own drift vector before it is filled, the length proportional to its
+   instantaneous speed — 3(1 - local)^2, the derivative of the position ramp,
+   exactly zero while the dot sits in the assembled halftone and largest as it
+   accelerates away.
+
+   It is a COMET, not a capsule: the wake is stroked at TRAIL_ALPHA of the dot's
+   alpha and TRAIL_WIDTH of its width, then the head is filled at full alpha on
+   top. Both reductions are load bearing — the eye reads an evenly lit elongated
+   shape as an OBJECT of that shape, so a full-alpha, full-width smear turns a
+   scattering halftone into a field of tic-tacs. Capped at TRAIL_MAX_R dot radii
+   so a fast dot smears rather than becoming a dash. */
+const TRAIL_SCALE = 0.022;
+const TRAIL_ALPHA = 0.3;
+const TRAIL_WIDTH = 0.62;
+const TRAIL_MAX_R = 3;
 
 /* Payoff panel crossfade, expressed in phase-2 (reveal) progress. The brand panel
    is a plain DOM layer (LogoPayoff) that fades straight in over the cleared
    ground — no iris, no radius, no wipe. It LAGS the scatter so the disintegration
-   is plainly seen first: the dots break apart alone from reveal 0, and only once
-   they have visibly flown apart does the panel start to fade (PANEL_FADE_FROM),
-   ramping its alpha 0 -> 1 as a clearly visible gradual crossfade and reaching
-   full opacity (PANEL_FADE_TO) before the logo rises at LOGO_AT — so the panel is
-   fully sealed before the mark appears (no white AP+ wordmark flashing over a
-   still-pale field). The window is deliberately wide enough to read as a fade
-   rather than a pop, while still lagging the scatter so the break-up lands first.
-   The panel is opaque and occludes the canvas, so once it is in it simply covers
-   whatever dots remain; the break-up has already read. */
-const PANEL_FADE_FROM = 0.3;
-const PANEL_FADE_TO = 0.66;
+   is plainly seen first: the dots break apart alone from reveal 0, the panel
+   starts to fade at PANEL_FADE_FROM once the median dot is a third of the way out
+   and a tenth of the field has already gone, and it reaches full opacity at
+   PANEL_FADE_TO just after the last dot leaves at SCATTER_SPAN. The window is
+   deliberately wide enough to read as a fade rather than a pop.
+
+   These are re-timed against SCATTER_SPAN rather than re-tuned by feel: the old
+   0.30 / 0.66 were the same intent, measured against a scatter that never
+   completed. */
+const PANEL_FADE_FROM = 0.42;
+const PANEL_FADE_TO = 0.72;
 
 /* LOGO_AT is the reveal progress at which the mark begins to rise — set late,
    after the panel has fully faded in (PANEL_FADE_TO), so it settles onto solid
@@ -226,7 +286,7 @@ const PANEL_FADE_TO = 0.66;
    TITLE_FADE_TO of the whole gesture (dotify + reveal blended, see the loop),
    with a whisper of blur so the type melts into the dot field as it forms and
    starts to scatter. */
-const LOGO_AT = 0.72;
+const LOGO_AT = 0.78;
 const TITLE_FADE_FROM = 0.2;
 const TITLE_FADE_TO = 0.6;
 const TITLE_BLUR_PX = 3;
@@ -476,7 +536,12 @@ function FieldDissolve({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const cols = GRID_COLS;
+    /* Ruling from the CSS width, not the device-pixel width, so the cell keeps
+       its physical size on a retina screen (see CELL_PX). */
+    const cols = Math.max(
+      MIN_COLS,
+      Math.min(MAX_COLS, Math.round(rect.width / CELL_PX)),
+    );
     const cellW = w / cols;
     const rows = Math.max(1, Math.round(h / cellW));
 
@@ -487,7 +552,7 @@ function FieldDissolve({
         const i = row * cols + col;
         fieldArr[i] = fieldLum((col + 0.5) / cols, (row + 0.5) / rows);
         const angle = Math.random() * Math.PI * 2;
-        const dist = (0.4 + Math.random() * 0.6) * SCATTER_DRIFT * w;
+        const dist = (DRIFT_MIN + Math.random() * DRIFT_SPREAD) * SCATTER_DRIFT * w;
         scatter[i * 3] = Math.cos(angle) * dist;
         scatter[i * 3 + 1] = Math.sin(angle) * dist;
         scatter[i * 3 + 2] = Math.random() * STAGGER;
@@ -502,13 +567,25 @@ function FieldDissolve({
      cleared the canvas, so it only ever adds dots on top. Each dot moves toward
      its own scatter offset on its staggered schedule and fades as it drifts, so
      the field breaks apart as a wave rather than a crossfade. Shared by every
-     card: the payoff dots disintegrate exactly like the plain ones. */
-  const drawDots = useCallback((settle: number) => {
+     card: the payoff dots disintegrate exactly like the plain ones.
+
+     `dir` is +1 while the dots are flying out and -1 while they are flying home
+     on hover-out. The comet wake has to lie BEHIND the direction of travel, and
+     on the way home that is the far side of the dot; without the sign a reversed
+     dissolve draws every wake pointing the way it is going.
+
+     Alpha takes the square root of the ease so a dot stays lit through most of
+     its travel instead of spending its light before it has moved far enough to be
+     SEEN moving — see LoFiProjectCard, which carries the same maths and the full
+     note on why this stopped being a light-ground carve-out. */
+  const drawDots = useCallback((settle: number, dir: number) => {
     const scene = sceneRef.current;
     if (!scene) return;
     const { ctx, cols, rows, cellW, cellH, field: fieldArr, scatter } = scene;
 
     ctx.fillStyle = field.dot;
+    ctx.strokeStyle = field.dot;
+    ctx.lineCap = "round";
     const maxRadius = cellW * DOT_MAX;
 
     for (let row = 0; row < rows; row++) {
@@ -525,11 +602,37 @@ function FieldDissolve({
               );
         if (local <= 0) continue;
         const eased = easeOutCubic(local);
-        const x = (col + 0.5) * cellW + scatter[i * 3] * (1 - eased);
-        const y = (row + 0.5) * cellH + scatter[i * 3 + 1] * (1 - eased);
-        ctx.globalAlpha = eased * (0.35 + 0.65 * lum);
+        const dx = scatter[i * 3];
+        const dy = scatter[i * 3 + 1];
+        const x = (col + 0.5) * cellW + dx * (1 - eased);
+        const y = (row + 0.5) * cellH + dy * (1 - eased);
+        const radius = maxRadius * Math.sqrt(lum) * (0.55 + 0.45 * eased);
+        const alpha = Math.sqrt(eased) * (0.35 + 0.65 * lum);
+
+        /* Speed as a fraction of the dot's own drift vector: zero at rest,
+           largest as it accelerates out, so the smear only ever appears on a dot
+           that is actually travelling. */
+        const speed = 3 * (1 - local) ** 2 * TRAIL_SCALE * dir;
+        let tx = dx * speed;
+        let ty = dy * speed;
+        const trail = Math.hypot(tx, ty);
+        const cap = radius * TRAIL_MAX_R;
+        if (trail > cap) {
+          tx = (tx / trail) * cap;
+          ty = (ty / trail) * cap;
+        }
+        if (trail > 1) {
+          ctx.globalAlpha = alpha * TRAIL_ALPHA;
+          ctx.lineWidth = radius * 2 * TRAIL_WIDTH;
+          ctx.beginPath();
+          ctx.moveTo(x - tx, y - ty);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+        }
+
+        ctx.globalAlpha = alpha;
         ctx.beginPath();
-        ctx.arc(x, y, maxRadius * Math.sqrt(lum) * (0.55 + 0.45 * eased), 0, Math.PI * 2);
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -540,11 +643,11 @@ function FieldDissolve({
      fully assembled halftone, settle=0 fully scattered and gone. Used by every
      card — the canvas behaviour is uniform; a payoff card just fades its panel in
      over the cleared ground afterwards (the DOM LogoPayoff layer). */
-  const drawFrame = useCallback((settle: number) => {
+  const drawFrame = useCallback((settle: number, dir: number) => {
     const scene = sceneRef.current;
     if (!scene) return;
     scene.ctx.clearRect(0, 0, scene.w, scene.h);
-    drawDots(settle);
+    drawDots(settle, dir);
   }, [drawDots]);
 
   /* Hover loop: raise dotify to 1 then raise reveal while hovered; on hover-out
@@ -618,8 +721,16 @@ function FieldDissolve({
          value for the same reason as the title fade. */
       if (panelOpacity) panelOpacity.set(smoothstep(PANEL_FADE_FROM, PANEL_FADE_TO, reveal));
 
-      if (dotify > 0 && reveal < 1) {
-        drawFrame(1 - reveal);
+      /* The dot maths runs on its own share of the ramp (SCATTER_SPAN), so the
+         field is fully flown by the time the panel seals. Past that point there
+         is nothing left to draw, so the canvas is cleared and the remaining
+         frames cost nothing. Flying out while hovered, flying home while not —
+         the comet wake follows the direction of travel (see drawDots). */
+      if (dotify > 0 && reveal < SCATTER_SPAN) {
+        drawFrame(
+          1 - Math.min(1, reveal / SCATTER_SPAN),
+          hoveredRef.current ? 1 : -1,
+        );
       } else {
         const scene = sceneRef.current;
         scene?.ctx.clearRect(0, 0, scene.w, scene.h);
@@ -802,7 +913,7 @@ export function ProjectCard({ entry, index }: { entry: WorkEntry; index: number 
      devices only). The cursor reads it off `data-cursor-label` and gates its
      active state on `data-explore-card`; both hooks live on the link, not the
      card frame, so the whole target drives the cursor. */
-  const cursorLabel = isArticle ? "Read on Substack" : "Take a look";
+  const cursorLabel = isArticle ? "Read" : "Open";
 
   /* Card motion. Entry is the house fade-up with a stagger inside budget
      (4 items, 0.05s apart, 200ms each = 350ms total). Hover is the one
@@ -1024,7 +1135,15 @@ export function ComingSoonCard({ index }: { index: number }) {
         ease: motionEase.out,
         delay: shouldReduce ? 0 : Math.min(index * 0.05, 0.15),
       }}
-      className="relative isolate mx-auto flex aspect-[5/7] w-full max-w-sm flex-col items-center overflow-hidden rounded-2xl bg-muted px-6 py-5 text-center shadow-card"
+      /* The hairline is the lo-fi family's edge, and this card takes it because
+         the home grid it sits in is now entirely lo-fi. It used to be the one
+         flat card among luminous ones, where a borderless muted plate read as
+         deliberately quiet; against seven flat grey cards that all declare an
+         edge, the same plate reads as one that lost its border. Paper and rule
+         come from `loFiInk` rather than shell tokens for the same reason the
+         cards do — they are artwork constants (style-rules §3). */
+      className="relative isolate mx-auto flex aspect-[5/7] w-full max-w-md flex-col items-center overflow-hidden rounded-2xl border px-6 py-5 text-center shadow-card"
+      style={{ backgroundColor: loFiInk.paper, borderColor: loFiInk.rule }}
     >
       <div aria-hidden="true" className="min-h-4 basis-0 grow-7" />
       <div className="flex w-full min-h-24 items-start justify-center sm:min-h-28">

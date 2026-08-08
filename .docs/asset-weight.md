@@ -102,9 +102,11 @@ encode. If the "damage" appears there too, the gate is wrong, not the asset.
   "no re-encoding the footage" describes the recipe needing no preprocessing
   step; it is not a prohibition on compression.
 
-`node scripts/shrink-asset.mjs <files…>` runs both gates and refuses to write
-anything that fails. Use it rather than hand-rolling ffmpeg — the gates are
-easy to get subtly wrong, as above.
+`node scripts/shrink-asset.mjs --blend --write <files…>` runs both gates and
+refuses to write anything that fails. Both flags are load-bearing: without
+`--blend` only the SSIM gate runs, and without `--write` the whole invocation
+is a dry run that reports and writes nothing. Use it rather than hand-rolling
+ffmpeg — the gates are easy to get subtly wrong, as above.
 
 ## 4. Never re-encode or downscale a master
 
@@ -146,10 +148,11 @@ Lizzie for a decision, never deleted or degraded.
    do not overwrite it.
 3. Video: re-encode at CRF 23 (§2). Poster: WebP q80, and regenerate it
    whenever the clip changes (`video-blend.md`).
-4. Run the gates via `node scripts/shrink-asset.mjs`. If one fails, get a
-   control before believing it (§3).
+4. Run the gates via `node scripts/shrink-asset.mjs --blend --write`. Drop
+   `--write` first if you want the dry run. If a gate fails, get a control
+   before believing it (§3).
 5. Is the clip blend-composited? Then the open-field gate is mandatory, not
-   optional.
+   optional, and it only runs when you pass `--blend`.
 6. Confirm dimensions and frame count are unchanged, and every `src`/`poster`
    path still resolves.
 7. Look at it — the maths proves the blend invariant holds, not that the work

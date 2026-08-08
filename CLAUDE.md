@@ -4,7 +4,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Portfolio frontend rules
 
-Before creating or changing frontend UI, read and follow `.docs/style-rules.md`. When building or changing an animated home-card cover, also follow `.docs/cover-effects.md`. When placing video that must dissolve into the page background (no visible rectangle), follow `.docs/video-blend.md`. When adding, replacing, or re-encoding any video or image asset, follow `.docs/asset-weight.md` — generated clips arrive at absurd bitrates, and the obvious fixes (downscale, regenerate smaller, batch-compress every image) are the wrong ones.
+Before creating or changing frontend UI, read and follow `.docs/style-rules.md`. When building or changing an animated home-card cover, also follow `.docs/cover-effects.md`. When placing video that must dissolve into the page background (no visible rectangle), follow `.docs/video-blend.md`. When a mobile prototype gallery should demonstrate its own hotspots (the auto-playing touch ring), follow `.docs/auto-demo.md` — it is opt-in per user flow via `Hotspot.demoStep`, and its gating rules (in-view, reduced-motion, permanent handover on first touch) are not optional. When adding, replacing, or re-encoding any video or image asset, follow `.docs/asset-weight.md` — generated clips arrive at absurd bitrates, and the obvious fixes (downscale, regenerate smaller, batch-compress every image) are the wrong ones.
 
 When the user asks for a frontend change, load the `frontend-design` skill (Skill tool: `frontend-design:frontend-design`) before writing or editing any UI code, and apply its guidance alongside the rules below.
 
@@ -24,7 +24,7 @@ Full playbook: `.docs/token-playbook.md`. Standing rules:
 - Never take screenshots in the main conversation to verify UI. Run the `visual-qa` agent (`.claude/agents/visual-qa.md`) only when the user asks for it, not automatically after frontend changes; give it the affected routes and it captures, looks, and returns text findings. (Agents that verify their own work with screenshots, like `fd` and `ms`, still do so.)
 - `fd`'s screenshot loop is conditional, not a fixed ritual: it earns its cost on visual decisions (new/unsettled layout, responsive behaviour, hover, reduced motion) and is wasted on mechanical, deterministic edits (token renames, string swaps, applying a settled rule). If a change is that mechanical it isn't an `fd` task at all — route it to a haiku/sonnet agent. When a genuine `fd` task also happens to be non-visual, tell it in the brief to skip screenshot verification.
 - Any screenshot capture goes through `node scripts/screenshot.mjs` — never write ad-hoc Playwright or headless-Chrome code.
-- Any asset re-encode goes through `node scripts/shrink-asset.mjs` — never hand-roll ffmpeg. It runs the quality and blend gates and refuses to write anything that fails. Its gates are easy to get subtly wrong by hand: every one of them produced a false alarm the first time it ran without a control (`.docs/asset-weight.md` §3).
+- Any asset re-encode goes through `node scripts/shrink-asset.mjs --blend --write` — never hand-roll ffmpeg. It runs the quality and blend gates and refuses to write anything that fails. Both flags matter: without `--blend` only the SSIM gate runs, and without `--write` it is a dry run. Its gates are easy to get subtly wrong by hand: every one of them produced a false alarm the first time it ran without a control (`.docs/asset-weight.md` §3).
 
 ## Work architecture
 

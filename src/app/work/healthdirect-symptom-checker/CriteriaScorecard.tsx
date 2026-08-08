@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion, type Variants } from "motion/react";
 import { BookOpenText, HandHeart, type LucideIcon } from "lucide-react";
+import { CountUp } from "@/app/components/CountUp";
 import { motionDuration, motionEase } from "@/app/lib/motion";
 
 /**
@@ -17,6 +18,10 @@ import { motionDuration, motionEase } from "@/app/lib/motion";
  * bg-secondary mint), the same scale and colour as the outcome scorecard this
  * pairs with, so an icon and a number read as equal-weight marks; bar and
  * result are told apart by copy and context, not size.
+ *
+ * Figures count up from zero every time they scroll into view (CountUp), on
+ * the cell stagger's own cadence; "AA" has no digits and stays static in the
+ * same frame.
  *
  * Rhythm: a fixed top-down cadence, not a bottom-anchored figure. The eyebrow
  * label sits at the top; a deliberate mt-6/8 gap sets the dominant mark apart
@@ -106,7 +111,7 @@ export function CriteriaScorecard({ className }: { className?: string }) {
       variants={v.grid}
       className={`grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-3 ${className ?? ""}`}
     >
-      {criteria.map((c) => (
+      {criteria.map((c, index) => (
         <motion.div
           key={c.label}
           variants={v.cell}
@@ -115,9 +120,11 @@ export function CriteriaScorecard({ className }: { className?: string }) {
           <dt className={eyebrow}>{c.label}</dt>
           {c.kind === "metric" ? (
             <dd className="mt-6 flex flex-col gap-3 md:mt-8">
-              <span className="text-4xl font-semibold leading-[0.95] tracking-[-0.02em] tabular-nums text-leaf break-words md:text-5xl">
-                {c.target}
-              </span>
+              <CountUp
+                value={c.target}
+                delay={shouldReduce ? 0 : index * 0.05}
+                className="text-4xl font-semibold leading-[0.95] tracking-[-0.02em] text-leaf break-words md:text-5xl"
+              />
               <span className="text-sm leading-relaxed text-muted-foreground">
                 {c.detail}
               </span>

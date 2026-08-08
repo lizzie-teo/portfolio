@@ -1,12 +1,16 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type KeyboardEvent,
   type MouseEvent,
+  type ReactNode,
+  type RefObject,
 } from "react";
 import Image from "next/image";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
@@ -15,7 +19,15 @@ import type { Variants } from "motion/react";
 import { cn } from "@/lib/utils";
 import { motionDuration, motionEase } from "../lib/motion";
 import { useIsDesktop } from "../lib/useIsDesktop";
+import {
+  DEMO_DISMISS_ID,
+  demoPressId,
+  useHotspotDemo,
+} from "../lib/useHotspotDemo";
 import { CollapsingLeaf } from "./CollapsingLeaf";
+import { MaskReveal } from "./MaskReveal";
+import { MotionReveal } from "./MotionReveal";
+import { TouchRing } from "./TouchRing";
 import {
   anchorScrollOffset,
   sectionContentGap,
@@ -23,6 +35,34 @@ import {
   sectionLede,
   subsectionHeading,
 } from "./Chapter";
+
+/**
+ * Marks a capture as one state of a before-and-after comparison. The whole
+ * point of the field is that WHICH STATE THIS IS is carried in words, as real
+ * DOM text, on both the desktop stage and the mobile gallery — never by a
+ * colour, a position in a row, or a reading order the reader has to infer. The
+ * two states of a pair sit at the same width (see the `w-[46%]` pair path), so
+ * equal width on equal-width captures is equal zoom and the comparison is fair;
+ * the label is what says which is which.
+ */
+export type CaptureState = {
+  /**
+   * The word above the rule. "Before" and "After" on a shipped pair; on a
+   * single-state exhibit it names the present ("Today"), because there is no
+   * "after" for it to precede.
+   */
+  label: string;
+  /** Six words at most: what this state is, so the frame reads on its own. */
+  summary?: string;
+  /**
+   * Marks the SHIPPED state, and takes the one accent rule in the pair. A solo
+   * exhibit must never set it: the accent means "and here is what shipped", so
+   * spending it on a recommendation that has not shipped would claim delivered
+   * work. The honest answer to a missing "after" is no second frame and no
+   * accent, not an invented mock.
+   */
+  shipped?: boolean;
+};
 
 export type FeatureScreenshot = {
   src: string;
@@ -66,6 +106,18 @@ export type FeatureScreenshot = {
    * hidden capture that is also a hotspot target stays reachable on mobile.
    */
   desktopHidden?: boolean;
+  /**
+   * Marks this capture as one state of a before-and-after comparison, and draws
+   * the state caption above it: the word, a rule, and a one line summary (see
+   * StateCaption). Additive — a capture without it renders exactly as it always
+   * has, so the decisions and usability bands are untouched.
+   *
+   * It reaches BOTH branches deliberately. A comparison whose states are only
+   * told apart on one screen size is not a comparison, and on the mobile
+   * gallery, where the pair is paged rather than set side by side, the label is
+   * the only thing that says which frame is on the phone right now.
+   */
+  state?: CaptureState;
 };
 
 /**
@@ -94,6 +146,18 @@ export type Hotspot = {
   w: number;
   h: number;
   label: string;
+  /**
+   * Position in the auto-demo loop, 1-based. Omit to leave a hotspot
+   * reader-only — the demo never touches it.
+   *
+   * A feature's demo sequence is its hotspots that carry a `demoStep`, sorted
+   * ascending, so the scope is authored per user flow rather than switched on
+   * globally: number only the `popupImage` hotspots for a loop of explainers, or
+   * number the `goToImage` ones too for a full walk through the prototype. A
+   * feature with none behaves exactly as it does today. See useHotspotDemo for
+   * the sequencer, the gating, and the reader-handover rules.
+   */
+  demoStep?: number;
 } & (
   | { popupImage: number; goToImage?: never }
   | { goToImage: number; popupImage?: never }
@@ -105,8 +169,23 @@ export type Feature = {
   label: string;
   /** Optional display line at the top of the expanded card. */
   heading?: string;
-  /** The card body — each string renders as its own paragraph. */
-  body: string[];
+  /**
+   * The card body — each entry renders as its own paragraph. Nodes, not plain
+   * strings, so a paragraph can carry inline emphasis: the usability findings
+   * bold the load-bearing phrase of a claim and lead each evidence paragraph
+   * with a bold verdict ("Too wordy. Three services, each with…"). Keep the
+   * markup inline-level — this is one `<p>`, not a slot for blocks.
+   */
+  body: ReactNode[];
+  /**
+   * Optional qualifier at the foot of the body: what the frames do not show,
+   * stated plainly, so a reader who measures the live pages finds the framing
+   * already admitted. It is a separate field rather than a last `body` entry
+   * because it is not another beat of the argument — it steps down in ink and
+   * size to a figure-legend tone, which a body paragraph cannot do without the
+   * page data reaching in and setting its own colours.
+   */
+  footnote?: ReactNode;
   /** One to three real product screenshots shown for the active feature. */
   images: FeatureScreenshot[];
   /**
@@ -139,6 +218,11 @@ export type FeatureChipsProps = {
    *   Screenshots lift on the hero's soft `shadow-sc-hero` rather than the
    *   near-invisible black `shadow-card`, and all ink switches to light tokens
    *   that clear AA (white on `#10262f` grout is ~16:1).
+   *
+   * The tone reaches the below-lg branch too, via `MOBILE_SKIN` — that stack was
+   * dark-only until the usability findings needed a light band, and its ink,
+   * control pill, focus offsets, and frameless lift all follow the tone now. The
+   * phone frame itself deliberately does not (see MobileSkin).
    */
   tone?: "light" | "dark";
   /**
@@ -151,6 +235,228 @@ export type FeatureChipsProps = {
 
 // The 80ms chip→image offset: the panel morph leads, the screenshots answer.
 const IMAGE_LEAD = 0.08;
+
+/**
+ * The band's tone-dependent classes, in one place.
+ *
+ * The mobile linear stack and its gallery were authored for the dark decisions
+ * band and hardcoded the light-on-leaf tokens, so a `tone="light"` band (the
+ * usability findings) rendered white ink on a mint surface. Every class that
+ * has to answer to the band now resolves here and is threaded down as a
+ * `skin`, so the two tones can never drift apart by half a component.
+ *
+ * Named for the branch it was written for, but no longer confined to it: the
+ * lift under a frameless capture (`frameless`), the state caption on a
+ * comparison frame, and the body footnote are drawn on BOTH branches and read
+ * their classes here, because a treatment that differed between the two
+ * branches of the same band would be a bug, not a design.
+ *
+ * The device is deliberately NOT toned. A phone bezel is a physical object, not
+ * a surface of the page: it stays the deep `bg-grout` shell with the same
+ * screen radius and scroll cue on both bands, so the two galleries read as the
+ * same handset photographed on two backgrounds. Only what the band actually
+ * touches switches — ink, the control pill, focus-ring offsets, and the lift
+ * under a frameless capture.
+ */
+type MobileSkin = {
+  /** Feature title ink. */
+  heading: string;
+  /** Body paragraph ink. */
+  body: string;
+  /** Per-slide caption ink (FeatureScreenshot.note). */
+  note: string;
+  /** The rounded control pill holding the arrows and dots. */
+  controlBar: string;
+  /** Prev / next arrow buttons. */
+  control: string;
+  /** The dot button's focus ring (its offset colour follows the pill). */
+  dotButton: string;
+  /** Active and idle dot fills. */
+  dotActive: string;
+  dotIdle: string;
+  /** The bezel's :has() focus ring, offset onto the band behind it. */
+  bezelRing: string;
+  /** Lift under a capture shown without a device frame. */
+  frameless: string;
+  /** The "Before" / "After" word above a comparison frame (CaptureState). */
+  stateLabel: string;
+  /** Its one line summary, a step quieter than the word above it. */
+  stateSummary: string;
+  /**
+   * The rule under an unshipped state: the band's own hairline, carrying no
+   * accent. A shipped state takes `stateRuleShipped` instead.
+   */
+  stateRuleIdle: string;
+  /**
+   * The rule under the SHIPPED state — the one accent in a pair. It reuses each
+   * tone's established "this is the current one" accent rather than hardcoding
+   * `--primary`, because `--primary` is set for the light reading surface: at
+   * healthdirect's #007f78 on the #183947 leaf it lands at 2.5:1 and fails the
+   * 3:1 bar a non-text indicator has to clear. The dark band's coral
+   * (`--rail-tile-active`, the same accent its active carousel dot uses) reads
+   * at 4.2:1 there. Colour is never the only signal in either case — the word
+   * above the rule says which state this is.
+   */
+  stateRuleShipped: string;
+  /** The body footnote: figure-legend tone, below the body ink. */
+  footnote: string;
+};
+
+const CONTROL_BASE =
+  "flex min-h-11 min-w-11 items-center justify-center rounded-full border outline-none transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-40";
+const DOT_BASE =
+  "flex min-h-11 min-w-6 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
+
+const MOBILE_SKIN: Record<"light" | "dark", MobileSkin> = {
+  // The decisions band: light ink on the leaf, coral for the active dot, the
+  // hero's soft shadow (a black `shadow-card` all but vanishes on the leaf).
+  dark: {
+    heading: "text-leaf-foreground",
+    body: "text-leaf-foreground/85",
+    note: "text-leaf-foreground/70",
+    controlBar: "border-rail-tile-border bg-grout shadow-sc-hero",
+    control: cn(
+      CONTROL_BASE,
+      "border-rail-tile-border bg-transparent text-leaf-foreground hover:bg-rail-tile-hover focus-visible:ring-leaf-foreground focus-visible:ring-offset-grout"
+    ),
+    dotButton: cn(
+      DOT_BASE,
+      "focus-visible:ring-leaf-foreground focus-visible:ring-offset-grout"
+    ),
+    dotActive: "bg-rail-tile-active",
+    dotIdle: "bg-leaf-foreground/25",
+    bezelRing:
+      "has-[:focus-visible]:ring-leaf-foreground has-[:focus-visible]:ring-offset-leaf",
+    // No hairline: these captures are white product UI on the deep leaf, so
+    // luminance already closes their edge and a light border would ring them.
+    frameless: "shadow-sc-hero",
+    // 80% white on the leaf is 9.4:1 — the state word is load-bearing (it is
+    // what tells Before from After), so it sits a step brighter than the note
+    // ink beneath it rather than joining the quiet metadata.
+    stateLabel: "text-leaf-foreground/80",
+    stateSummary: "text-leaf-foreground/70",
+    stateRuleIdle: "bg-leaf-foreground/30",
+    stateRuleShipped: "bg-rail-tile-active",
+    footnote: "text-leaf-foreground/65",
+  },
+  // The findings band: the reading tokens, borrowing ExhibitCarousel's light
+  // control pill so the two evidence galleries in this chapter page with the
+  // same controls. A frameless capture takes a hairline as well as the shadow —
+  // some of these crops are themselves mint panels sitting on the mint band,
+  // and a shadow alone leaves them edgeless.
+  light: {
+    heading: "text-foreground",
+    body: "text-muted-foreground",
+    note: "text-muted-foreground",
+    controlBar: "border-primary/15 bg-card shadow-card",
+    control: cn(
+      CONTROL_BASE,
+      "border-primary/40 bg-card text-primary hover:border-primary/70 hover:bg-primary/10 active:bg-primary/20 focus-visible:ring-focus focus-visible:ring-offset-card"
+    ),
+    dotButton: cn(
+      DOT_BASE,
+      "focus-visible:ring-focus focus-visible:ring-offset-card"
+    ),
+    dotActive: "bg-primary",
+    dotIdle: "bg-primary/25",
+    bezelRing:
+      "has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-secondary",
+    frameless: "border border-border shadow-card",
+    // On the light band the reading tokens already carry the §3 caption role,
+    // and `--primary` is the accent this surface was tuned for.
+    stateLabel: "text-foreground",
+    stateSummary: "text-muted-foreground",
+    stateRuleIdle: "bg-border",
+    stateRuleShipped: "bg-primary",
+    footnote: "text-muted-foreground",
+  },
+};
+
+/**
+ * The state marker over a comparison frame: the word, a rule, and a one line
+ * summary. Drawn by BOTH branches from the same component, so "Before" looks
+ * and reads the same whether the pair is set side by side on the desktop stage
+ * or paged through one phone below `lg`.
+ *
+ * Above the frame, not below it, and that is the load-bearing placement
+ * decision: the desktop stage top-loads its captures and hard-clips whatever
+ * runs past the band's bottom edge, so anything under an image is the first
+ * thing lost. A label the reader cannot see is worse than no comparison at all.
+ *
+ * The word is the §3 caption/kicker eyebrow, not `minorHeading`. In the tiled
+ * exhibit this content came from (`ResolvedFindings`) it was a genuine `h4`,
+ * because an `h3` named the pair directly above it. Here nothing does: the
+ * exhibit is titled by a chip, which is a button, and the desktop stage sits
+ * ABOVE the chip list in the DOM. An `h4` there would follow the section's `h2`
+ * with no `h3` between them and break the §12 outline. It is a caption by role
+ * now, so it takes the caption treatment — which §12 asks for explicitly when a
+ * label is not really titling a block.
+ *
+ * The rule is the second signal, never the first: `stateRuleShipped` marks the
+ * state that shipped, `stateRuleIdle` everything else, and a solo exhibit takes
+ * the idle rule on its only frame. Colour alone never says which is which.
+ */
+function StateCaption({
+  state,
+  skin,
+  as: Tag = "div",
+  className,
+  reserveSummary = false,
+}: {
+  state: CaptureState;
+  skin: MobileSkin;
+  /**
+   * `figcaption` on the desktop stage, where the caption sits inside the
+   * capture's own `<figure>`; the default `div` on the mobile gallery, where the
+   * phone is a persistent frame the slides page through rather than a figure per
+   * capture, and a stray figcaption would have no figure to caption.
+   */
+  as?: "figcaption" | "div";
+  className?: string;
+  /**
+   * Draw the summary line even where this state has none, so a gallery that
+   * mixes captioned and uncaptioned captures keeps one caption height and the
+   * frame below it never jumps as slides page.
+   */
+  reserveSummary?: boolean;
+}) {
+  return (
+    <Tag className={cn("mb-3", className)}>
+      <p
+        className={cn(
+          "text-xs font-medium uppercase tracking-[0.18em]",
+          skin.stateLabel
+        )}
+      >
+        {state.label}
+      </p>
+      {/* A fixed 2px track holds both frames' captions on one baseline while
+          the lines themselves differ in weight. */}
+      <span aria-hidden="true" className="mt-2 block h-0.5">
+        <span
+          className={cn(
+            "block w-full rounded-full",
+            state.shipped
+              ? cn("h-0.5", skin.stateRuleShipped)
+              : cn("h-px", skin.stateRuleIdle)
+          )}
+        />
+      </span>
+      {state.summary || reserveSummary ? (
+        // min-h reserves one line on every frame of a pair, so two summaries of
+        // different length still start their captures' images on the same line.
+        <p
+          className={cn(
+            "mt-2 min-h-[1lh] text-xs leading-relaxed",
+            skin.stateSummary
+          )}
+        >
+          {state.summary}
+        </p>
+      ) : null}
+    </Tag>
+  );
+}
 
 // Morph corner radii, in px, materialised for Motion's layout animation (it
 // interpolates numbers, not CSS-var strings, and only scale-corrects a radius
@@ -170,6 +476,7 @@ export function FeatureChips({
   const shouldReduce = useReducedMotion();
   const reactId = useId();
   const dark = tone === "dark";
+  const skin = MOBILE_SKIN[dark ? "dark" : "light"];
   // The desktop stage is a CollapsingLeaf (sticky + useScroll), which cannot be
   // disabled by CSS — so the mobile/desktop split is a JS decision here, not a
   // `lg:` class. Below lg we render a calm linear stack instead (see the branch
@@ -244,9 +551,25 @@ export function FeatureChips({
   // to scroll (and so nothing is clipped on the right); the swipe gallery uses
   // fixed bounded-media widths (the §5 media-frame exception).
   const widthClass = (image: FeatureScreenshot) => {
-    if (count === 1) return "w-full";
-    // Explicit fixed width wins; applied inline on the figure (below).
+    // Explicit fixed width wins; applied inline on the figure (below). Checked
+    // before count === 1 because a lone capture can be a pinned phone shot
+    // (Accessible) as well as a full-stage composite — w-full would blow a
+    // portrait phone up to the whole stage.
     if (image.displayWidth) return "";
+    // A comparison capture always takes the pair track, and never a fixed pixel
+    // width. Two reasons, and they are the same reason twice:
+    //  - A pair must FIT. Two pinned 300px captures plus their gap overflow the
+    //    stage at lg, so the "after" is pushed off the edge and has to be swiped
+    //    to. A comparison you have to swipe to complete is not a comparison; the
+    //    percentage track fits at every width the stage mounts at.
+    //  - A solo comparison keeps the same track rather than filling the stage.
+    //    Equal width is equal zoom, which is what makes the exhibit fair, and it
+    //    would be odd for the one unshipped recommendation to be the biggest
+    //    picture in the section purely because nothing shipped beside it.
+    // Guarded at two, which is what a before-and-after is; a longer group of
+    // states would fall through to the sizing paths below.
+    if (image.state && count <= 2) return "w-[46%]";
+    if (count === 1) return "w-full";
     if (fitRow) {
       // Four portrait phone shots. Below 2xl the desktop stage isn't wide
       // enough to carry four across legibly once the chip column takes its
@@ -273,8 +596,12 @@ export function FeatureChips({
 
   // next/image sizes hints matched to the widthClass above.
   const imageSizes = (image: FeatureScreenshot) => {
-    if (count === 1) return "(min-width: 1024px) 60vw, 92vw";
     if (image.displayWidth) return `${image.displayWidth}px`;
+    // Matches the pair track above, solo or paired — the stage only mounts from
+    // lg, so the pair sizing is the only hint that ever applies.
+    if (image.state && count <= 2)
+      return "(min-width: 1024px) 28vw, (min-width: 768px) 34vw, 44vw";
+    if (count === 1) return "(min-width: 1024px) 60vw, 92vw";
     if (fitRow) {
       // The stage only mounts from lg up, and columns hold at 240px through the
       // swipe range, shrinking no lower than ~215px once they fit at 2xl.
@@ -379,18 +706,27 @@ export function FeatureChips({
       >
         {hasIntro ? (
           <div className="max-w-prose">
+            {/* The word slip, like every other top-level section title on a
+                case-study page — this band is a section in the stack, not a
+                sub-part of one, and it is the gesture that marks a heading as a
+                heading (see ArtifactSection). The lede trails it on the
+                standard fade-up. */}
             {heading ? (
-              <h2
+              <MaskReveal
+                as="h2"
+                mode="word"
+                duration="fast"
                 id={`${reactId}-heading`}
                 className={cn(sectionHeading, dark && "text-leaf-foreground")}
-              >
-                {heading}
-              </h2>
+                text={heading}
+              />
             ) : null}
             {lede ? (
-              <p className={cn(sectionLede, dark && "text-leaf-foreground")}>
-                {lede}
-              </p>
+              <MotionReveal delay={0.05}>
+                <p className={cn(sectionLede, dark && "text-leaf-foreground")}>
+                  {lede}
+                </p>
+              </MotionReveal>
             ) : null}
           </div>
         ) : null}
@@ -495,16 +831,34 @@ export function FeatureChips({
                             : undefined
                         }
                       >
-                        {/* Shadow and radius on the same element so the soft lift
-                            follows the rounded-xs screenshot with no square halo
-                            (CLAUDE.md screenshot carve-out). On the dark leaf the
-                            black shadow-card all but vanishes, so the captures
-                            lift on the hero's soft shadow-sc-hero and separate
-                            from the leaf by luminance, exactly as the hero does. */}
+                        {/* The state marker on a comparison capture, above the
+                            frame it names. Above, because this stage top-loads
+                            its captures and hard-clips whatever runs past the
+                            band's bottom edge: anything set under an image here
+                            is the first thing lost, and a label the reader
+                            cannot see is worse than no comparison at all. */}
+                        {image.state ? (
+                          <StateCaption
+                            as="figcaption"
+                            state={image.state}
+                            skin={skin}
+                          />
+                        ) : null}
+                        {/* Shadow, hairline, and radius on the same element so
+                            the lift follows the rounded-xs screenshot with no
+                            square halo (CLAUDE.md screenshot carve-out). On the
+                            dark leaf the black shadow-card all but vanishes, so
+                            the captures lift on the hero's soft shadow-sc-hero
+                            and separate from the leaf by luminance, exactly as
+                            the hero does. On the light band the shadow is real
+                            but not always enough: a capture can be a mint panel
+                            on the mint band (the Service Finder crop), so the
+                            hairline is what closes its edge. Same treatment as
+                            the mobile branch's frameless slide. */}
                         <div
                           className={cn(
                             "w-full overflow-hidden rounded-xs",
-                            dark ? "shadow-sc-hero" : "shadow-card"
+                            skin.frameless
                           )}
                         >
                           <Image
@@ -706,6 +1060,19 @@ export function FeatureChips({
                             {paragraph}
                           </p>
                         ))}
+                        {/* The qualifier, a step down in size and ink from the
+                            argument it closes — a figure legend, not another
+                            beat of the claim. */}
+                        {feature.footnote ? (
+                          <p
+                            className={cn(
+                              "mt-4 text-xs leading-relaxed",
+                              skin.footnote
+                            )}
+                          >
+                            {feature.footnote}
+                          </p>
+                        ) : null}
                       </motion.div>
                     ) : null}
                   </AnimatePresence>
@@ -723,7 +1090,11 @@ export function FeatureChips({
           // which have no working small-screen translation.
           <div className={cn("space-y-12", hasIntro && sectionContentGap)}>
             {features.map((feature) => (
-              <MobileFeatureSection key={feature.id} feature={feature} />
+              <MobileFeatureSection
+                key={feature.id}
+                feature={feature}
+                skin={skin}
+              />
             ))}
           </div>
         )}
@@ -734,30 +1105,40 @@ export function FeatureChips({
 
 type MobileFeatureSectionProps = {
   feature: Feature;
+  skin: MobileSkin;
 };
 
-// One decision, stacked for reading: the label as an h3 (these features carry
+// One feature, stacked for reading: the label as an h3 (these features carry
 // no separate `heading`, so the label is the subsection title), the body
-// paragraphs at the accordion's dark-card measure, then the swipe gallery.
-function MobileFeatureSection({ feature }: MobileFeatureSectionProps) {
+// paragraphs at the accordion's card measure, then the swipe gallery.
+function MobileFeatureSection({ feature, skin }: MobileFeatureSectionProps) {
   const title = feature.heading ?? feature.label;
   return (
     <div>
-      <h3 className={cn(subsectionHeading, "text-leaf-foreground")}>{title}</h3>
+      <h3 className={cn(subsectionHeading, skin.heading)}>{title}</h3>
       {feature.body.map((paragraph, index) => (
         <p
           key={index}
-          className={cn(
-            "mt-3 max-w-prose text-sm leading-relaxed text-leaf-foreground/85"
-          )}
+          className={cn("mt-3 max-w-prose text-sm leading-relaxed", skin.body)}
         >
           {paragraph}
         </p>
       ))}
+      {feature.footnote ? (
+        <p
+          className={cn(
+            "mt-4 max-w-prose text-xs leading-relaxed",
+            skin.footnote
+          )}
+        >
+          {feature.footnote}
+        </p>
+      ) : null}
       <MobileGallery
         images={feature.images}
         hotspots={feature.hotspots}
         galleryLabel={title}
+        skin={skin}
       />
     </div>
   );
@@ -769,10 +1150,16 @@ function MobileFeatureSection({ feature }: MobileFeatureSectionProps) {
 // popupImage kind — goToImage hotspots page the carousel and open nothing.
 type ResolvedHotspot = Hotspot & { popup?: FeatureScreenshot };
 
+// Module-level so a feature with no auto-demo hands the sequencer the SAME empty
+// array on every render rather than a fresh one — the hook holds this list for
+// the life of a loop.
+const EMPTY_DEMO_STEPS: ResolvedHotspot[] = [];
+
 type MobileGalleryProps = {
   images: FeatureScreenshot[];
   hotspots?: Hotspot[];
   galleryLabel: string;
+  skin: MobileSkin;
 };
 
 // The mobile design gallery, built to match the usability-findings carousel
@@ -801,10 +1188,23 @@ type MobileGalleryProps = {
 // captures are full-page scrolls up to ~1:14.5, so those screens scroll a long
 // way by design — that is what showing the whole screen means here.
 // Single-shot features render just the slide — no control bar.
-function MobileGallery({ images, hotspots, galleryLabel }: MobileGalleryProps) {
+function MobileGallery({
+  images,
+  hotspots,
+  galleryLabel,
+  skin,
+}: MobileGalleryProps) {
   const shouldReduce = useReducedMotion();
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(0);
+  // The gallery root, handed to the demo as both its in-view gate and the
+  // surface it listens on for the reader taking over.
+  const galleryRef = useRef<HTMLElement | null>(null);
+  // True only while the auto-demo is driving. It exists to silence the stage's
+  // live region: the demo changes slides and opens popups on its own, and a
+  // screen reader being told about each of those is noise the reader did not
+  // ask for. The instant the reader takes over, announcements come back.
+  const [demoActive, setDemoActive] = useState(false);
 
   // Every image is a carousel slide — hotspots are purely additive overlays, so
   // a capture can be both a standalone page AND a hotspot's popup target. Each
@@ -843,11 +1243,6 @@ function MobileGallery({ images, hotspots, galleryLabel }: MobileGalleryProps) {
     exit: (dir: number) => ({ opacity: 0, x: dir * -slideOffset }),
   };
 
-  // Dark restyle of FindingsCarousel's control button: a wireframe tile on the
-  // grout pill, light ink, coral-free — the coral is reserved for the dot.
-  const controlClassName =
-    "flex min-h-11 min-w-11 items-center justify-center rounded-full border border-rail-tile-border bg-transparent text-leaf-foreground outline-none transition-colors hover:bg-rail-tile-hover focus-visible:ring-2 focus-visible:ring-leaf-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-grout disabled:pointer-events-none disabled:opacity-40";
-
   const currentSlide = slides[index] ?? slides[0];
   const current = currentSlide.image;
   // Hotspots that annotate the visible primary screen, each carrying its popup
@@ -879,16 +1274,61 @@ function MobileGallery({ images, hotspots, galleryLabel }: MobileGalleryProps) {
     ? () => goTo(modalSource.onImage, -1)
     : undefined;
 
+  // The auto-demo sequence: the feature's hotspots that opted in, in step order,
+  // each carrying its popup capture like any other resolved hotspot. Memoised on
+  // the authored arrays (module constants, so stable) because the sequencer
+  // holds this list for the life of a loop — rebuilding it every render would
+  // hand the running loop a new array on every ring frame.
+  const demoSteps: ResolvedHotspot[] = useMemo(
+    () =>
+      (hotspots ?? [])
+        .filter((hotspot) => hotspot.demoStep !== undefined)
+        .sort((a, b) => (a.demoStep ?? 0) - (b.demoStep ?? 0))
+        .map((hotspot) => ({
+          ...hotspot,
+          popup:
+            hotspot.popupImage !== undefined
+              ? images[hotspot.popupImage]
+              : undefined,
+        })),
+    [hotspots, images]
+  );
+
   return (
     <section
+      ref={galleryRef}
       aria-roledescription="carousel"
       aria-label={`${galleryLabel} designs`}
       onKeyDown={handleKeyDown}
       className="mt-6"
     >
-      {/* min-height holds a floor for short slides; tall full-page captures
-          grow past it to their natural height. */}
-      <div aria-live="polite" aria-atomic="true" className="min-h-64">
+      {/* The stage floor, and the reason the control bar below never moves as
+          you page. It matches the framed phone's own height (its `h-[60svh]
+          max-h-[32rem]` screen plus the bezel's 8px inset on each edge), so a
+          gallery that mixes a tall framed screen with a short frameless
+          fragment — the usability findings page a whole screen, then a 2.3:1
+          banner crop — keeps one box for every slide instead of collapsing by
+          200px and dragging the arrows up with it. Short slides centre in the
+          box; taller captures grow past it to their natural height. */}
+      <div
+        aria-live={demoActive ? "off" : "polite"}
+        aria-atomic="true"
+        className="flex min-h-[min(60svh,33rem)] flex-col justify-center"
+      >
+        {/* Which state is on the phone right now. Here the pair is paged rather
+            than set side by side, so this label is the ONLY thing saying which
+            frame you are looking at — it is inside the live region so paging
+            announces the state with the slide. The row is drawn on every slide
+            of a gallery that uses states, so the phone below never shifts as
+            you page between a captioned frame and an uncaptioned one. */}
+        {images.some((image) => image.state) ? (
+          <StateCaption
+            state={current.state ?? { label: "" }}
+            skin={skin}
+            reserveSummary
+            className="mx-auto w-full max-w-[19rem] px-2"
+          />
+        ) : null}
         {allMobile ? (
           // Persistent-phone model: the bezel, screen, fixed screen height, and
           // scroll cue stay put while the carousel pages the SCREEN CONTENT
@@ -897,12 +1337,17 @@ function MobileGallery({ images, hotspots, galleryLabel }: MobileGalleryProps) {
           // phone never crossfades or resizes as you page.
           <PersistentPhoneFrame
             image={current}
+            imageIndex={currentSlide.imageIndex}
             hotspots={currentHotspots}
+            demoSteps={demoSteps}
+            galleryRef={galleryRef}
+            onDemoActiveChange={setDemoActive}
             onNavigate={navigateToImage}
             onDismissSlide={dismissSlide}
             direction={direction}
             slideVariants={slideVariants}
             shouldReduce={shouldReduce}
+            skin={skin}
           />
         ) : (
           // Mixed feature ("Keeping momentum"): its desktop capture can't live in
@@ -928,9 +1373,15 @@ function MobileGallery({ images, hotspots, galleryLabel }: MobileGalleryProps) {
                   image={current}
                   hotspots={currentHotspots}
                   onNavigate={navigateToImage}
+                  skin={skin}
                 />
               ) : (
-                <div className="mx-auto w-full overflow-hidden rounded-xs shadow-sc-hero">
+                <div
+                  className={cn(
+                    "mx-auto w-full overflow-hidden rounded-xs",
+                    skin.frameless
+                  )}
+                >
                   <Image
                     src={current.src}
                     alt={current.alt}
@@ -953,7 +1404,12 @@ function MobileGallery({ images, hotspots, galleryLabel }: MobileGalleryProps) {
             lines (no note runs longer), so the control bar below never shifts
             as slides page. */}
         {images.some((image) => image.note) ? (
-          <p className="mx-auto mt-3 min-h-[3lh] max-w-[19rem] px-2 text-left text-xs leading-relaxed text-leaf-foreground/70">
+          <p
+            className={cn(
+              "mx-auto mt-3 min-h-[3lh] max-w-[19rem] px-2 text-left text-xs leading-relaxed",
+              skin.note
+            )}
+          >
             {current.note}
           </p>
         ) : null}
@@ -961,13 +1417,18 @@ function MobileGallery({ images, hotspots, galleryLabel }: MobileGalleryProps) {
 
       {multi ? (
         <div className="mt-4 flex justify-center">
-          <div className="flex max-w-full items-center gap-2 rounded-full border border-rail-tile-border bg-grout p-1.5 shadow-sc-hero">
+          <div
+            className={cn(
+              "flex max-w-full items-center gap-2 rounded-full border p-1.5",
+              skin.controlBar
+            )}
+          >
             <button
               type="button"
               aria-label="Previous design"
               disabled={atStart}
               onClick={() => goTo(index - 1, -1)}
-              className={controlClassName}
+              className={skin.control}
             >
               <ArrowLeftIcon aria-hidden="true" className="size-4" />
             </button>
@@ -983,14 +1444,15 @@ function MobileGallery({ images, hotspots, galleryLabel }: MobileGalleryProps) {
                       onClick={() =>
                         goTo(dotIndex, dotIndex > index ? 1 : -1)
                       }
-                      className="flex min-h-11 min-w-6 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-leaf-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-grout"
+                      className={skin.dotButton}
                     >
                       <span
-                        className={`h-1.5 rounded-full transition-all ${
+                        className={cn(
+                          "h-1.5 rounded-full transition-all",
                           isActive
-                            ? "w-5 bg-rail-tile-active"
-                            : "w-1.5 bg-leaf-foreground/25"
-                        }`}
+                            ? `w-5 ${skin.dotActive}`
+                            : `w-1.5 ${skin.dotIdle}`
+                        )}
                       />
                     </button>
                   </li>
@@ -1002,7 +1464,7 @@ function MobileGallery({ images, hotspots, galleryLabel }: MobileGalleryProps) {
               aria-label="Next design"
               disabled={atEnd}
               onClick={() => goTo(index + 1, 1)}
-              className={controlClassName}
+              className={skin.control}
             >
               <ArrowRightIcon aria-hidden="true" className="size-4" />
             </button>
@@ -1025,6 +1487,7 @@ type PhoneFrameProps = {
   hotspots?: ResolvedHotspot[];
   /** Pages the carousel to an images index — the goToImage hotspot action. */
   onNavigate?: (imageIndex: number) => void;
+  skin: MobileSkin;
 };
 
 // Keydown inside a bounded screen scroll: arrows scroll the capture and never
@@ -1058,14 +1521,39 @@ const SCREEN_RADIUS = "rounded-xl";
 const SCREEN_RADIUS_B = "rounded-b-xl";
 
 // Shared tap affordance for every in-frame prototype hotspot: invisible at rest
-// (nothing drawn over the clean capture), a translucent wash of the case study's
+// (nothing drawn over the clean capture), then a soft GLOW of the case study's
 // brand action green (--primary #007f78) on hover, press, and keyboard focus.
-// The fill IS the cue and doubles as the focus-visible indicator — no ring,
-// border, or outline. Bumped from the first pass (/25·/30) so the wash is clearly
-// perceptible over the light product screenshots. No animation beyond the colour
-// transition, so reduced motion needs no special case.
+// The glow IS the cue and doubles as the focus-visible indicator — no ring,
+// border, or outline.
+//
+// A glow rather than a fill. Earlier passes washed the whole box in flat
+// primary (/35·/45), which read as a green rectangle stamped on the product
+// screenshot — it fought the capture instead of pointing into it, and the
+// harder it was pushed for legibility the uglier it got. The bloom does the
+// same job by a different route: an inset edge-light hugs the trigger's shape
+// and a soft outer halo lifts it off the page, so the underlying UI stays
+// readable THROUGH the highlight. The faint tint (/8) only stops the middle of
+// a large hotspot reading as a hole. Perceptible over light product captures
+// and over the dark grout of a popup, because a halo carries on both where a
+// mid-opacity fill washes out on one of them.
+//
+// Box-shadow and background only: no transform, no position change, nothing
+// that moves. So reduced motion still needs no special case.
+//
+// `data-demo-press` is the auto-demo's finger (useHotspotDemo): it lights the
+// same glow at the same strength as a real press, so a hotspot pressed by the
+// ring and one pressed by a thumb are indistinguishable. That is the point —
+// the demo is showing the reader what their own tap will do, so it must not
+// have a private visual language.
+// Written out per state rather than composed from a shared fragment: Tailwind
+// scans source text, so a variant built by interpolation is a class that never
+// gets generated.
 const HOTSPOT_AFFORDANCE =
-  "bg-transparent outline-none transition-colors hover:bg-primary/35 focus-visible:bg-primary/45 active:bg-primary/45";
+  "bg-transparent shadow-primary/0 outline-none transition-[background-color,box-shadow] duration-200 ease-out " +
+  "hover:bg-primary/8 hover:shadow-[0_0_14px_3px,inset_0_0_10px_1px] hover:shadow-primary/40 " +
+  "focus-visible:bg-primary/8 focus-visible:shadow-[0_0_14px_3px,inset_0_0_10px_1px] focus-visible:shadow-primary/40 " +
+  "active:bg-primary/8 active:shadow-[0_0_14px_3px,inset_0_0_10px_1px] active:shadow-primary/40 " +
+  "data-[demo-press=true]:bg-primary/8 data-[demo-press=true]:shadow-[0_0_14px_3px,inset_0_0_10px_1px] data-[demo-press=true]:shadow-primary/40";
 
 // The modal dismiss bounds, shared by PhonePopup's close controls and the
 // carousel's modal-slide dismiss hotspots (PersistentPhoneFrame), so a modal
@@ -1103,7 +1591,12 @@ const OK_HOTSPOT = { left: "3%", top: "91.5%", width: "94%", height: "7.5%" };
 // revealing a green wash on hover/press/focus, and tapping one slides a detail
 // popup up over the screen — the popup capture itself. Closing returns to the
 // exact same scroll position underneath; the carousel index is never touched.
-function PhoneFrame({ image, hotspots = [], onNavigate }: PhoneFrameProps) {
+function PhoneFrame({
+  image,
+  hotspots = [],
+  onNavigate,
+  skin,
+}: PhoneFrameProps) {
   const [openHotspot, setOpenHotspot] = useState<ResolvedHotspot | null>(null);
   // The trigger element, so focus can return to it precisely on close.
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -1130,7 +1623,11 @@ function PhoneFrame({ image, hotspots = [], onNavigate }: PhoneFrameProps) {
     <div className="mx-auto w-full max-w-[19rem] px-2">
       <div
         className={cn(
-          "bg-grout p-2 shadow-sc-hero outline-none has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-leaf-foreground has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-leaf",
+          // The bezel itself does not follow the band — a handset is the same
+          // object on either tone (see MobileSkin). Only its focus ring, which
+          // lands on the band behind the device, is toned.
+          "bg-grout p-2 shadow-sc-hero outline-none has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-offset-2",
+          skin.bezelRing,
           BEZEL_RADIUS
         )}
       >
@@ -1195,7 +1692,18 @@ function PhoneFrame({ image, hotspots = [], onNavigate }: PhoneFrameProps) {
 
 type PersistentPhoneFrameProps = {
   image: FeatureScreenshot;
+  /** The images index of the current slide, so the demo knows where it is. */
+  imageIndex: number;
   hotspots?: ResolvedHotspot[];
+  /**
+   * The feature's auto-demo sequence in step order (see Hotspot.demoStep).
+   * Empty for every feature that has not opted in, which makes the demo inert.
+   */
+  demoSteps?: ResolvedHotspot[];
+  /** The gallery root: the demo's in-view gate and handover surface. */
+  galleryRef: RefObject<HTMLElement | null>;
+  /** Reports whether the demo is driving, so the stage can silence aria-live. */
+  onDemoActiveChange?: (active: boolean) => void;
   /** Pages the carousel to an images index — the goToImage hotspot action. */
   onNavigate?: (imageIndex: number) => void;
   /**
@@ -1208,6 +1716,7 @@ type PersistentPhoneFrameProps = {
   direction: number;
   slideVariants: Variants;
   shouldReduce: boolean | null;
+  skin: MobileSkin;
 };
 
 // The persistent-phone gallery device. Where PhoneFrame is one static screen,
@@ -1227,16 +1736,27 @@ type PersistentPhoneFrameProps = {
 // mixed "momentum" feature keeps the per-slide PhoneFrame model.
 function PersistentPhoneFrame({
   image,
+  imageIndex,
   hotspots = [],
+  demoSteps = EMPTY_DEMO_STEPS,
+  galleryRef,
+  onDemoActiveChange,
   onNavigate,
   onDismissSlide,
   direction,
   slideVariants,
   shouldReduce,
+  skin,
 }: PersistentPhoneFrameProps) {
   const [openHotspot, setOpenHotspot] = useState<ResolvedHotspot | null>(null);
   // The trigger element, so focus can return to it precisely on close.
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  // Whether the popup currently on screen was opened by the demo rather than by
+  // the reader. It decides two things a demo-opened popup must not do: pull
+  // focus into itself on open (which would scroll the page to the band and trap
+  // Tab around a dialog nobody asked for), and hand focus back to a "trigger"
+  // the reader never touched on close.
+  const [popupFromDemo, setPopupFromDemo] = useState(false);
 
   // Paging to a new screen dismisses any open popup: the new screen arrives
   // clean at the top, so a popup from the previous slide must not linger. This
@@ -1248,6 +1768,7 @@ function PersistentPhoneFrame({
   if (image.src !== prevSrc) {
     setPrevSrc(image.src);
     if (openHotspot) setOpenHotspot(null);
+    if (popupFromDemo) setPopupFromDemo(false);
   }
 
   const openPopup = (
@@ -1256,13 +1777,48 @@ function PersistentPhoneFrame({
   ) => {
     if (!hotspot.popup) return;
     triggerRef.current = event.currentTarget;
+    setPopupFromDemo(false);
     setOpenHotspot(hotspot);
   };
 
   const closePopup = () => {
     setOpenHotspot(null);
-    triggerRef.current?.focus();
+    // Only restore focus to a trigger the reader actually pressed. A demo-opened
+    // popup was never focused, and its "trigger" is whatever the reader last
+    // touched — sending focus there on close would be a jump out of nowhere.
+    if (!popupFromDemo) triggerRef.current?.focus();
+    setPopupFromDemo(false);
   };
+
+  // The demo's own open/close: identical state changes, minus focus. Stable
+  // identities so the running sequence never sees them change under it.
+  const demoOpenPopup = useCallback((hotspot: ResolvedHotspot) => {
+    if (!hotspot.popup) return;
+    setPopupFromDemo(true);
+    setOpenHotspot(hotspot);
+  }, []);
+  const demoClosePopup = useCallback(() => {
+    setOpenHotspot(null);
+    setPopupFromDemo(false);
+  }, []);
+  const demoNavigate = useCallback(
+    (target: number) => onNavigate?.(target),
+    [onNavigate]
+  );
+
+  const demo = useHotspotDemo<ResolvedHotspot>({
+    steps: demoSteps,
+    imageIndex,
+    galleryRef,
+    openPopup: demoOpenPopup,
+    closePopup: demoClosePopup,
+    navigate: demoNavigate,
+    shouldReduce,
+  });
+
+  useEffect(() => {
+    onDemoActiveChange?.(demo.active);
+  }, [demo.active, onDemoActiveChange]);
 
   return (
     // Same device shell as PhoneFrame: small side inset, capped phone-ish width,
@@ -1271,7 +1827,11 @@ function PersistentPhoneFrame({
     <div className="mx-auto w-full max-w-[19rem] px-2">
       <div
         className={cn(
-          "bg-grout p-2 shadow-sc-hero outline-none has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-leaf-foreground has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-leaf",
+          // The bezel itself does not follow the band — a handset is the same
+          // object on either tone (see MobileSkin). Only its focus ring, which
+          // lands on the band behind the device, is toned.
+          "bg-grout p-2 shadow-sc-hero outline-none has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-offset-2",
+          skin.bezelRing,
           BEZEL_RADIUS
         )}
       >
@@ -1309,6 +1869,7 @@ function PersistentPhoneFrame({
                   height, so hotspot percentages resolve against the capture and
                   the affordances scroll with it. */}
               <div
+                ref={demo.setScrollEl}
                 tabIndex={0}
                 role="group"
                 aria-label={`Scrollable preview: ${image.alt}`}
@@ -1334,6 +1895,7 @@ function PersistentPhoneFrame({
                       hotspot={hotspot}
                       onOpen={openPopup}
                       onNavigate={onNavigate}
+                      demoPressed={demo.pressTarget === demoPressId(hotspot)}
                     />
                   ))}
                   {/* Modal slide reached via the arrows: the capture's own X
@@ -1384,7 +1946,30 @@ function PersistentPhoneFrame({
 
           <AnimatePresence>
             {openHotspot ? (
-              <PhonePopup hotspot={openHotspot} onClose={closePopup} />
+              <PhonePopup
+                hotspot={openHotspot}
+                onClose={closePopup}
+                autoFocus={!popupFromDemo}
+                demoPressedDismiss={demo.pressTarget === DEMO_DISMISS_ID}
+              />
+            ) : null}
+          </AnimatePresence>
+
+          {/* The auto-demo's finger. Last child and z-20, so it rides above both
+              the capture and an open popup — a pointer that hides behind the
+              surface it is pressing explains nothing. Clipped by the screen's
+              own overflow, so it enters and leaves under the bezel. Null under
+              reduced motion, on a feature with no demo, and the moment the
+              reader takes over. */}
+          <AnimatePresence>
+            {demo.ring ? (
+              <TouchRing
+                x={demo.ring.x}
+                y={demo.ring.y}
+                from={demo.ring.from}
+                pressed={demo.ring.pressed}
+                pressKey={demo.ring.pressKey}
+              />
             ) : null}
           </AnimatePresence>
         </div>
@@ -1397,6 +1982,8 @@ type HotspotProps = {
   hotspot: ResolvedHotspot;
   onOpen: (hotspot: ResolvedHotspot, event: MouseEvent<HTMLButtonElement>) => void;
   onNavigate?: (imageIndex: number) => void;
+  /** The auto-demo's finger is on this one right now. */
+  demoPressed?: boolean;
 };
 
 // The tappable affordance over a trigger element. Invisible at rest — nothing is
@@ -1405,12 +1992,13 @@ type HotspotProps = {
 // popup's close-hotspot all read as one consistent affordance. A popupImage
 // hotspot opens the in-frame popup (and announces itself as a dialog trigger);
 // a goToImage hotspot pages the carousel instead.
-function Hotspot({ hotspot, onOpen, onNavigate }: HotspotProps) {
+function Hotspot({ hotspot, onOpen, onNavigate, demoPressed }: HotspotProps) {
   return (
     <button
       type="button"
       aria-haspopup={hotspot.goToImage === undefined ? "dialog" : undefined}
       aria-label={hotspot.label}
+      data-demo-press={demoPressed ? "true" : undefined}
       onClick={(event) => {
         if (hotspot.goToImage !== undefined) onNavigate?.(hotspot.goToImage);
         else onOpen(hotspot, event);
@@ -1429,6 +2017,17 @@ function Hotspot({ hotspot, onOpen, onNavigate }: HotspotProps) {
 type PhonePopupProps = {
   hotspot: ResolvedHotspot;
   onClose: () => void;
+  /**
+   * False for a popup the auto-demo opened. A dialog that focuses itself is
+   * right when the reader asked for it and wrong when nobody did: it would drag
+   * focus (and the page scroll) into a band the reader may be nowhere near, and
+   * trap Tab inside it. A demo-opened popup therefore stays visual — no
+   * autofocus, no trap — while Escape and both dismiss controls still work, and
+   * a reader-opened popup keeps the full dialog behaviour unchanged.
+   */
+  autoFocus?: boolean;
+  /** The auto-demo's finger is on the capture's own "Ok" pill. */
+  demoPressedDismiss?: boolean;
 };
 
 // The in-frame detail popup — a Figma-prototype modal that slides up over the
@@ -1445,14 +2044,19 @@ type PhonePopupProps = {
 // the popup, the same in-image affordance as the entry hotspots. The hotspot
 // sits inside the scrolling image so it tracks the X, and it is the accessible
 // close control: focus lands on it on open, and it carries an aria-label.
-function PhonePopup({ hotspot, onClose }: PhonePopupProps) {
+function PhonePopup({
+  hotspot,
+  onClose,
+  autoFocus = true,
+  demoPressedDismiss,
+}: PhonePopupProps) {
   const shouldReduce = useReducedMotion();
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const popup = hotspot.popup;
 
   useEffect(() => {
-    closeRef.current?.focus();
+    if (autoFocus) closeRef.current?.focus();
     const dialog = dialogRef.current;
     if (!dialog) return;
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
@@ -1461,6 +2065,10 @@ function PhonePopup({ hotspot, onClose }: PhonePopupProps) {
         onClose();
         return;
       }
+      // The Tab trap belongs to a dialog the reader opened. Trapping an
+      // unrequested one would corral keyboard focus inside a popup the reader
+      // never asked for — and the first keypress hands the demo over anyway.
+      if (!autoFocus) return;
       if (event.key === "Tab") {
         const focusables = dialog.querySelectorAll<HTMLElement>(
           "button:not([disabled]), [tabindex]:not([tabindex='-1'])"
@@ -1479,7 +2087,7 @@ function PhonePopup({ hotspot, onClose }: PhonePopupProps) {
     };
     dialog.addEventListener("keydown", onKeyDown);
     return () => dialog.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+  }, [onClose, autoFocus]);
 
   // Only popupImage hotspots are ever opened (openPopup guards), so this is a
   // type narrowing, not a reachable state.
@@ -1546,11 +2154,15 @@ function PhonePopup({ hotspot, onClose }: PhonePopupProps) {
           {/* Second dismiss control over the modal's own "Ok" button at the
               foot of the capture — same in-image affordance as the X, so a
               reader can close from either control they can see. rounded-full to
-              hug the pill; the wash doubles as its focus-visible cue. */}
+              hug the pill; the glow doubles as its focus-visible cue.
+              This is the control the auto-demo presses: Ok is the modal's
+              primary action, wide and labelled and already under the thumb,
+              where the X is the escape hatch in the far corner. */}
           <button
             type="button"
             aria-label="OK"
             onClick={onClose}
+            data-demo-press={demoPressedDismiss ? "true" : undefined}
             style={OK_HOTSPOT}
             className={cn("absolute z-[1] rounded-full", HOTSPOT_AFFORDANCE)}
           />

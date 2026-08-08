@@ -73,7 +73,7 @@ export function CaseStatement({
               </p>
             ) : null}
             <dl className="grid grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-8">
-              {stats.map((stat) => (
+              {stats.map((stat, index) => (
                 <div key={stat.label}>
                   <dt className="sr-only">{stat.label}</dt>
                   <dd>
@@ -82,6 +82,7 @@ export function CaseStatement({
                       value={stat.value}
                       label={stat.label}
                       detail={stat.detail}
+                      delay={index * 0.05}
                     />
                   </dd>
                 </div>

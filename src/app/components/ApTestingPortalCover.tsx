@@ -21,8 +21,18 @@ const PIXEL_INK = "#DFD8F9";
 /* Pixel grid — the .docs/cover-effects.md halftone recipe, varied: square
    "pixels" on a coarser grid instead of round halftone dots, so the field
    reads as a screen mosaic rather than a print. Size follows sqrt(luminance)
-   so pixel area tracks a synthesized field brightness. */
-const GRID_COLS = 72;
+   so pixel area tracks a synthesized field brightness.
+
+   THE RULING IS A CELL SIZE, NOT A COLUMN COUNT, and it is the coarsest of the
+   three covers because this one is a MOSAIC: a screen pixel is meant to be an
+   object you can count. A fixed column count made the screen finer as the
+   artwork got smaller, which is backwards for a ruling and is why the small
+   instances read as static rather than as a mosaic coming apart. Clamped at both
+   ends: a 970px feature plate lands 48 columns (20px cells), a 290px card 22
+   (13px), against 13px and 4px before. */
+const CELL_PX = 17;
+const MIN_COLS = 22;
+const MAX_COLS = 48;
 const LUM_CUTOFF = 0.06;
 const PIXEL_MAX = 0.8;
 
@@ -32,12 +42,45 @@ const PIXEL_MAX = 0.8;
    queues). */
 const DOTIFY_MS = 300;
 const SCATTER_MS = 800;
-/* Directional variation: the dissolve is a left-to-right sweep. Delay is
-   ordered by column (plus light jitter) and every pixel drifts the same way,
-   so the mosaic assembles like a scan pass instead of a random scatter. */
-const SWEEP_SPAN = 0.5;
+/* Directional variation: the dissolve is a LEFT TO RIGHT sweep. Delay is
+   ordered by column (plus light jitter) and every pixel drifts the same way, so
+   the mosaic comes apart like a scan pass rather than a random scatter.
+
+   THE ORDER WAS INVERTED. A pixel's local progress is (settle - delay) over the
+   remaining span and `settle` counts DOWN from 1, so a LARGER delay departs
+   EARLIER. Ordering the delay as col/cols therefore sent the right edge first
+   and ran the front right to left — the opposite of what this cover's comment,
+   and its whole character, claimed. It is now (1 - col/cols), so the left edge
+   goes first and the front travels left to right. The drift stays leftward, so
+   pixels are flung back into the space the front has already cleared: they fly
+   against emptiness instead of over pixels still waiting their turn, which is
+   what makes the scan legible.
+
+   The drift also grew from 6..12% of the width to 12..40%. At the old distance a
+   pixel travelled well under its own cell before its alpha was spent, so the
+   sweep was a fade with a direction rather than a mosaic being blown across the
+   frame. */
+const SWEEP_SPAN = 0.46;
 const SWEEP_JITTER = 0.12;
 const MAX_DELAY = SWEEP_SPAN + SWEEP_JITTER;
+const DRIFT_MIN = 0.12;
+const DRIFT_SPREAD = 0.28;
+const WOBBLE = 0.05;
+
+/* MOTION TRAIL — the cue that actually says "flying". A pixel drawn at a new
+   place each frame has MOVED; it never reads as MOVING. So a travelling pixel is
+   drawn as a bar swept back along its own drift vector, at TRAIL_ALPHA of its own
+   alpha and TRAIL_WIDTH of its own size, with the square pixel filled on top: a
+   crisp head with a faint smear behind it. The length is the derivative of the
+   position ramp (3(1 - local)^2, zero at rest so the assembled mosaic is
+   untouched) scaled by TRAIL_SCALE, and capped at TRAIL_MAX_R pixel widths. On
+   this cover the drift is near horizontal, so every smear lies the same way and
+   the scan direction is stated by the artwork rather than asserted in a comment.
+   Butt caps, not round: this is the mosaic, and its particles have corners. */
+const TRAIL_SCALE = 0.022;
+const TRAIL_ALPHA = 0.3;
+const TRAIL_WIDTH = 0.62;
+const TRAIL_MAX_R = 3;
 
 /* Hook-line cascade from .docs/style-rules.md: `slow` items, 0.06s interval. */
 const LINE_STAGGER = 0.06;
@@ -145,7 +188,12 @@ export function ApTestingPortalCover({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const cols = GRID_COLS;
+    /* Ruling from the CSS width, not the device-pixel width, so the cell stays
+       the same physical size on a retina screen (see CELL_PX). */
+    const cols = Math.max(
+      MIN_COLS,
+      Math.min(MAX_COLS, Math.round(rect.width / CELL_PX)),
+    );
     const cellW = w / cols;
     const rows = Math.max(1, Math.round(h / cellW));
 
@@ -160,10 +208,12 @@ export function ApTestingPortalCover({
       for (let col = 0; col < cols; col++) {
         const i = row * cols + col;
         field[i] = fieldLum((col + 0.5) / cols, (row + 0.5) / rows);
-        scatter[i * 3] = -(0.06 + Math.random() * 0.06) * w;
-        scatter[i * 3 + 1] = (Math.random() - 0.5) * 0.04 * w;
+        scatter[i * 3] = -(DRIFT_MIN + Math.random() * DRIFT_SPREAD) * w;
+        scatter[i * 3 + 1] = (Math.random() - 0.5) * WOBBLE * w;
+        /* (1 - col/cols): the LEFT edge carries the largest delay and therefore
+           departs first, so the scan front runs left to right (see SWEEP_SPAN). */
         scatter[i * 3 + 2] =
-          (col / cols) * SWEEP_SPAN + Math.random() * SWEEP_JITTER;
+          (1 - col / cols) * SWEEP_SPAN + Math.random() * SWEEP_JITTER;
       }
     }
 
@@ -171,14 +221,21 @@ export function ApTestingPortalCover({
   }, []);
 
   /* Draws one mosaic frame; settle=1 is fully assembled, lower values sweep
-     each pixel toward its drift offset on its column-ordered schedule. */
-  const drawFrame = useCallback((settle: number) => {
+     each pixel toward its drift offset on its column-ordered schedule. `dir` is
+     +1 while the pixels are flying out and -1 while they are flying home on
+     hover-out: the motion smear has to lie BEHIND the direction of travel, and
+     on the way home that is the far side of the pixel, not the near one.
+     Without it a reversed sweep draws every smear pointing the way it is
+     going. */
+  const drawFrame = useCallback((settle: number, dir: number) => {
     const scene = sceneRef.current;
     if (!scene) return;
     const { ctx, w, h, cols, rows, cellW, cellH, field, scatter } = scene;
 
     ctx.clearRect(0, 0, w, h);
     ctx.fillStyle = PIXEL_INK;
+    ctx.strokeStyle = PIXEL_INK;
+    ctx.lineCap = "butt";
     const maxSize = cellW * PIXEL_MAX;
 
     for (let row = 0; row < rows; row++) {
@@ -195,10 +252,32 @@ export function ApTestingPortalCover({
               );
         if (local <= 0) continue;
         const eased = easeOutCubic(local);
-        const x = (col + 0.5) * cellW + scatter[i * 3] * (1 - eased);
-        const y = (row + 0.5) * cellH + scatter[i * 3 + 1] * (1 - eased);
-        const size = maxSize * Math.sqrt(lum) * (0.55 + 0.45 * eased);
-        ctx.globalAlpha = eased * (0.3 + 0.7 * lum);
+        const dx = scatter[i * 3];
+        const dy = scatter[i * 3 + 1];
+        const x = (col + 0.5) * cellW + dx * (1 - eased);
+        const y = (row + 0.5) * cellH + dy * (1 - eased);
+        const size = maxSize * Math.sqrt(lum) * (0.6 + 0.4 * eased);
+        /* sqrt(eased), not eased: on the midnight field a linear alpha spends
+           the pixel before it has travelled far enough to be seen travelling. */
+        const alpha = Math.sqrt(eased) * (0.3 + 0.7 * lum);
+        const speed = 3 * (1 - local) ** 2 * TRAIL_SCALE * dir;
+        let tx = dx * speed;
+        let ty = dy * speed;
+        const trail = Math.hypot(tx, ty);
+        const cap = size * TRAIL_MAX_R;
+        if (trail > cap) {
+          tx = (tx / trail) * cap;
+          ty = (ty / trail) * cap;
+        }
+        if (trail > 1) {
+          ctx.globalAlpha = alpha * TRAIL_ALPHA;
+          ctx.lineWidth = size * TRAIL_WIDTH;
+          ctx.beginPath();
+          ctx.moveTo(x - tx, y - ty);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = alpha;
         ctx.fillRect(x - size / 2, y - size / 2, size, size);
       }
     }
@@ -249,7 +328,9 @@ export function ApTestingPortalCover({
       }
 
       if (dotify > 0 && scatter < 1) {
-        drawFrame(1 - scatter);
+        /* Flying out while hovered, flying home while not — the motion smear
+           follows the direction of travel (see drawFrame). */
+        drawFrame(1 - scatter, hoveredRef.current ? 1 : -1);
       } else {
         const scene = sceneRef.current;
         scene?.ctx.clearRect(0, 0, scene.w, scene.h);

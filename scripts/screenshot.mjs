@@ -26,8 +26,19 @@
 //                       behaviour — unlike --hash, which centres.
 //   --scroll=<px>       after warm-up, scroll to an absolute Y offset and
 //                       capture that state (viewport only)
+//   --scroll-to=<sel>   like --hash but for anything without an id: centre the
+//                       first match of a CSS selector and capture (viewport
+//                       only). Reaches a section identified by its own content
+//                       — e.g. one feature's gallery inside a band that only
+//                       carries one id.
 //   --hover=<selector>  after warm-up, real-hover the element and capture
 //   --focus=<selector>  after warm-up, focus the element and capture
+//   --delay=<ms>        wait this long immediately before the shutter, after
+//                       every other positioning step. For a self-running,
+//                       looping effect that has no trigger to hover or click —
+//                       the phone-frame auto-demo (useHotspotDemo) — where the
+//                       only way to reach a given beat is to arrive at it in
+//                       time. Vary it to walk a timeline frame by frame.
 //
 // Always use this (Playwright) rather than headless Chrome CLI: headless
 // Chrome misreports horizontal overflow below 500px widths.
@@ -198,6 +209,15 @@ for (const width of widths) {
       );
     }
 
+    // Selector-addressed scroll (viewport capture), for a section that has no
+    // id of its own to hash to.
+    if (opts["scroll-to"]) {
+      await page.evaluate((sel) => {
+        document.querySelector(sel)?.scrollIntoView({ block: "center" });
+      }, String(opts["scroll-to"]));
+      await page.waitForTimeout(400);
+    }
+
     // Absolute scroll position (viewport capture), for pinning down a
     // scroll-linked effect at an exact offset.
     if (opts.scroll !== undefined) {
@@ -294,12 +314,16 @@ for (const width of widths) {
       await page.hover(String(opts.hover));
       await page.waitForTimeout(settleMs);
     }
+    // Last thing before the shutter, so it composes with any positioning above.
+    if (opts.delay !== undefined) {
+      await page.waitForTimeout(parseInt(String(opts.delay), 10));
+    }
 
     const slug = route === "/" ? "home" : route.replace(/^\/|\/$/g, "").replace(/\//g, "-");
-    const suffix = [opts.dark && "dark", opts["reduced-motion"] && "rm", opts.hash && `hash-${opts.hash}`, opts.anchor && `anchor-${opts.anchor}`, opts.scroll !== undefined && `y${opts.scroll}`, opts.click && "click", (opts.hover || opts.focus) && "state", (opts.hover || opts.focus) && opts.settle !== undefined && `s${opts.settle}`].filter(Boolean).join("-");
+    const suffix = [opts.dark && "dark", opts["reduced-motion"] && "rm", opts.hash && `hash-${opts.hash}`, opts.anchor && `anchor-${opts.anchor}`, opts.scroll !== undefined && `y${opts.scroll}`, opts["scroll-to"] && "at", opts.click && "click", (opts.hover || opts.focus) && "state", (opts.hover || opts.focus) && opts.settle !== undefined && `s${opts.settle}`, opts.delay !== undefined && `d${opts.delay}`].filter(Boolean).join("-");
     const file = path.join(outDir, `${slug}-${width}${suffix ? `-${suffix}` : ""}.png`);
     const viewportOnly =
-      opts.hash || opts.anchor || opts.scroll !== undefined || opts.click || opts["scroll-el"];
+      opts.hash || opts.anchor || opts.scroll !== undefined || opts.click || opts["scroll-el"] || opts["scroll-to"];
     await page.screenshot({ path: file, fullPage: viewportOnly ? false : fullPage });
 
     const overflow = await page.evaluate(

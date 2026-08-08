@@ -18,11 +18,11 @@ type PointerState = {
 
 export function ExploreCursor() {
   const rafRef = useRef<number | null>(null);
-  const targetRef = useRef({ x: 0, y: 0, active: false, label: "Take a look" });
+  const targetRef = useRef({ x: 0, y: 0, active: false, label: "Open" });
   const [enabled, setEnabled] = useState(false);
   const [pointer, setPointer] = useState<PointerState>({
     active: false,
-    label: "Take a look",
+    label: "Open",
     visible: false,
     x: 0,
     y: 0,
@@ -77,7 +77,7 @@ export function ExploreCursor() {
       const target = event.target instanceof Element ? event.target : null;
       const card = target?.closest<HTMLElement>("[data-explore-card]");
       const active = Boolean(card);
-      const label = card?.dataset.cursorLabel || "Take a look";
+      const label = card?.dataset.cursorLabel || "Open";
       targetRef.current = { x: event.clientX, y: event.clientY, active, label };
       setPointer((current) => ({ ...current, visible: true }));
     };
@@ -114,9 +114,9 @@ export function ExploreCursor() {
       style={{
         opacity: pointer.visible ? 1 : 0,
         transform: `translate3d(${pointer.x}px, ${pointer.y}px, 0) translate(-50%, -50%) rotate(${pullAngle}deg) scale(${1 + stretch}, ${1 - stretch * SQUASH_RATIO}) rotate(${-pullAngle}deg) scale(${baseScale})`,
-        width: pointer.active ? 118 : 18,
-        height: pointer.active ? 118 : 18,
-        fontSize: pointer.active ? 13 : 0,
+        width: pointer.active ? 76 : 18,
+        height: pointer.active ? 76 : 18,
+        fontSize: pointer.active ? 12 : 0,
       }}
     >
       <span

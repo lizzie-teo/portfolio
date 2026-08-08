@@ -22,10 +22,32 @@ const DOT_INK = "#EAF5F2";
 /* Halftone grid: the resting flat teal field is broken into a fixed dot matrix
    whose dot size follows a synthesized teal-field luminance. With no video to
    film, the dots read as the teal card itself breaking into a screen of specks
-   that then scatter into the hook line. */
-const GRID_COLS = 92;
+   that then scatter into the hook line.
+
+   COARSE ON PURPOSE. This ran at 92 columns and the dissolve read as television
+   snow: at that ruling a dot is a few pixels across, neighbouring dots touch for
+   the whole flight, and a random-angle scatter of seven thousand specks is
+   statistically a uniform re-shuffle — the field turns to noise and then fades,
+   and no individual dot is ever seen travelling. Halving the ruling is what buys
+   the flight back: each speck is a legible object, the ground shows between
+   them at rest, and gaps open as they leave. See the trail note below for the
+   other half of the fix.
+
+   THE RULING IS A CELL SIZE, NOT A COLUMN COUNT. A fixed GRID_COLS makes the
+   screen get FINER as the artwork gets smaller, which is backwards: a halftone
+   ruling is a property of the press, not of the print's size. It is also what
+   made the small instances the worst ones — at 92 columns a 290px card cover ran
+   3px cells, well below the size at which an eye can follow one speck. So the
+   column count is derived from the container's CSS width to hold the cell near
+   CELL_PX, clamped at both ends so a narrow card still reads as a screen rather
+   than a chequerboard and a wide plate does not turn back into noise. Measured:
+   a 970px feature plate lands 60 columns (16px cells), a 290px card 28 (10px),
+   against 10px and 3px before. */
+const CELL_PX = 13;
+const MIN_COLS = 28;
+const MAX_COLS = 60;
 const LUM_CUTOFF = 0.06;
-const DOT_MAX = 0.62;
+const DOT_MAX = 0.6;
 
 /* Hover sequence: the resting flat field crossfades into the dot screen, then
    the dots scatter into the hook line. Hover-out reverses the same ramps from
@@ -34,10 +56,46 @@ const DOT_MAX = 0.62;
    tokens like the ParticleDissolve hero does. */
 const DOTIFY_MS = 300;
 const SCATTER_MS = 800;
-/* Portion of scatter progress used to stagger dots, and how far each dot
-   drifts while scattered, as a portion of card width. */
-const SCATTER_DELAY = 0.4;
-const SCATTER_DRIFT = 0.16;
+/* Portion of scatter progress used to stagger dots, and how far each dot drifts
+   while scattered, as a portion of card width. The drift more than doubled in
+   the same pass that coarsened the grid: at 0.16 a dot travelled roughly its own
+   width before its alpha had spent itself, so the break-up was a fade dressed as
+   a scatter. DRIFT_MIN and DRIFT_SPREAD widen the per-dot magnitude range
+   (0.25x to 1.2x of SCATTER_DRIFT, against a former 0.4x to 1.0x) so some dots
+   plainly outrun others and the field opens unevenly instead of expanding as one
+   sheet. */
+const SCATTER_DELAY = 0.5;
+const SCATTER_DRIFT = 0.36;
+const DRIFT_MIN = 0.25;
+const DRIFT_SPREAD = 0.95;
+
+/* MOTION TRAIL — the cue that actually says "flying".
+   A dot drawn as a circle at a new position each frame is a dot that has MOVED;
+   it never reads as a dot that is MOVING. So each dot in flight is drawn as a
+   round-capped capsule swept back along its own drift vector, the length
+   proportional to its instantaneous speed — a smear, exactly as a camera would
+   record it. Position is drift x (1 - easeOutCubic(local)), so the speed factor
+   is the derivative 3(1 - local)^2: zero while the dot sits in the assembled
+   halftone (so the rest state is untouched, perfect circles) and largest as it
+   accelerates away. TRAIL_SCALE converts that into a fraction of the dot's own
+   drift vector, which means the trail always points where the dot is going —
+   the thing that makes each cover's direction (even burst here, sweep on AP+,
+   ping on Macquarie) legible rather than an assertion in a comment.
+
+   It is drawn as a COMET, not a capsule: the smear is stroked at TRAIL_ALPHA of
+   the dot's own alpha and the dot is then filled at full alpha on top, so the
+   head stays a crisp speck with a soft wake behind it. A uniform-alpha capsule
+   was tried first and read as a field of tic-tacs — the eye takes an evenly lit
+   elongated shape as an OBJECT of that shape, not as a moving round one. The
+   wake is also NARROWER than the head (TRAIL_WIDTH), for the same reason: an
+   equal-width wake still silhouettes as a capsule however faint it is, while a
+   wake at two thirds the head's width silhouettes as a taper. The length is
+   capped at TRAIL_MAX_R dot radii so a fast dot smears rather than turning into
+   a dash. */
+const TRAIL_SCALE = 0.022;
+const TRAIL_ALPHA = 0.3;
+const TRAIL_WIDTH = 0.62;
+const TRAIL_MAX_R = 3;
 
 /* Hook-line cascade from .docs/style-rules.md: `slow` items, 0.06s interval. */
 const LINE_STAGGER = 0.06;
@@ -141,7 +199,12 @@ export function SymptomCheckerCover({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const cols = GRID_COLS;
+    /* Ruling from the CSS width, not the device-pixel width, so the cell stays
+       the same physical size on a retina screen (see CELL_PX). */
+    const cols = Math.max(
+      MIN_COLS,
+      Math.min(MAX_COLS, Math.round(rect.width / CELL_PX)),
+    );
     const cellW = w / cols;
     const rows = Math.max(1, Math.round(h / cellW));
 
@@ -154,7 +217,7 @@ export function SymptomCheckerCover({
         const i = row * cols + col;
         field[i] = fieldLum((col + 0.5) / cols, (row + 0.5) / rows);
         const angle = Math.random() * Math.PI * 2;
-        const dist = (0.4 + Math.random() * 0.6) * SCATTER_DRIFT * w;
+        const dist = (DRIFT_MIN + Math.random() * DRIFT_SPREAD) * SCATTER_DRIFT * w;
         scatter[i * 3] = Math.cos(angle) * dist;
         scatter[i * 3 + 1] = Math.sin(angle) * dist;
         scatter[i * 3 + 2] = Math.random() * SCATTER_DELAY;
@@ -165,14 +228,20 @@ export function SymptomCheckerCover({
   }, []);
 
   /* Draws one halftone frame; settle=1 is fully assembled, lower values move
-     each dot toward its scatter offset on its own staggered schedule. */
-  const drawFrame = useCallback((settle: number) => {
+     each dot toward its scatter offset on its own staggered schedule. `dir` is
+     +1 while the dots are flying out and -1 while they are flying home on
+     hover-out: the motion smear has to lie BEHIND the direction of travel, and
+     on the way home that is the far side of the dot, not the near one. Without
+     it a reversed dissolve draws every wake pointing the way the dot is going. */
+  const drawFrame = useCallback((settle: number, dir: number) => {
     const scene = sceneRef.current;
     if (!scene) return;
     const { ctx, w, h, cols, rows, cellW, cellH, field, scatter } = scene;
 
     ctx.clearRect(0, 0, w, h);
     ctx.fillStyle = DOT_INK;
+    ctx.strokeStyle = DOT_INK;
+    ctx.lineCap = "round";
     const maxRadius = cellW * DOT_MAX;
 
     for (let row = 0; row < rows; row++) {
@@ -189,11 +258,35 @@ export function SymptomCheckerCover({
               );
         if (local <= 0) continue;
         const eased = easeOutCubic(local);
-        const x = (col + 0.5) * cellW + scatter[i * 3] * (1 - eased);
-        const y = (row + 0.5) * cellH + scatter[i * 3 + 1] * (1 - eased);
-        ctx.globalAlpha = eased * (0.3 + 0.7 * lum);
+        const dx = scatter[i * 3];
+        const dy = scatter[i * 3 + 1];
+        const x = (col + 0.5) * cellW + dx * (1 - eased);
+        const y = (row + 0.5) * cellH + dy * (1 - eased);
+        const radius = maxRadius * Math.sqrt(lum) * (0.6 + 0.4 * eased);
+        const alpha = Math.sqrt(eased) * (0.3 + 0.7 * lum);
+        /* Speed as a fraction of the drift vector (see TRAIL_SCALE): zero at
+           rest, largest as the dot accelerates out, so the smear appears only
+           once the dot is actually travelling. */
+        const speed = 3 * (1 - local) ** 2 * TRAIL_SCALE * dir;
+        let tx = dx * speed;
+        let ty = dy * speed;
+        const trail = Math.hypot(tx, ty);
+        const cap = radius * TRAIL_MAX_R;
+        if (trail > cap) {
+          tx = (tx / trail) * cap;
+          ty = (ty / trail) * cap;
+        }
+        if (trail > 1) {
+          ctx.globalAlpha = alpha * TRAIL_ALPHA;
+          ctx.lineWidth = radius * 2 * TRAIL_WIDTH;
+          ctx.beginPath();
+          ctx.moveTo(x - tx, y - ty);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = alpha;
         ctx.beginPath();
-        ctx.arc(x, y, maxRadius * Math.sqrt(lum) * (0.55 + 0.45 * eased), 0, Math.PI * 2);
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -244,7 +337,9 @@ export function SymptomCheckerCover({
       }
 
       if (dotify > 0 && scatter < 1) {
-        drawFrame(1 - scatter);
+        /* Flying out while hovered, flying home while not — the motion smear
+           follows the direction of travel (see drawFrame). */
+        drawFrame(1 - scatter, hoveredRef.current ? 1 : -1);
       } else {
         const scene = sceneRef.current;
         scene?.ctx.clearRect(0, 0, scene.w, scene.h);
