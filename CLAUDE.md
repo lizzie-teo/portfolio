@@ -43,3 +43,13 @@ To add a case study:
 To add an article: add an `article` entry to `workEntries`. Nothing else.
 
 Shared chrome: `SiteHeader` (all pages) and `CaseStudyShell` (case-study hero, content slot, prev/next footer) in `src/app/components/`. Each case study keeps its own visual language *inside* the shell — put project-specific modules in the page, not in the shell. Deliberately no dynamic `/work/[slug]` route: per-project folders let each case study own its presentation.
+
+### Explorations are a second registry, on purpose
+
+`src/app/explorations/entries.ts` is a sibling of `workEntries`, not a `kind` inside it. Do not merge them. An exploration has no client, outcome, industry or cover, and it must never appear in the home grid; folding it into `workEntries` would mean adding a third `kind` and filtering it back out of every consumer. Entries live at `/explorations/<slug>` in their own folders and wrap in `ExplorationShell`, mirroring the case-study pattern.
+
+The exploration shell is deliberately the *other* surface: plain paper, light masthead, one reading column, where a case study runs on grout with tiled plates and a project theme. That contrast is how a reader tells working notes from a finished argument. Don't port the grout system across.
+
+The index at `/explorations` is a **library**, shelved by subject rather than by date, so the page never promises a publishing cadence. Every entry states a verdict (`shipped`, `killed`, `superseded`, `open`) — `killed` is the most valuable value in the set and the copy should say so plainly. No counters anywhere, in the nav or on the shelves.
+
+`/explore/*` (gitignored, local, never deployed) is the private workbench these entries are written *from*, and is not the same thing. An entry embeds a few live specimens; it never publishes the lab.

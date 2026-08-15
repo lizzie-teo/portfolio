@@ -4,7 +4,14 @@ import Link from "next/link";
 import { HERO_VEIL_INK } from "./HeroInkVeil";
 import { useHeroTone } from "./HeroToneContext";
 
-const navItems = [["Work", "/#work"]] as const;
+/* Work leads. Explorations follow, and the order is the hierarchy: a reader
+   meets the case studies before the working notes, on the masthead as on the
+   home page. Adding a third item is not free — see the leader's note below,
+   which is now carrying two labels on a 320px line. */
+const navItems = [
+  ["Work", "/#work"],
+  ["Explorations", "/explorations"],
+] as const;
 
 type SiteHeaderProps = {
   /**
@@ -117,11 +124,17 @@ export function SiteHeader({ tone }: SiteHeaderProps) {
           </span>
         </Link>
 
-        {/* The leader. min-w-6 keeps a visible run of rule at 320px — the nav
-            gap compresses before the line does. */}
+        {/* The leader. It used to hold a min-w-6 run of rule at every width,
+            on the reasoning that the nav gap should compress before the line
+            does. That was tuned when the nav carried one word; with
+            "Explorations" beside "Work" the two labels and the wordmark very
+            nearly fill a 320px line on their own, and a reserved 24px of rule
+            is what tips it into overflow. So the floor now starts at sm: on a
+            small phone the leader gives up its last few pixels to keep the row
+            on one baseline, and everywhere else it behaves exactly as before. */}
         <span
           aria-hidden
-          className={`min-w-6 flex-1 border-b text-xs leading-none transition-colors duration-300 ${leaderTone}`}
+          className={`min-w-0 flex-1 border-b text-xs leading-none transition-colors duration-300 sm:min-w-6 ${leaderTone}`}
         >
           &#8203;
         </span>
