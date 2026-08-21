@@ -160,6 +160,7 @@ import { workEntryHref, type WorkEntry } from "../work/projects";
 import { IndustryGlyph } from "./IndustryGlyph";
 import { halftoneInk, loFiInk, loFiWriting } from "./loFiInk";
 import { PAYOFFS, payoffInk } from "./projectPayoffs";
+import { articleCardHeading, projectCardHeading } from "./typography";
 
 /* MOTION CONSTANTS — ProjectCard's, copied verbatim (see the header). Both
    copies were re-ruled together in the pass described below, so they still are
@@ -911,7 +912,7 @@ function FootBlock({
       className={`mt-4 shrink-0 border-t pt-3${ghost ? " invisible" : ""}`}
       style={{ borderColor: grey.rule }}
     >
-      <div className="flex items-baseline justify-between gap-3 font-mono text-xs uppercase tracking-[0.16em]">
+      <div className="flex items-baseline justify-between gap-3 font-mono text-xs font-medium uppercase tracking-[0.16em]">
         {publication ? (
           <span className="min-w-0 truncate">{publication}</span>
         ) : null}
@@ -1059,12 +1060,13 @@ function parseOutcome(value: string): ParsedOutcome | null {
   };
 }
 
-/* THE TITLE'S OWN TYPE, quoted rather than re-specified. Every value here is
-   the h2's: same face, same step at both breakpoints, same weight, same leading,
-   same tracking. If the title's treatment ever moves, this moves with it, and
-   the dissolve keeps swapping like for like. */
-const FIGURE_TYPE =
-  "font-heading text-3xl font-medium leading-[1.02] tracking-[-0.015em] sm:text-4xl";
+/* THE TITLE'S OWN TYPE, quoted rather than re-specified — literally the same
+   token the h2 wears. Same face, same step at both breakpoints, same weight,
+   same leading, same tracking, because it IS that string: if the title's
+   treatment ever moves, this moves with it and the dissolve keeps swapping like
+   for like. Aliased rather than used directly so the intent stays legible at
+   the two call sites below. */
+const FIGURE_TYPE = projectCardHeading;
 
 /** Air on each flank of a dash, in the figure's own em so it scales with the
     step. Enough to unstick the bar from lining figures either side of it and no
@@ -1363,8 +1365,8 @@ export function LoFiProjectCard({
             <h2
               className={
                 isArticle
-                  ? "max-w-[20ch] text-balance font-heading text-xl font-medium leading-[1.15] tracking-[-0.01em] sm:text-2xl"
-                  : "max-w-[10ch] text-balance font-heading text-3xl font-medium leading-[1.02] tracking-[-0.015em] sm:text-4xl"
+                  ? `max-w-[20ch] text-balance ${articleCardHeading}`
+                  : `max-w-[10ch] text-balance ${projectCardHeading}`
               }
             >
               {entry.title}

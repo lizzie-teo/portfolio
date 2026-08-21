@@ -55,6 +55,15 @@
  * scene rather than the scene shrunk to a thumbnail.
  *
  * ─────────────────────────────────────────────────────────────────────────────
+ * THE ROW'S INK IS SEMANTIC, NOT SCENE. It ran on `loFiInk`'s dark constants
+ * while the work band was --grout; the band is light now, so the title takes
+ * --foreground (10.39:1 on --secondary), the date and deck take
+ * --secondary-foreground (7.00:1 — NOT --muted-foreground, which measures
+ * 5.13:1 on this band and would sit under the 7:1 bar small text is held to),
+ * and the row separator takes --rule, which is the site's
+ * own divider rather than a second grey invented here. Only the DevelopPlate
+ * stays artwork: it carries its own ground.
+ *
  * IT IS A `ul`, NOT A `dl`, AND THAT IS A BUG FIX. This was a description list
  * with `<dd>` nested INSIDE `<dt>` and an `<a>` sitting between `<dl>` and its
  * terms — none of which is valid, and it was throwing a hydration mismatch on the
@@ -71,7 +80,7 @@ import { motionDuration, motionEase } from "../lib/motion";
 import { articleMedia } from "./develop/articleScenes";
 import { DevelopPlate } from "./develop/DevelopPlate";
 import { useDevelopActivation } from "./develop/useDevelopActivation";
-import { loFiInk } from "./loFiInk";
+import { indexItemHeading } from "./typography";
 import type { ArticleEntry } from "../work/projects";
 
 export function WritingIndex({ entries }: { entries: ArticleEntry[] }) {
@@ -122,8 +131,7 @@ function WritingRow({ entry, index }: { entry: ArticleEntry; index: number }) {
              The top hairline on every row plus one on the last gives the set a
              closing rule without a wrapper border that would double up against
              whatever follows. */
-          className="group block border-t py-5 outline-none transition-colors duration-100 last:border-b focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-4 focus-visible:ring-offset-grout md:py-6"
-          style={{ borderColor: loFiInk.rule }}
+          className="group block border-t border-rule py-5 outline-none transition-colors duration-100 last:border-b focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-4 focus-visible:ring-offset-secondary md:py-6"
         >
           <div className="flex flex-col gap-5 md:flex-row-reverse md:items-start md:gap-8">
             {/* THE PLATE. First in the DOM so it stacks on top on mobile;
@@ -139,32 +147,20 @@ function WritingRow({ entry, index }: { entry: ArticleEntry; index: number }) {
                     aligns into a readable date rail. Below md it stacks above the
                     title instead, because a fixed date column on a 320px screen
                     leaves the title about 180px and starts breaking words. */}
-                <span
-                  className="block font-mono text-xs uppercase tracking-[0.16em] md:hidden"
-                  style={{ color: loFiInk.quiet }}
-                >
+                <span className="block font-mono text-xs font-medium uppercase tracking-[0.16em] text-secondary-foreground md:hidden">
                   {entry.year}
                 </span>
                 <span className="mt-2 flex items-baseline gap-8 md:mt-0">
-                  <span
-                    className="hidden w-28 shrink-0 font-mono text-xs uppercase tracking-[0.16em] md:block"
-                    style={{ color: loFiInk.quiet }}
-                  >
+                  <span className="hidden w-28 shrink-0 font-mono text-xs font-medium uppercase tracking-[0.16em] text-secondary-foreground md:block">
                     {entry.year}
                   </span>
-                  <h4
-                    className="font-heading text-lg font-medium leading-snug tracking-[-0.01em] md:text-xl"
-                    style={{ color: loFiInk.ink }}
-                  >
+                  <h4 className={`${indexItemHeading} text-foreground`}>
                     {entry.title}
                   </h4>
                 </span>
                 {/* The deck, indented to the title's own left edge from md up so
                     it reads as belonging to the title rather than to the date. */}
-                <p
-                  className="mt-2 max-w-prose text-sm leading-relaxed md:ml-36"
-                  style={{ color: loFiInk.quiet }}
-                >
+                <p className="mt-2 max-w-prose text-sm leading-relaxed text-secondary-foreground md:ml-36">
                   {entry.deck}
                 </p>
               </div>
@@ -177,8 +173,7 @@ function WritingRow({ entry, index }: { entry: ArticleEntry; index: number }) {
               <ArrowUpRight
                 aria-hidden="true"
                 strokeWidth={1.5}
-                className="mt-1 size-5 shrink-0 transition-transform duration-100 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transform-none"
-                style={{ color: loFiInk.quiet }}
+                className="mt-1 size-5 shrink-0 text-secondary-foreground transition-transform duration-100 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transform-none"
               />
             </div>
           </div>

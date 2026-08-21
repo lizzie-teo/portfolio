@@ -5,6 +5,7 @@ import { anchorScrollOffset, cornerClasses, type TileCorners } from "./Chapter";
 import { CollapsingLeaf } from "./CollapsingLeaf";
 import { MaskReveal } from "./MaskReveal";
 import { SiteHeader } from "./SiteHeader";
+import { coverHeading } from "./typography";
 import {
   getCaseStudy,
   getCaseStudyNeighbors,
@@ -35,13 +36,22 @@ function introBlocks(node: React.ReactNode): React.ReactNode[] {
 const footerLinkClassName =
   "group inline-flex min-h-11 flex-col justify-center outline-none focus-visible:ring-2 focus-visible:ring-grout-foreground focus-visible:ring-offset-4 focus-visible:ring-offset-grout";
 
-/* Intro meta is a short label/value pair for single facts (Role), a labelled
-   list for grouped scope, or a titled set of groups for a fuller breakdown
-   (the phase-by-phase role split). The first two render in the narrow intro
-   sidebar; the grouped variant is promoted to a full-width row below the hero
-   columns so its sub-lists get room to breathe. */
+/* Intro meta is a short label/value pair for single facts (Role), a tight list
+   of one-line disciplines (Focus), a labelled list for scope stated in
+   sentences, or a titled set of groups for a fuller breakdown (the phase-by-
+   phase role split). The first three render in the narrow intro sidebar; the
+   grouped variant is promoted to a full-width row below the hero columns so its
+   sub-lists get room to breathe.
+
+   `bullets` and `items` are both marked lists, and what separates them is
+   whether a row wraps. A bullet is a discipline name on one line, so it takes a
+   dot and sits close to its neighbours (`space-y-1.5`, the phase-column
+   spacing). An item is a sentence, so it takes the dash rule that reads as a
+   lead-in, and its gap has to clearly beat its own interline space or the list
+   collapses into one grey mass. */
 type CaseIntroMeta =
   | { label: string; value: string }
+  | { label: string; bullets: string[] }
   | { label: string; items: string[] }
   | { label: string; groups: { label: string; items: string[] }[] };
 
@@ -141,7 +151,7 @@ export function CaseStudyShell({
           suppressed under reduced motion. */}
       <ArrivalCue />
 
-      <main className="overflow-x-clip">
+      <main id="main" tabIndex={-1} className="overflow-x-clip outline-none">
         <div className="mx-auto w-full max-w-[1800px] px-4 pb-16 pt-3 sm:px-6 md:px-8 md:pt-4 lg:px-20 lg:pb-24 xl:px-48 xl:pb-32 2xl:px-64">
           <div className={reserveNavLane ? "xl:pr-64 2xl:pr-72" : undefined}>
             {/* The anchor wrapper (when the page navs to the intro) sits
@@ -202,7 +212,15 @@ export function CaseStudyShell({
                       mode="word"
                       duration="slow"
                       delay={0.05}
-                      className="max-w-[18ch] text-[clamp(2.25rem,6vw,5.5rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-leaf-foreground"
+                      /* Top rung of the display ladder (40 → 88px), on the same
+                         375→1440px anchors as the `Chapter.tsx` roles so the
+                         hero can never draw level with a heading below it. The
+                         old `6vw` term ignored browser text zoom between its
+                         bounds and started at 36px, only 6px above the case
+                         statement on a phone; see the ladder note in
+                         `typography.ts` before retuning. Measure stays here —
+                         it is layout, not type. */
+                      className={`max-w-[18ch] ${coverHeading}`}
                       text={entry.title}
                     />
                     {!hideTagline && (
@@ -221,6 +239,10 @@ export function CaseStudyShell({
                   </div>
                   {intro ? (
                     <div
+                      /* The rule sits in its own clear band: 32px of air above
+                         it and 32px below (`pt-8` on the meta list), so it reads
+                         as a break between the intro prose and the facts rather
+                         than as a hairline tucked under the last paragraph. */
                       className={`min-w-0 space-y-8 ${isMasthead ? "lg:col-start-2 lg:row-start-2 lg:row-span-2" : ""}`}
                     >
                       <div className="max-w-prose space-y-4 text-base leading-relaxed text-leaf-foreground/90">
@@ -241,8 +263,13 @@ export function CaseStudyShell({
                           </MaskReveal>
                         ))}
                       </div>
+                      {/* The gap between facts has to clearly beat the gap
+                          inside one (label to value is 6px, bullet to bullet
+                          6px). At 24px the three facts read as one grey stack;
+                          32/40px is what makes Role, Impact area and Focus each
+                          land as its own thing. */}
                       {plainMeta?.length ? (
-                        <dl className="space-y-6 border-t border-leaf-foreground/20 pt-6">
+                        <dl className="space-y-8 border-t border-leaf-foreground/20 pt-8 lg:space-y-10">
                           {/* Same rule as the role credits: slip the label and
                               each row on its own rather than masking a term and
                               its whole list as one block. */}
@@ -256,7 +283,42 @@ export function CaseStudyShell({
                                 className="text-xs font-medium uppercase tracking-[0.16em] text-leaf-foreground/70"
                                 text={item.label}
                               />
-                              {"items" in item ? (
+                              {"bullets" in item ? (
+                                /* One mask for the whole list, not one per row:
+                                   a label plus four one-line rows is short
+                                   enough to arrive as a single card of type
+                                   rather than ticking in row by row (the same
+                                   call the phase columns make below). */
+                                <MaskReveal
+                                  as="dd"
+                                  mode="block"
+                                  duration="fast"
+                                  delay={0.25 + index * 0.05}
+                                  className="mt-3"
+                                >
+                                  <ul className="space-y-1.5">
+                                    {item.bullets.map((bullet) => (
+                                      <li
+                                        key={bullet}
+                                        className="flex gap-2.5 text-sm leading-relaxed text-leaf-foreground/90"
+                                      >
+                                        {/* A dot, not the dash rule the sentence
+                                            rows use: a dash reads as a lead-in to
+                                            a statement, and these rows are names
+                                            in a set. Centred on the first line
+                                            (`mt-[0.65em]` puts a 4px dot's middle
+                                            on the cap-height middle at
+                                            `text-sm`/`leading-relaxed`). */}
+                                        <span
+                                          aria-hidden="true"
+                                          className="mt-[0.65em] size-1 shrink-0 rounded-full bg-leaf-foreground/50"
+                                        />
+                                        <span>{bullet}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </MaskReveal>
+                              ) : "items" in item ? (
                                 /* Sized for credits that wrap. `mt-2.5` and
                                    `space-y-1.5` were tuned when these were
                                    one-line items in the grouped two-column
@@ -395,7 +457,7 @@ export function CaseStudyShell({
           </div>
           <div className="col-span-2 row-start-2 text-center md:col-span-1 md:row-start-auto md:self-center">
             <Link
-              href="/#work"
+              href="/work"
               className="inline-flex min-h-11 items-center border-b border-transparent text-xs font-bold uppercase tracking-[0.16em] outline-none transition-colors hover:border-grout-foreground focus-visible:border-grout-foreground focus-visible:ring-2 focus-visible:ring-grout-foreground focus-visible:ring-offset-4 focus-visible:ring-offset-grout"
             >
               All work

@@ -145,7 +145,7 @@ export function LandscapeReview({
                   className="w-full"
                 />
               </div>
-              <figcaption className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              <figcaption className="mt-3 text-sm font-medium leading-relaxed text-leaf">
                 Ada&apos;s home screen, with the conversational framing our
                 review kept coming back to.
               </figcaption>
@@ -161,7 +161,7 @@ export function LandscapeReview({
                 >
                   <motion.p
                     variants={v.cell}
-                    className="flex items-center gap-2 border-b border-border pb-3 text-xs font-semibold uppercase tracking-[0.14em] text-foreground"
+                    className="flex items-center gap-2 border-b border-rule pb-3 text-xs font-semibold uppercase tracking-[0.14em] text-foreground"
                   >
                     <Icon aria-hidden="true" className="size-4 shrink-0" />
                     {lens.label}

@@ -14,9 +14,13 @@
  *   - The lever is BITRATE, not dimensions. Never downscale, never regenerate.
  *   - Never point this at a master. It overwrites in place under --write.
  *
- * Two gates, both of which must pass or nothing is written:
+ * Three gates, all of which must pass or nothing is written:
  *
  *   content   SSIM >= 0.99 against the original.
+ *   frames    the encode has exactly as many frames as the source. SSIM cannot
+ *             catch this on its own — ffmpeg's ssim filter pairs frames by
+ *             timestamp, so a re-encode that silently resamples a VFR capture
+ *             down still scores ~0.999 on whatever survived.
  *   blend     (--blend, for the mix-blend-mode:lighten recipe in
  *             .docs/video-blend.md) no "open-field" pixel lifted more than
  *             3/255 above the backdrop token.
@@ -34,9 +38,9 @@ import { tmpdir } from "node:os";
 import { join, extname, basename } from "node:path";
 import sharp from "sharp";
 
-const CRF = 23;
+const CRF_DEFAULT = 23;
 const MAX_LIFT = 3;      // /255 above backdrop, open field. See header.
-const MIN_SSIM = 0.99;
+const MIN_SSIM_DEFAULT = 0.99;
 const FIELD_RADIUS = 10; // px from real glow before a lifted pixel counts as "open field"
 
 const argv = process.argv.slice(2);
@@ -44,10 +48,69 @@ const BLEND = argv.includes("--blend");
 const WRITE = argv.includes("--write");
 const FILES = argv.filter((a) => !a.startsWith("--"));
 
-if (!FILES.length) {
-  console.error("usage: node scripts/shrink-asset.mjs [--blend] [--write] <files…>");
+/* --min-ssim=<n> LOWERS THE CONTENT BAR, and it is only ever correct when a
+   CONTROL says the bar itself is wrong for this footage (.docs/asset-weight.md
+   §3). Some sources carry high-frequency texture the encoder cannot preserve at
+   any useful bitrate — /world's engraved legs print paper grain into every
+   frame, and a NEAR-LOSSLESS CRF 18 control scores 0.9899 there while coming out
+   LARGER than the source. A gate that fails near-lossless is measuring the
+   content, not the damage.
+
+   So the rule is unchanged: run the control first, and set this to the floor the
+   control establishes — never to whatever number happens to make the encode
+   pass. It rides on the command line rather than living in this file so the
+   override is visible in the shell history that produced the asset. */
+const ssimArg = argv.find((a) => a.startsWith("--min-ssim="));
+const MIN_SSIM = ssimArg ? Number(ssimArg.split("=")[1]) : MIN_SSIM_DEFAULT;
+
+/* --gop=<n> SETS THE KEYFRAME INTERVAL, and it exists for SCRUBBED video —
+   clips whose currentTime is driven by scroll rather than played (/world). x264
+   defaults to a ~250-frame GOP, which is right for playback and wrong for
+   scrubbing: with one keyframe in a 121-frame clip, every other frame is a
+   delta frame and a seek to an arbitrary time cannot be served without decoding
+   the whole run up to it. The browser snaps to what it can decode cheaply
+   instead, and the scrub reads as jagged — frames stepping rather than the
+   camera moving. scrub-engine.js's own header says `-g 8` for the master and
+   `-g 4` for the mobile tier, but that is the VENDORED engine's requirement,
+   not this project's: /world decodes its legs through WebCodecs and
+   `world/film/mp4-intra.ts` returns null for anything with a delta frame, so
+   a /world leg needs `--gop=1` (all-intra). A `-g 8` re-encode of a leg would
+   not error — the page silently drops to its jagged path.
+
+   It is not free, but it is cheap on this material: on /world's line art, -g 8
+   costs ~5% in bytes and -g 1 (every frame a keyframe, the smoothest possible
+   seek) about 28%. Do NOT set this on ordinary playback video — there it buys
+   nothing and costs weight on every visitor; the `-hero.mp4` playback
+   derivatives exist precisely so the all-intra masters never have to be
+   played. */
+/* --crf=<n> TRADES THE OTHER WAY. The default 23 is a weight setting and it is
+   right for most of the site. It is wrong wherever the footage IS the work and
+   is looked at closely — /world's flight is a full-bleed engraving the reader
+   scrubs by hand, and at 23 the fine hatching mushes in motion in a way still
+   crops do not reveal. Lower is better quality and more bytes: on that footage
+   23 scores SSIM 0.984 against the master and 18 scores 0.998, for about 40%
+   more weight. Set it low enough that the DEFAULT 0.99 gate passes without
+   `--min-ssim` — if you find yourself reaching for both flags at once, you are
+   lowering the bar to fit a number you chose, which is backwards. */
+const crfArg = argv.find((a) => a.startsWith("--crf="));
+const CRF = crfArg ? Number(crfArg.split("=")[1]) : CRF_DEFAULT;
+if (crfArg && (!Number.isInteger(CRF) || CRF < 0 || CRF > 51)) {
+  console.error("--crf must be an integer 0-51");
   process.exit(1);
 }
+
+const gopArg = argv.find((a) => a.startsWith("--gop="));
+const GOP = gopArg ? Number(gopArg.split("=")[1]) : null;
+if (gopArg && (!Number.isInteger(GOP) || GOP < 1)) {
+  console.error("--gop must be a positive integer");
+  process.exit(1);
+}
+
+if (!FILES.length || !Number.isFinite(MIN_SSIM)) {
+  console.error("usage: node scripts/shrink-asset.mjs [--blend] [--write] [--min-ssim=<n>] <files…>");
+  process.exit(1);
+}
+if (ssimArg) console.warn(`  note: content bar lowered to SSIM ${MIN_SSIM} — you ran the CRF 18 control, right?`);
 
 const sh = (c, a) => execFileSync(c, a, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 const kb = (p) => Math.round(statSync(p).size / 1024);
@@ -153,8 +216,29 @@ for (const file of FILES) {
     const audio = sh("ffprobe", ["-v", "error", "-select_streams", "a",
       "-show_entries", "stream=codec_name", "-of", "csv=p=0", file]).trim();
     if (audio) console.warn(`  note: ${basename(file)} HAS audio — -an will strip it`);
+    /* -fps_mode passthrough keeps the SOURCE timestamps. Without it ffmpeg
+       encodes at the input's AVERAGE frame rate, which is the wrong number for
+       a screen recording: long still stretches drag the average far below the
+       rate the motion was actually captured at, so the moving passages get
+       resampled DOWN. A 60fps prototype capture with enough idle time averages
+       ~35fps and silently lost 1292 of its 3700 frames this way — and the SSIM
+       gate could not see it, because ffmpeg's ssim filter pairs frames by
+       timestamp, so it compared the frames that survived and reported 0.9985.
+       Passthrough is not a quality/size trade: on that clip it was smaller
+       (6388KB vs 6553KB) AND scored better (0.9989), because the dropped frames
+       were near-duplicates that cost almost nothing to keep, while resampling
+       forces motion to be re-rendered at timestamps it was never sampled at.
+       On a genuinely constant-rate source this flag is a no-op. */
+    /* -sc_threshold 0 alongside -g/-keyint_min, or x264 keeps its own scene-cut
+       keyframes and places the rest wherever it likes — which on a slow camera
+       move through flat line art means almost nowhere, and the interval you
+       asked for is not the interval you get. */
+    const gopArgs = GOP
+      ? ["-g", String(GOP), "-keyint_min", String(GOP), "-sc_threshold", "0"]
+      : [];
     sh("ffmpeg", ["-v", "error", "-y", "-i", file, "-c:v", "libx264", "-crf", String(CRF),
-      "-preset", "slow", "-pix_fmt", "yuv420p", "-an", "-movflags", "+faststart", out]);
+      "-preset", "slow", "-pix_fmt", "yuv420p", "-an", "-fps_mode", "passthrough",
+      ...gopArgs, "-movflags", "+faststart", out]);
   } else {
     await sharp(file).webp({ quality: 80 }).toFile(out);
   }
@@ -166,6 +250,12 @@ for (const file of FILES) {
   if (isVideo) {
     const s = ssim(file, out);
     gates.push({ name: "ssim", ok: s >= MIN_SSIM, detail: s.toFixed(4) });
+    /* Frame count, which SSIM cannot stand in for: ffmpeg's ssim filter pairs
+       frames by timestamp, so a re-encode that DROPS frames still scores well
+       on the ones it kept. Checklist item 6 in .docs/asset-weight.md asks for
+       this by hand; a gate the tool runs is what makes it true every time. */
+    const fIn = frameCount(file), fOut = frameCount(out);
+    gates.push({ name: "frames", ok: fOut === fIn, detail: `${fOut}/${fIn}` });
   }
   if (BLEND) {
     let count = 0, worst = 0;

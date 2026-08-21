@@ -39,6 +39,27 @@ special-casing.
 
 ### 1. Lighten blend over a token backdrop
 
+**Measure before reaching for this move — it has a disqualifying case.** The
+blend only works when the footage's empty field sits clearly on one side of
+the backdrop and the subject clearly on the other. Sample the clip: if the
+subject is within **~30/255 of the open field on any channel**, skip move 1
+entirely and use a **matched underlay** instead — every levels correction
+that separates the field from the backdrop drags the subject with it. The
+worked failure: the hello world Macintosh footage, ink on warm paper, where
+the CRT mint (rgb 175,207,186) sits ~18 levels of luma from the paper field
+(rgb 231,210,192). The measurements and the dead ends are written out in
+HomeHero.tsx.
+
+**The matched-underlay recipe** (used by both `/world`'s `.sw-sky::before`
+and the home hero): sample the clip's own field colour (mean of the open
+field across all frames), paint it on a layer BEHIND the film, wider and
+softer than the film's own alpha feather, fading to transparent over the
+page surface. The clip's field then meets identical colour at its edge and
+the warmth resolves into the page token over a long ramp — the composite
+`1 − (1−underlay)(1−film)` is monotonic in both layers, so no ordering of
+the two gradients can produce a step. The sampled colour is artwork, not a
+token; it never carries type and must never join the theme.
+
 Structure — a positioned wrapper, a backdrop div, the video on top:
 
 ```tsx

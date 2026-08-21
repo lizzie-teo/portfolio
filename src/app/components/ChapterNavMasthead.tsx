@@ -33,25 +33,38 @@ import { underlineSegment } from "./SiteHeader";
  *    It hangs left of the chapter labels' text column, in the pip lane, so the
  *    indent alone reads as a level up.
  *
- * Label and destination come from the existing site vocabulary: "Main tree" to
- * `/`, the wordmark's own words. A real `next/link` because this leaves the page
- * (the chapter anchors do not). Contrast: full-strength `text-leaf-foreground`,
+ * The label names the destination rather than the site: "Selected work", to
+ * `/work` — the same destination the prev/next footer uses (`CaseStudyShell`),
+ * and for the same reason. A reader who reaches for this row mid-read is leaving
+ * to pick a different project, not to read the introduction; sending them to `/`
+ * landed them above the home page's hero every time and made them scroll past it
+ * to get to the grid. The footer already got this right, but the footer is only
+ * reachable by finishing the article, and this row is the one that persists.
+ *
+ * It was `/#work` until the work got a page of its own. The anchor was always
+ * the workaround — it landed the reader partway down the home page, and once
+ * that page became the fourteen-viewport garden flight it landed them partway
+ * down THAT, with the whole walk sitting above them. `/work` is the thing the
+ * anchor was standing in for.
+ *
+ * A real `next/link` because this leaves the page (the
+ * chapter anchors do not). Contrast: full-strength `text-leaf-foreground`,
  * never a dimmed tint — small text carries the 7:1 bar (style rules §4), so the
  * tier is expressed by typography, not by fading the ink.
  */
 export function ChapterNavMasthead({ className }: { className?: string }) {
   return (
     <Link
-      href="/"
+      href="/#work"
       // min-h-11 (44px) so the row is a touch target in the mobile menu.
       className={`group flex min-h-11 items-center rounded-lg px-3 text-leaf-foreground outline-none focus-visible:ring-2 focus-visible:ring-leaf-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-leaf ${className ?? ""}`}
     >
       {/* leading-none, unlike the wrapping chapter rows: the drawn underline
           hangs off the bottom of this line box (see SiteHeader), and a taller
-          box would drop the rule into a floating gap. "Main tree" never wraps,
-          so it costs nothing here. */}
-      <span className="relative block text-sm font-medium leading-none">
-        Main tree
+          box would drop the rule into a floating gap. `whitespace-nowrap` keeps
+          "Selected work" on one line so the rule stays put. */}
+      <span className="relative block whitespace-nowrap text-sm font-medium leading-none">
+        Selected work
         {/* Drawn from the start of the word, as the masthead's own nav links
             are — the label is the whole target now, so there is nothing for a
             right-origin draw to travel toward. */}

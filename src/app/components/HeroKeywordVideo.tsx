@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motionDuration, motionEase } from "../lib/motion";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -96,14 +96,40 @@ export function HeroKeywordVideo({
   dark,
   src,
   poster,
+  preload = "metadata",
 }: {
   active: boolean;
   dark: boolean;
   src: string;
   poster: string;
+  /* How much of the film to fetch before it is asked for. `metadata` is the
+     desktop default: the pointer can light a word at any moment, so the header
+     is worth having in hand. Below `lg` the caller passes `none` — the six
+     clips total ~8.6MB and a phone should download exactly the one it taps.
+     Under `none` the poster moves out of the video's own attribute and onto a
+     real <img> beneath it (see POSTER_STAND_IN below), because Chrome defers
+     the poster fetch along with the media: measured, a `preload="none"` clip
+     shows an empty disc for as long as the film takes to arrive, and under
+     reduced motion — where play() is never called, so the load algorithm never
+     runs — it would stay empty for good. */
+  preload?: "none" | "metadata";
 }) {
   const reduce = useReducedMotion() ?? false;
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  /* POSTER STAND-IN. On the lazy path the poster is the first thing to arrive
+     (50–130KB against ~1MB of film) and the only thing that arrives at all
+     under reduced motion, so it is rendered as its own layer under the video
+     rather than left to the attribute. It is requested the first time the word
+     is asked for and then stays — six posters eagerly loaded would be half a
+     megabyte a phone never asked for, and one poster re-requested on every tap
+     would flicker. The video paints over it the moment it has frames. */
+  const [primed, setPrimed] = useState(false);
+  const lazy = preload === "none";
+  // Adjusted during render rather than in an effect, so the poster's request is
+  // in flight in the same commit that lights the word — an effect would cost a
+  // second render before the img element exists.
+  if (active && !primed) setPrimed(true);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -154,15 +180,25 @@ export function HeroKeywordVideo({
             dark ? "bg-grout" : "bg-secondary"
           }`}
         />
+        {lazy && primed && (
+          /* eslint-disable-next-line @next/next/no-img-element -- blend-
+             composited decorative frame; sizing and masking are the frame's */
+          <img
+            aria-hidden="true"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover [mix-blend-mode:lighten]"
+            src={poster}
+          />
+        )}
         <video
           ref={videoRef}
           className="absolute inset-0 h-full w-full object-cover [mix-blend-mode:lighten]"
           src={src}
-          poster={poster}
+          poster={lazy ? undefined : poster}
           muted
           loop
           playsInline
-          preload="metadata"
+          preload={preload}
         />
       </div>
     </motion.div>

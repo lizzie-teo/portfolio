@@ -123,7 +123,7 @@ export function AnnotatedFrame({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1, transition: swapTransition }}
                 exit={swapExit}
-                className="text-sm leading-relaxed text-muted-foreground"
+                className="text-sm font-medium leading-relaxed text-leaf"
               >
                 {step.caption}
               </motion.p>

@@ -132,9 +132,9 @@ export const workEntries: WorkEntry[] = [
     kind: "case-study",
     slug: "funding-finder",
     title: "Funding Finder",
-    tagline: "Designing trust into a faster private-lending application.",
+    tagline: "Designing trust into a faster private lending application.",
     size: "standard",
-    industry: "Financial services",
+    industry: "Fintech",
     tags: ["Fintech", "Product design"],
     /* Condensed from the published write-up's role block, which opens
        "End-to-end UX design from discovery through delivery". */
@@ -158,12 +158,14 @@ export const workEntries: WorkEntry[] = [
     size: "tall",
     industry: "Healthcare",
     tags: ["Health", "Service design"],
-    /* Taken from this case study's own "My role" meta block, whose first line
-       is "Sole designer on the redesign, alongside a product manager, clinical
-       leads, and Infermedica's engine team". Not invented here — shortened to
-       fit one line on a card. Was "End to end UX", which said less: sole
-       designer is the stronger and more specific claim, and it is the one the
-       page now makes. */
+    /* Drifted from the page on purpose, for now: the hero's credits block was
+       simplified to Role / Impact area / Focus and its Role now reads "Product
+       Design Consultant", while the card keeps the stronger, more specific claim
+       the old hero sentence made ("Sole designer on the redesign, alongside a
+       product manager, clinical leads, and Infermedica's engine team"). Both are
+       true. If the card should match the hero's title instead, change this to
+       "Product Design Consultant" — do not change it back to "End to end UX",
+       which said less than either. */
     role: "Sole designer",
     /* TODO(lizzie): year unknown. Nothing in the repo records when this shipped;
        the spec bar omits the row cleanly until it is filled in. */
@@ -182,7 +184,12 @@ export const workEntries: WorkEntry[] = [
     title: "AP+ Testing Portal",
     tagline: "Making certification workflows and delivery status easier to read.",
     size: "standard",
-    industry: "Payments",
+    /* FINTECH, NOT "PAYMENTS" — merged with Funding Finder's old "Financial
+       services" so the gallery's Industry filter carries one money sector
+       rather than two holding one project each (owner's call, Aug 2026). The
+       specific word survives where it is still accurate: `tags` keeps
+       "Payments", and the case study itself is unchanged. */
+    industry: "Fintech",
     tags: ["Payments", "Platform UX"],
     /* Condensed from the published write-up's role block, which opens
        "End-to-end UX design from rapid discovery through delivery". */
@@ -200,15 +207,12 @@ export const workEntries: WorkEntry[] = [
     kind: "case-study",
     slug: "macquarie-radar",
     title: "Macquarie Radar",
-    /* TODO(lizzie): this tagline does not match the published project. The
-       write-up at lizzieteo.com/radar describes Radar as a research reporting
-       tool — ERA data preparation and submission, for research and faculty
-       teams — not a student-support view for advisors. The student framing
-       appears to have been invented alongside the scaffold copy in this
-       project's page.tsx, and it feeds the home card, the page title, and the
-       meta description. Left in place rather than rewritten from a scraped
-       page, but it should be replaced before this ships. */
-    tagline: "Helping advisors reach students who need support sooner.",
+    /* From the published write-up at lizzieteo.com/radar: Radar is a research
+       reporting tool for ERA data preparation and submission, used by research
+       and faculty teams. The earlier student-support tagline was invented
+       alongside the scaffold copy in this project's page.tsx, which still
+       carries that framing and needs the same correction. */
+    tagline: "Helping research and faculty teams get ERA submissions ready sooner.",
     size: "standard",
     industry: "Higher education",
     tags: ["Education", "Product design"],
@@ -219,11 +223,7 @@ export const workEntries: WorkEntry[] = [
        preparation and submission". Chosen over its companion figure — "20%
        improvement in strategic research investment decision-making accuracy" —
        because a time saving is concrete and self-explanatory on a card, while
-       "decision-making accuracy" needs a paragraph to mean anything.
-
-       NOTE(lizzie): this figure is about ERA research reporting, which is not
-       what the tagline above or the scaffold copy in this project's page.tsx
-       describes. See the TODO on the tagline. */
+       "decision-making accuracy" needs a paragraph to mean anything. */
     outcome: { value: "30%", label: "Less time preparing ERA submissions" },
     media: { cover: "macquarie-radar" },
   },
@@ -237,19 +237,15 @@ export const workEntries: WorkEntry[] = [
      reading top to bottom meets four projects before the first essay, and the
      grid never asks a blog post to compete with Healthdirect for the same
      glance. If writing ever needs its own band with its own heading, this order
-     is what makes that a lift rather than a rewrite. */
-  {
-    kind: "article",
-    url: "https://lizzieteo.substack.com/p/figma-to-code-best-practices",
-    title: "Figma to Code: Best Practices",
-    tagline:
-      "Structuring design files so the handoff to production stops losing information.",
-    deck: "How to structure design files, align teams, and coach AI to generate production-ready code",
-    publication: "Substack",
-    size: "standard",
-    topic: "Design engineering",
-    year: "October 2025",
-  },
+     is what makes that a lift rather than a rewrite.
+
+     ARTICLES ARE HELD NEWEST FIRST, and that is a requirement rather than a
+     preference: `WritingIndex` renders them in registry order beside a date
+     rail, so any other arrangement reads as a broken list rather than a curated
+     one. The order is kept here rather than sorted at render because `year` is
+     free text ("January 2026", and on case studies "2022 to 2023") — there is no
+     date to sort on without parsing prose, and a parser for three strings is a
+     worse failure mode than a rule. New posts go at the TOP of this block. */
   {
     kind: "article",
     url: "https://lizzieteo.substack.com/p/how-a-ux-qa-custom-agent-changed",
@@ -276,6 +272,18 @@ export const workEntries: WorkEntry[] = [
     size: "standard",
     topic: "Leadership",
     year: "November 2025",
+  },
+  {
+    kind: "article",
+    url: "https://lizzieteo.substack.com/p/figma-to-code-best-practices",
+    title: "Figma to Code: Best Practices",
+    tagline:
+      "Structuring design files so the handoff to production stops losing information.",
+    deck: "How to structure design files, align teams, and coach AI to generate production-ready code",
+    publication: "Substack",
+    size: "standard",
+    topic: "Design engineering",
+    year: "October 2025",
   },
 ];
 

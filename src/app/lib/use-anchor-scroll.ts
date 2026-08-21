@@ -51,6 +51,57 @@ function cubicBezier([x1, y1, x2, y2]: readonly number[]) {
 }
 const easeInOut = cubicBezier(motionEase.inOut);
 
+/* ── THE FILM IS NOT SCRUBBED BY A NAVIGATION ──────────────────────────────
+   `/` opens on the garden flight: eleven thousand pixels of scroll track whose
+   whole purpose is that scroll position IS playback position. Ease a jump
+   across it and the reader watches seven scenes run backwards at roughly 15x —
+   a 520 to 920ms glide over that distance is a strobe, not a transition. It is
+   the reason the site's own smooth scrolling (`globals.css`) has to be
+   overridden here rather than deferred to.
+
+   THE RULE IS ABOUT THE JUMP, NOT THE PAGE, AND THE UNIT IS ONE VIEWPORT: a
+   jump is instant when it would scrub MORE THAN A SCREENFUL of film. A viewport
+   is the natural measure because it is how much of the track is on screen at
+   once — roughly one scene — and one screenful of scrub is about the most a
+   glide can carry before it reads as a rewind rather than a move.
+
+   WHY NOT "ANY OVERLAP AT ALL", which is where this started. The bands begin at
+   the track's foot, and an anchored section lands about 130px ABOVE its own top
+   edge (the 1cm-under-the-bar landing), so a reader parked on the work band is
+   technically still inside the track's box. A bare overlap test made Work →
+   Explorations instant while Explorations → Writing stayed eased, which is two
+   different behaviours for the same kind of hop. The viewport threshold puts all
+   three band hops on the eased path and every jump that genuinely crosses the
+   walk on the instant one.
+
+   WHAT LANDS WHERE, on `/`: "My skills" from anywhere below (back to the floppy
+   at scroll 0) and "Work" from anywhere inside the walk both scrub the whole
+   film and go instant; the three band-to-band hops keep the site's ordinary
+   glide with its 1cm landing and its settle. Nothing on a case study is
+   affected — there is no track there and this returns false.
+
+   THE CONTRACT IS ONE ATTRIBUTE. Whatever mounts a scrub track stamps
+   `data-sw-scrub-track` on the element that IS the track — for the flight that
+   is the engine root, which starts at scroll 0 and is exactly as tall as the
+   track (world.css, THE FLIGHT IS ITS OWN TIMELINE, has the identity). Measured
+   live rather than cached: the track's height is a function of viewport height
+   and of `scrollMobileFactor`, so any number read at mount is wrong after a
+   rotate.
+
+   EXPORTED, because three call sites share the one rule: this hook (the
+   masthead), the arrival's skip (FlightFork) and the ending's button
+   (ScrollWorld). A rule implemented three times is three rules. */
+export function jumpWouldScrubFilm(from: number, to: number) {
+  const track = document.querySelector("[data-sw-scrub-track]");
+  if (!track) {
+    return false;
+  }
+  const bottom = track.getBoundingClientRect().bottom + window.scrollY;
+  // Every track on this site starts at scroll 0, so the film the jump passes
+  // through is whatever of its span lies above the track's foot.
+  return bottom - Math.min(from, to) > window.innerHeight;
+}
+
 /**
  * The a11y half of an anchor jump. A smooth-scroll to an id famously leaves
  * keyboard focus at the top of the page — Tab after the jump then walks the
@@ -172,6 +223,16 @@ export function useAnchorScroll() {
       // the exact 1cm pin.
       const startY = window.scrollY;
       const initialTarget = landingTarget(element, marginTop);
+
+      // A jump that would drag the reader through a scroll-scrubbed film gets
+      // no glide at all — see THE FILM IS NOT SCRUBBED BY A NAVIGATION. Focus
+      // still lands and the arrival still announces; only the travel is cut.
+      if (jumpWouldScrubFilm(startY, initialTarget)) {
+        window.scrollTo({ top: initialTarget, behavior: "instant" });
+        landFocus(element, id, true);
+        return;
+      }
+
       const distance = Math.abs(initialTarget - startY);
       // Already there (re-click on the current section): don't sit through an
       // eased nudge that moves nothing.

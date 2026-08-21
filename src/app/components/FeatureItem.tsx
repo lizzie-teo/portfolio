@@ -189,7 +189,7 @@ export function FeatureItem({ entry }: { entry: WorkEntry }) {
   );
 
   const linkClass =
-    "group block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-4 focus-visible:ring-offset-grout";
+    "group block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-4 focus-visible:ring-offset-secondary";
 
   return isArticle ? (
     <a

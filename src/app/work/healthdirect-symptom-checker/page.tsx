@@ -27,7 +27,7 @@ import { IaFlow } from "./IaFlow";
 import { JourneyMap } from "./JourneyMap";
 import { LandscapeReview } from "./LandscapeReview";
 import { NativeConceptFlow } from "./NativeConceptFlow";
-import { usabilityFindings } from "./UsabilityFindings";
+import { TestingChangedBand } from "./TestingChanged";
 import { SymptomsHero } from "./SymptomsHero";
 
 const slug = "healthdirect-symptom-checker";
@@ -46,159 +46,12 @@ const chapters: CaseChapter[] = [
       { id: "user-journey", title: "User Journey" },
       { id: "information-architecture", title: "Information Architecture" },
       { id: "sketches", title: "Sketches" },
-      { id: "usability-testing", title: "Usability Testing" },
-      { id: "what-testing-changed", title: "What Testing Changed" },
+      { id: "what-testing-changed", title: "What User Testing Changed" },
     ],
   },
   { id: "decisions", title: "Key Design Decisions" },
   { id: "outcome", title: "The Outcome" },
   { id: "whats-next", title: "What Came Next" },
-];
-
-/* What round 2 changed, as three before-and-after exhibits on the same chip band
-   the findings above and the decisions below use.
-
-   Four rules govern the presentation, carried over from the tiled exhibit this
-   content used to live in:
-
-   1. **Matched width, always.** Every capture takes the stage's pair track,
-      including the solo one, which keeps that track rather than growing into
-      the space a missing "after" left. Equal width on 1080px-wide captures is
-      equal zoom, so the type in "before" and "after" is the same physical size
-      and the comparison is fair rather than two differently scaled pictures.
-      The track is a percentage rather than a pixel pin so a pair always fits
-      the stage: a comparison the reader has to swipe to complete is not one.
-   2. **Both states cut at the same place.** Every capture starts at the top of
-      its page and runs off the bottom of the band, hard-clipped at the same
-      height by the stage — the band's own treatment, applied equally to both
-      states, so neither is favoured by the framing. The captures are whole
-      pages, so where the two differ in length that difference is real; the band
-      cannot show it, which is why the footnote says it in words.
-   3. **Honest framing.** The one recommendation that has not shipped gets a
-      single state labelled "Today" and no `shipped` accent, rather than a mock
-      in an "after" frame: an absent frame is honest where an invented one would
-      read as delivered work.
-   4. **Nothing load-bearing is trapped in a bitmap.** The claim, the state
-      labels, and the footnotes are real DOM text, so the argument survives at
-      320px where the captures are only legible as structure.
-
-   The bolded phrase in each claim is the load-bearing one, matching the findings
-   band's evidence vocabulary. */
-const testingChangedFeatures: Feature[] = [
-  {
-    id: "outcome-page",
-    label: "See a GP outcome",
-    body: [
-      <>
-        Round 2 asked for one change here, a copy edit to “What to do” so the
-        different service categories reached people as a recommendation rather
-        than a paragraph to work through.
-      </>,
-      <>
-        The rebuild <strong>says what to do in a sentence</strong>, then{" "}
-        <strong>lays the services out as numbered options</strong>. Each one says
-        what the service is, what it costs and how you get seen, and links
-        straight to it. Before, the three were bullets in a single list, and one
-        Service Finder link at the top was the only way in.
-      </>,
-    ],
-    footnote:
-      "Both states are shown from the top of the page and run on past the bottom of this band. The new page is the longer of the two: every option now carries the detail that used to sit behind one shared link.",
-    images: [
-      {
-        src: "/assets/healthdirect/before-after/see-doc-before.webp",
-        alt: "The original 'See a doctor within 2 hours' page, from the top of the screen to the end of the options: the pink outcome banner, a 'What to do' heading, two paragraphs of advice, then one bullet list mixing Alternate GPs, Virtual Care Clinics and Urgent Care Clinics with their explanations, closed by a single 'About these services' link.",
-        width: 1080,
-        height: 2530,
-        device: "mobile",
-        state: { label: "Before", summary: "Advice, then one mixed list." },
-      },
-      {
-        src: "/assets/healthdirect/before-after/see-doc-after.webp",
-        alt: "The redesigned page, from the top of the screen to the end of the options: the same outcome banner, a 'What to do' summary card stating you need to see a doctor within the next 2 hours, then three numbered options, 1. Virtual Care Clinics, 2. GP and 3. Urgent Care Clinics, each with bullets on what the service is, what it costs and how you get seen, and its own link.",
-        width: 1080,
-        height: 3970,
-        device: "mobile",
-        state: {
-          label: "After",
-          summary: "A summary, then three options.",
-          shipped: true,
-        },
-      },
-    ],
-  },
-  {
-    id: "guidance-panel",
-    label: "Service guidance",
-    body: [
-      <>
-        Users found this panel helpful, but round 2 heard the same ask twice
-        over: they wanted it more targeted. Several expected it to name the
-        services near them, or give them a number to call.
-      </>,
-      <>
-        The rebuild <strong>scopes the panel to a single service</strong> and{" "}
-        <strong>sets the headings as the questions people asked</strong>: whether
-        an appointment is needed, wait times, cost. Each answer leads with its
-        verdict, so the first word or two is usually the whole answer.
-      </>,
-    ],
-    images: [
-      {
-        src: "/assets/healthdirect/before-after/aboutservices-before.png",
-        alt: "The original panel, titled 'About these services', shown whole: Virtual Care Clinics, Urgent Care Clinics and Emergency Departments each described in a flat paragraph and a bullet list, one after another.",
-        width: 1080,
-        height: 3249,
-        device: "mobile",
-        state: { label: "Before", summary: "Every service, described in turn." },
-      },
-      {
-        src: "/assets/healthdirect/before-after/aboutservices-after.png",
-        alt: "The redesigned panel, titled 'Learn more' and scoped to Virtual Care Clinics, shown whole: a short description, then question headings including 'Do I need an appointment?' answered with 'No' in the first word.",
-        width: 1080,
-        height: 2400,
-        device: "mobile",
-        state: {
-          label: "After",
-          summary: "One service, answered in questions.",
-          shipped: true,
-        },
-      },
-    ],
-  },
-  {
-    id: "service-distance",
-    label: "Service distance",
-    body: [
-      <>
-        Round 2 asked for one thing the redesign has not answered yet: a way to
-        filter services by how far away they are, rather than only sorting by it.
-      </>,
-      <>
-        Sorting by nearest shipped.{" "}
-        <strong>
-          A distance filter is still open, pending technical feasibility.
-        </strong>{" "}
-        Until it lands the list orders results nearest first but nothing bounds
-        how far it reaches, so a search from one Adelaide suburb returns fifty
-        results within 1166km.
-      </>,
-    ],
-    footnote:
-      "Shown as it stands today, with no second frame beside it. It is the one round 2 recommendation without a shipped answer, kept here rather than dropped.",
-    images: [
-      {
-        src: "/assets/healthdirect/before-after/nearest-sort.webp",
-        alt: "The live service results for Urgent Care in Bowden: a Filter button, a 'Sort by: Nearest' control, then a 'Search results' heading reading '50 results within 1166km', followed by the whole first result card, Total Urgent Care Norwood, at 3.0km.",
-        width: 1080,
-        height: 2115,
-        device: "mobile",
-        // No `shipped`: this state is the present, not an answer. The accent
-        // means "and here is what shipped", and nothing has.
-        state: { label: "Today", summary: "Sorted by nearest, unbounded." },
-      },
-    ],
-  },
 ];
 
 /* The four decisions that carried the flow, shown as expandable chips beside a
@@ -355,14 +208,25 @@ const decisionFeatures: Feature[] = [
     // ~23.5%, ~29.6% down). Images interleave modal-then-finder per service so
     // the arrow walk reads option by option.
     //
-    // All six carry a `demoStep`, so this feature's phone frame runs the auto
-    // demo (Hotspot.demoStep / useHotspotDemo). It is the flow that needs one
-    // most — the capture is 1080×12910, so every trigger here sits ~430px below
-    // the fold of the phone screen and a reader who never scrolls the capture
-    // never learns it is tappable — and it is the only flow that exercises both
-    // step kinds, popup explainer and paged navigation. Steps follow the
-    // authored order, so the loop walks the results page option by option.
-    // Every other feature is left reader-only until the pattern is signed off.
+    // This feature's phone frame runs the auto demo (useHotspotDemo). It is the
+    // flow that needs one most — the capture is 1080×12910, so every trigger
+    // here sits ~430px below the fold of the phone screen and a reader who never
+    // scrolls the capture never learns it is tappable. Every other feature is
+    // left reader-only until the pattern is signed off.
+    //
+    // The loop READS before it presses (demoScan below), then demonstrates ONE
+    // option in depth: Urgent Care, steps 1 and 2. Showing all three explainers
+    // was the first pass and it was the wrong shape — six presses ran past a
+    // minute, and opening every modal in turn answers a question the reader has
+    // not been asked yet. The scan carries the recommendation ORDER, which is
+    // the actual design decision this chapter argues; one worked example then
+    // shows what a tap does. Urgent care is the right example because it is the
+    // middle option, the one the design steers people TOWARD when virtual care
+    // cannot treat them and an ED would be overkill.
+    //
+    // The other four triggers keep their coordinates and stay fully tappable by
+    // hand — they simply carry no `demoStep`. Re-widening the demo later is
+    // adding numbers back, nothing more.
     hotspots: [
       {
         onImage: 0,
@@ -371,7 +235,6 @@ const decisionFeatures: Feature[] = [
         w: 72,
         h: 1.9,
         popupImage: 1,
-        demoStep: 1,
         label: "More info: Virtual Care Clinic",
       },
       {
@@ -381,7 +244,6 @@ const decisionFeatures: Feature[] = [
         w: 56,
         h: 1.15,
         goToImage: 2,
-        demoStep: 2,
         label: "Find a Virtual Care Clinic",
       },
       {
@@ -391,7 +253,7 @@ const decisionFeatures: Feature[] = [
         w: 75,
         h: 1.9,
         popupImage: 3,
-        demoStep: 3,
+        demoStep: 1,
         label: "More info: Urgent Care Clinics",
       },
       {
@@ -401,7 +263,7 @@ const decisionFeatures: Feature[] = [
         w: 59,
         h: 1.1,
         goToImage: 4,
-        demoStep: 4,
+        demoStep: 2,
         label: "Find an Urgent Care Clinic",
       },
       {
@@ -411,7 +273,6 @@ const decisionFeatures: Feature[] = [
         w: 89,
         h: 2.0,
         popupImage: 5,
-        demoStep: 5,
         label: "More info: Emergency Departments",
       },
       {
@@ -421,8 +282,36 @@ const decisionFeatures: Feature[] = [
         w: 72,
         h: 1.3,
         goToImage: 6,
-        demoStep: 6,
         label: "Find an Emergency Department",
+      },
+    ],
+    // The read-through, run once at the top of each loop before anything is
+    // pressed: the outcome verdict, then the three care options in the order
+    // the design recommends them. Coordinates measured off actionable-1.png
+    // (1080×12910) — the three option headings land within 0.4% of the info
+    // hotspots above, which is the check that the mapping is right.
+    //
+    // Boxes rather than points so the hand centres on the text it is reading
+    // and the region says what is being read. x spans the heading text only,
+    // not the full column, so the hand rests over words rather than whitespace.
+    demoScan: [
+      {
+        onImage: 0,
+        x: 5,
+        y: 4.2,
+        w: 55,
+        h: 1.8,
+        label: "Seek immediate medical care",
+      },
+      { onImage: 0, x: 5, y: 12.9, w: 62, h: 1.3, label: "1. Virtual Care Clinic" },
+      { onImage: 0, x: 5, y: 18.6, w: 65, h: 1.3, label: "2. Urgent Care Clinics" },
+      {
+        onImage: 0,
+        x: 5,
+        y: 24.3,
+        w: 82,
+        h: 1.3,
+        label: "3. Emergency Departments",
       },
     ],
   },
@@ -460,7 +349,6 @@ export default function HealthdirectSymptomCheckerPage() {
   return (
     <CaseStudyShell
       slug="healthdirect-symptom-checker"
-      chip="Public Health"
       hideTagline
       heroId="introduction"
       heroCorners="top"
@@ -484,30 +372,26 @@ export default function HealthdirectSymptomCheckerPage() {
               . It&apos;s a triage tool that helps people assess their
               symptoms and decide on next steps for care.
             </p>
-            <p>
-              The redesign integrated{" "}
-              <span className="font-semibold text-leaf-highlight">
-                Infermedica&apos;s AI engine
-              </span>{" "}
-              into a flow an anxious person could actually finish, without it
-              ever sounding like a diagnosis.
-            </p>
           </>
         ),
-        /* Flat, not grouped: the role block used to split into Phase 1 and
-           Phase 2 columns, and Phase 2 has been parked (see
-           _parked/Phase2Chapter.tsx). One list of three also drops the hero
-           back to the plain two-column grid the shell uses for Macquarie.
-           Every line states ownership rather than naming a discipline — the IA
-           flow and the screens below already prove she did IA and UI; what the
-           artifacts can't show is that nobody else was making those calls. */
+        /* A credits block, not a paragraph: this used to be three sentences of
+           ownership ("Sole designer on the redesign, alongside…"), and before
+           that a Phase 1 / Phase 2 split whose second phase has been parked
+           (see _parked/Phase2Chapter.tsx). Three labelled facts scan in the time
+           a hiring manager actually gives a hero, and the page below is what
+           proves the ownership claim the sentences were making. The impact area
+           carries what the "Public Health" hero chip used to say, so the chip is
+           gone rather than repeating a line that sits four rows below it. */
         meta: [
+          { label: "Role", value: "Product Design Consultant" },
+          { label: "Impact area", value: "Public health" },
           {
-            label: "My role",
-            items: [
-              "Sole designer on the redesign, alongside a product manager, clinical leads, and Infermedica's engine team",
-              "Led it end to end: discovery, architecture, question flow, and final screens",
-              "Set the accessibility and plain language bar, then tested the build against it",
+            label: "Focus",
+            bullets: [
+              "Content Strategy",
+              "User Experience",
+              "User Testing",
+              "User Interface Detailing",
             ],
           },
         ],
@@ -526,24 +410,16 @@ export default function HealthdirectSymptomCheckerPage() {
           <CaseStatement
             corners="bottom"
             eyebrow="The reframe"
-            statsEyebrow="The result"
-            stats={[
-              {
-                value: "84%",
-                label: "Completed their check",
-                detail: "Up from 49% before the AI redesign",
-              },
-              {
-                value: "2M",
-                label: "Checks a year",
-                detail: "Across Australian jurisdictions",
-              },
-              {
-                value: "2×",
-                label: "More than the helpline",
-                detail: "Australians now choose digital first",
-              },
-            ]}
+            proofEyebrow="User response"
+            /* The proof under the reframe is a person, not a number: the
+               published figures still close the case study in the outcome
+               chapter, and repeating them up here made the opening slab read
+               as a results summary before the problem had been stated. */
+            quote={{
+              text: "“It definitely narrows things down really well. And even though I wouldn’t self diagnose anything usually, it gave perspective on how I might feel if I was properly ill, so I actually had an excuse to avoid the doctor which was great to me.”",
+              /* No `source`: the eyebrow above already says whose response
+                 this is, and a second label under the quote would repeat it. */
+            }}
           >
             {getCaseStudy(slug)?.tagline}
           </CaseStatement>
@@ -564,7 +440,16 @@ export default function HealthdirectSymptomCheckerPage() {
                 />
               }
             >
-              <Tile immersive corners="bottom" className={readingTilePadding}>
+              {/* Reversed against the reading tiles: the section takes the
+                  light teal quiet panel and the criteria cells come back in
+                  white, so the six targets read as objects set on the brand
+                  field rather than tints on white paper. */}
+              <Tile
+                surface="secondary"
+                immersive
+                corners="bottom"
+                className={readingTilePadding}
+              >
                 <MaskReveal
                   as="h2"
                   mode="word"
@@ -595,9 +480,9 @@ export default function HealthdirectSymptomCheckerPage() {
               <LandscapeReview id="landscape-review" corners="none" />
               <JourneyMap id="user-journey" corners="none" />
               <IaFlow id="information-architecture" corners="none" />
-              {/* Caps the upper slab. The findings band below bleeds edge to
-                  edge, so the run of tiles that opened with the chapter leaf
-                  ends here rather than carrying on past it. */}
+              {/* Caps the upper slab. The band below bleeds edge to edge, so
+                  the run of tiles that opened with the chapter leaf ends here
+                  rather than carrying on past it. */}
               <ArtifactSection
                 id="sketches"
                 headingLevel={2}
@@ -623,43 +508,17 @@ export default function HealthdirectSymptomCheckerPage() {
                   </div>
                 </MotionReveal>
               </ArtifactSection>
-              {/* The findings run on the same band as the decisions showcase
-                  further down the page — same component, same chip accordion
-                  and collapsing screenshot stage — because they are the two
-                  halves of one argument: what testing found, and what shipped
-                  in answer. A full-bleed band cannot sit inside a bordered tile,
-                  so this is a direct child of the chapter rather than an
-                  ArtifactSection, and it owns the #usability-testing anchor and
-                  its own heading and takeaway.
+              {/* The bridge into the decisions chapter: what testing found,
+                  stated through what shipped in answer to it. A separate
+                  "Usability testing" findings band used to run above this one
+                  (parked at _parked/UsabilityFindings.tsx); it argued the same
+                  research twice, once as findings and once as changes, so the
+                  page now carries only the half that shows the product.
 
-                  `tone="light"`: the dark band is the decisions chapter's one
-                  signature moment and repeating it here would spend it twice.
-                  Light also keeps the tinted research surface this section
-                  already had, which the "What testing changed" tile below
-                  shares. No `reserveNavLane`, matching the decisions usage —
-                  this page's shell runs `reserveNavLane={false}` and its dock
-                  floats over the page. */}
-              <FeatureChips
-                id="usability-testing"
-                features={usabilityFindings}
-                heading="Usability testing"
-                lede="Twelve users across two rounds (four priority, four culturally and linguistically diverse, two with disability, two general) produced eleven recommendations, all implemented."
-                tone="light"
-              />
-              {/* The bridge into the decisions chapter: the findings band above
-                  is research, this is what shipped in answer to it. The two run
-                  on the same component for that reason — the reader meets one
-                  finding, then the change it produced, in the same chip-and-stage
-                  gesture, so the pairing is felt rather than argued.
-
-                  `tone="dark"` is what separates them. The findings band is
-                  light because it is research; this one steps onto the leaf
-                  because it is product, and it hands the reader onto the
-                  decisions showcase below, which is the same dark band. The two
-                  dark bands are deliberately adjacent: the chapter leaf between
-                  them is the only pause, and the shared surface is the argument
-                  that what shipped here and what shipped there are one body of
-                  work.
+                  `tone="dark"` steps this band onto the leaf and hands the
+                  reader onto the decisions showcase below, which is the same
+                  dark band — the shared surface is the argument that what
+                  shipped here and what shipped there are one body of work.
 
                   A full-bleed band cannot sit inside a bordered tile, so this is
                   a direct child of the chapter rather than an ArtifactSection.
@@ -668,12 +527,13 @@ export default function HealthdirectSymptomCheckerPage() {
                   into the lede, because FeatureChips leads with its framing
                   sentence and a closing line under a full-bleed media stage
                   would land after the reader has already left for the next
-                  chapter. No `reserveNavLane`, matching the two sibling usages. */}
-              <FeatureChips
+                  chapter. No `reserveNavLane`, matching the sibling usage in the
+                  decisions chapter — this page's shell runs
+                  `reserveNavLane={false}` and its dock floats over the page. */}
+              <TestingChangedBand
                 id="what-testing-changed"
-                features={testingChangedFeatures}
-                heading="What testing changed"
-                lede="Round 2 came back as structure: the outcome page turned prose into a decision list, and the guidance panel narrowed to one service answered in questions."
+                heading="What user testing changed"
+                lede="Twelve users across two rounds (four priority, four culturally and linguistically diverse, two with disability, two general) produced eleven recommendations, all implemented. Below are a few examples."
                 tone="dark"
               />
             </Chapter>
@@ -738,28 +598,65 @@ export default function HealthdirectSymptomCheckerPage() {
                   this chapter as a flat composite; it now has its own chapter
                   below, because a future state prototype should not be read as
                   part of the result. */}
-              <Tile immersive corners="bottom">
-                <MotionReveal>
-                  <span
-                    aria-hidden="true"
-                    className="block h-1 w-10 rounded-full bg-primary md:w-12"
-                  />
-                  <p className="mt-6 max-w-[15em] font-heading text-[clamp(1.5rem,3.6vw,2.75rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-foreground">
-                    People finished the check, and left knowing what to do next.
-                  </p>
-                </MotionReveal>
+              {/* Motion tiers (§7): the heading is structure and slips; the
+                  scorecard's count-up is the explanatory motion this section
+                  actually earns; the rule and the link are neither, so they sit
+                  static. This tile used to fade its heading and its link up in
+                  two separate MotionReveals with the scorecard between them, so
+                  one tile arrived in three unrelated beats at three different
+                  scroll positions and the heading wore the same gesture as a
+                  trailing link. */}
+              {/* Reversed to match the criteria scorecard one chapter above —
+                  light teal field, white cells. The two scorecard sections are
+                  bar and result and have to carry the same surface, or the
+                  answer stops looking like an answer to the question. */}
+              <Tile surface="secondary" immersive corners="bottom">
+                <span
+                  aria-hidden="true"
+                  className="block h-1 w-10 rounded-full bg-primary md:w-12"
+                />
+                {/* An `h2` on `sectionHeading`, matching "What success had to
+                    look like" above the criteria scorecard: per §12 a
+                    statement line that titles an artifact block is that
+                    section's heading, so it takes the section rung rather
+                    than a display size of its own. It was a `<p>` on a
+                    bespoke clamp, which both escaped the ladder and left the
+                    outcome chapter with no in-flow heading in the outline. */}
+                {/* Word slip, matching that sibling heading — the two scorecard
+                    sections are the same kind of block and should arrive the
+                    same way. It is the longest heading on the page at eleven
+                    words, which `intervalFor` handles by tightening the stagger
+                    to 0.03s; the cascade still resolves in 0.5s, inside the
+                    section-heading budget. */}
+                {/* No colour class: `sectionHeading` carries the role's own
+                    ink (--heading, this theme's darkest teal). A local
+                    `text-foreground` here would silently opt this one
+                    heading out of it. */}
+                <MaskReveal
+                  as="h2"
+                  mode="word"
+                  duration="fast"
+                  className={`mt-6 max-w-[15em] ${sectionHeading}`}
+                  text="People finished the check, and left knowing what to do next."
+                />
                 <OutcomeScorecard className="mt-10 md:mt-14" />
-                <MotionReveal>
-                  <a
-                    href="https://about.healthdirect.gov.au/resources/news/healthdirect-symptom-checker-gen2-paves-the-way-to-the-national-virtual-front-door"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-10 inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline md:mt-14"
-                  >
-                    Read Healthdirect&apos;s announcement of Gen 2
-                    <ArrowUpRight aria-hidden="true" className="size-4" />
-                  </a>
-                </MotionReveal>
+                <a
+                  href="https://about.healthdirect.gov.au/resources/news/healthdirect-symptom-checker-gen2-paves-the-way-to-the-national-virtual-front-door"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  /* --secondary-foreground, not the usual --primary link ink.
+                     --primary #007f78 is tuned to clear 4.5:1 on the page
+                     background (#F3F7F7) and drops to 4.35:1 on the mint this
+                     tile now carries, which fails AA for a text-sm link.
+                     --secondary-foreground #006f69 is the same green family one
+                     step deeper and is the token defined as readable on this
+                     surface: 5.4:1. The rule above stays --primary — it is
+                     aria-hidden decoration, judged at the 3:1 non-text bar. */
+                  className="mt-10 inline-flex items-center gap-1.5 text-sm font-medium text-secondary-foreground underline-offset-4 hover:underline md:mt-14"
+                >
+                  Read Healthdirect&apos;s announcement of Gen 2
+                  <ArrowUpRight aria-hidden="true" className="size-4" />
+                </a>
               </Tile>
             </Chapter>
 

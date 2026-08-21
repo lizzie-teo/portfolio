@@ -155,8 +155,25 @@ const lensRow = [
   "lg:row-start-5",
 ] as const;
 
-const lensRule = (lensIndex: number) =>
-  lensIndex > 0 ? "lg:border-t lg:border-border" : "";
+/* Desktop matrix rules, drawn as their own full-width grid items rather than
+   as a border on each cell. A per-cell border-b/border-t is broken into six
+   dashes by lg:gap-x-5, which makes the diagram read as five parallel stacks
+   that happen to line up instead of one table; spanning every column draws the
+   line across the gaps too. Zero-height items pinned to the row edge, so they
+   sit flush whatever the row's tallest cell turns out to be.
+
+   Deliberately NOT motion components: the rules are the table's frame, so they
+   are already drawn while the cells stagger into them. Riding the stagger would
+   snap four full-width lines in at four different moments, which is far more
+   conspicuous than the short segments were. */
+const gridRules = [
+  /* Bottom of the header row. */
+  { key: "header", placement: "lg:row-start-1 lg:self-end" },
+  /* Top of each lens row after the first — the header rule divides that one. */
+  { key: "feelings", placement: "lg:row-start-3 lg:self-start" },
+  { key: "needs", placement: "lg:row-start-4 lg:self-start" },
+  { key: "pain", placement: "lg:row-start-5 lg:self-start" },
+] as const;
 
 function NoteChip({ note, lensChip }: { note: Note; lensChip: string }) {
   const text = typeof note === "string" ? note : note.text;
@@ -247,7 +264,7 @@ export function JourneyMap({
               <p className="mt-2 text-base font-semibold leading-snug">
                 A time-poor parent researching a child&apos;s symptoms
               </p>
-              <blockquote className="mt-3 border-l border-border pl-4 text-sm leading-relaxed text-muted-foreground">
+              <blockquote className="mt-3 border-l border-rule pl-4 text-sm leading-relaxed text-muted-foreground">
                 &ldquo;I take online search results with a grain of salt but I
                 like smart tools that save me time and get to the point quickly
                 and have constructive and progressive ideas on treatments and
@@ -257,16 +274,24 @@ export function JourneyMap({
           </motion.div>
 
           <div className="mt-8 md:mt-10 lg:grid lg:grid-cols-[7.5rem_repeat(5,minmax(0,1fr))] lg:gap-x-5 xl:grid-cols-[8.5rem_repeat(5,minmax(0,1fr))] xl:gap-x-6">
+            {gridRules.map((rule) => (
+              <div
+                key={rule.key}
+                aria-hidden="true"
+                className={`hidden lg:col-span-full lg:block lg:border-t lg:border-rule ${rule.placement}`}
+              />
+            ))}
+
             {/* Desktop-only row labels; mobile repeats them inside each stage. */}
             <div className="hidden lg:contents">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-foreground lg:col-start-1 lg:row-start-1 lg:self-end lg:border-b lg:border-border lg:pb-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-foreground lg:col-start-1 lg:row-start-1 lg:self-end lg:pb-3">
                 Journey steps
               </p>
               {lenses.map((lens, lensIndex) => (
                 <p
                   key={lens.key}
                   aria-hidden="true"
-                  className={`text-xs font-semibold uppercase tracking-[0.14em] text-foreground lg:col-start-1 ${lensRow[lensIndex]} ${lensRule(lensIndex)} lg:py-4`}
+                  className={`text-xs font-semibold uppercase tracking-[0.14em] text-foreground lg:col-start-1 ${lensRow[lensIndex]} lg:py-6`}
                 >
                   {lens.label}
                 </p>
@@ -278,11 +303,11 @@ export function JourneyMap({
                 key={stage.title}
                 variants={v.stage}
                 aria-label={`Stage ${stageIndex + 1} — ${stage.title}`}
-                className="mt-8 border-t border-border pt-6 first-of-type:mt-0 first-of-type:border-t-0 first-of-type:pt-0 lg:contents"
+                className="mt-8 border-t border-rule pt-6 first-of-type:mt-0 first-of-type:border-t-0 first-of-type:pt-0 lg:contents"
               >
                 <motion.div
                   variants={v.cell}
-                  className={`${stageCol[stageIndex]} lg:row-start-1 lg:flex lg:items-end lg:justify-between lg:gap-2 lg:border-b lg:border-border lg:pb-3`}
+                  className={`${stageCol[stageIndex]} lg:row-start-1 lg:flex lg:items-end lg:justify-between lg:gap-2 lg:pb-3`}
                 >
                   <p className="text-base font-semibold leading-snug">
                     {stage.title}
@@ -299,7 +324,7 @@ export function JourneyMap({
                   <motion.div
                     key={lens.key}
                     variants={v.cell}
-                    className={`mt-4 lg:mt-0 ${stageCol[stageIndex]} ${lensRow[lensIndex]} ${lensRule(lensIndex)} lg:py-4`}
+                    className={`mt-4 lg:mt-0 ${stageCol[stageIndex]} ${lensRow[lensIndex]} lg:py-6`}
                   >
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-foreground lg:hidden">
                       {lens.label}

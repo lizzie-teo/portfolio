@@ -18,11 +18,18 @@ import { motionDuration, motionEase } from "@/app/lib/motion";
  * cell here answers the Completion target there. Figures share the bar's large
  * teal scale exactly, so the two scorecards read as one matched pair.
  *
+ * Colour mirrors the bar exactly, and the pair has to move together: the
+ * section is the light teal quiet panel (--secondary, Tile surface="secondary")
+ * and the cells are white, floating on --shadow-float with no border. See
+ * CriteriaScorecard for why white rather than the theme's retinted --card, and
+ * why float rather than card or elevated. Flip one scorecard's surface without
+ * the other and the bar stops matching its result.
+ *
  * Two kinds share the frame, as in the bar scorecard: a measured result leads
  * with its published figure; a qualitative outcome swaps the figure for a
  * context icon and lets the statement carry the weight. Both marks sit in the
- * deep leaf teal (--leaf #183947, 10.9:1 on the bg-secondary mint) at the same
- * large scale as the bar scorecard, so the pair reads as one matched system.
+ * deep leaf teal (--leaf #183947, 12.3:1 on white) at the same large scale as
+ * the bar scorecard, so the pair reads as one matched system.
  *
  * Figures count up from zero every time they scroll into view (CountUp), on
  * the cell stagger's own cadence, so the result lands as it arrives.
@@ -120,7 +127,7 @@ export function OutcomeScorecard({ className }: { className?: string }) {
         <motion.div
           key={o.label}
           variants={v.cell}
-          className="flex flex-col rounded-xl border border-border bg-secondary p-6 md:p-8"
+          className="flex flex-col rounded-xl bg-white p-6 md:p-8 shadow-float"
         >
           <dt className={eyebrow}>{o.label}</dt>
           {o.kind === "metric" ? (
@@ -130,7 +137,7 @@ export function OutcomeScorecard({ className }: { className?: string }) {
                 delay={shouldReduce ? 0 : index * 0.05}
                 className="text-4xl font-semibold leading-[0.95] tracking-[-0.02em] text-leaf break-words md:text-5xl"
               />
-              <span className="text-sm leading-relaxed text-muted-foreground">
+              <span className="text-sm font-medium leading-relaxed text-leaf">
                 {o.detail}
               </span>
             </dd>

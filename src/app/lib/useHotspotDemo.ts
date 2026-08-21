@@ -79,12 +79,49 @@ const DEMO = {
   pageSwap: motionDuration.base * 2 * 1000 + 120,
   /** Beat between steps. */
   gap: 400,
+  /**
+   * Read-through beats. The hand moves between scan points at the same `slow`
+   * travel as everywhere else, then rests. `scanDwell` is the one that decides
+   * whether the scan reads as reading or as drifting: too short and it skims
+   * past a heading nobody has finished, too long and the loop stalls before it
+   * has done anything. `scanSettle` is the shorter rest on the outcome heading,
+   * which is three words rather than an option to weigh up.
+   */
+  scanDwell: 1100,
+  scanSettle: 700,
+  /** Pause after the last option is read, before the hand commits to a press. */
+  scanCommit: 500,
   /** Pause at the top of the capture before the loop starts again. */
   loop: 1400,
 } as const;
 
 /** Where the trigger is parked vertically in the screen during Reveal. */
 const REVEAL_ANCHOR = 0.45;
+
+/**
+ * A region the hand reads over before any of it is pressed — the outcome
+ * heading, then each recommended care option in turn. Same coordinate model as
+ * a hotspot (percentages of the capture, top-left plus size), because the scan
+ * and the press share all their positioning maths; the difference is only that
+ * a scan point is never touched.
+ *
+ * The scan exists because the press sequence answers "what happens if I tap
+ * this" before the reader has been told there is a list to tap in. On a capture
+ * this tall the three care options do not share a screenful, so drilling
+ * straight into one of them shows a modal with no visible sense of what it was
+ * chosen FROM — and the recommendation order is the whole design decision the
+ * chapter is about. Reading the set first, unhurried and without pressing
+ * anything, puts the choice on screen before the demonstration of it.
+ */
+export type DemoScanPoint = {
+  onImage: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** What is being read. Authoring aid; nothing renders it. */
+  label: string;
+};
 
 /**
  * The popup's "Ok" pill, as a fraction of the screen. Mirrors OK_HOTSPOT in
@@ -112,6 +149,9 @@ export function demoPressId(hotspot: DemoHotspot): DemoPressTarget {
 /** The press-target id for a demo-opened popup's own dismiss control. */
 export const DEMO_DISMISS_ID: DemoPressTarget = "popup-dismiss";
 
+/** Stable empty default, so an unscanned feature never re-runs the effect. */
+const EMPTY_SCAN: DemoScanPoint[] = [];
+
 type RingState = {
   x: number;
   y: number;
@@ -126,6 +166,11 @@ export type HotspotDemoOptions<T extends DemoHotspot> = {
    * the demo entirely, which is every feature that has not opted in.
    */
   steps: T[];
+  /**
+   * Optional read-through that runs once at the top of each loop, before the
+   * first press. Empty skips it.
+   */
+  scan?: DemoScanPoint[];
   /** The images index currently on screen, so the loop knows where it is. */
   imageIndex: number;
   /** The gallery root — the in-view gate and the reader-handover listeners. */
@@ -156,6 +201,7 @@ export type HotspotDemoState = {
 
 export function useHotspotDemo<T extends DemoHotspot>({
   steps,
+  scan = EMPTY_SCAN,
   imageIndex,
   galleryRef,
   openPopup,
@@ -175,8 +221,22 @@ export function useHotspotDemo<T extends DemoHotspot>({
   // Everything the running loop reads goes through a ref, so a re-render (the
   // carousel index changing, the ring moving) never restarts the sequence and
   // the gating effect can depend only on the things that genuinely gate it.
-  const latest = useRef({ steps, imageIndex, openPopup, closePopup, navigate });
-  latest.current = { steps, imageIndex, openPopup, closePopup, navigate };
+  const latest = useRef({
+    steps,
+    scan,
+    imageIndex,
+    openPopup,
+    closePopup,
+    navigate,
+  });
+  latest.current = {
+    steps,
+    scan,
+    imageIndex,
+    openPopup,
+    closePopup,
+    navigate,
+  };
 
   // A generation counter. Bumping it is how every pending timer, scroll
   // animation, and awaited beat learns it is stale: each await returns whether
@@ -260,10 +320,77 @@ export function useHotspotDemo<T extends DemoHotspot>({
       return true;
     };
 
+    /**
+     * Reveal a region and move the hand onto it, without pressing. Shared by the
+     * scan and by every press step's approach, so a read and a tap position the
+     * hand by identical maths and the two never disagree about where a thing is.
+     * Resolves false if this generation went stale mid-move.
+     */
+    const reachTo = async (
+      region: { x: number; y: number; w: number; h: number },
+      id: number
+    ) => {
+      const el = scrollElRef.current;
+      if (!el) return false;
+      const contentHeight = el.scrollHeight;
+      const screenW = el.clientWidth;
+      const screenH = el.clientHeight;
+      const centreY = ((region.y + region.h / 2) / 100) * contentHeight;
+      const centreX = ((region.x + region.w / 2) / 100) * screenW;
+      const maxScroll = Math.max(0, contentHeight - screenH);
+      const targetTop = Math.min(
+        Math.max(centreY - screenH * REVEAL_ANCHOR, 0),
+        maxScroll
+      );
+      if (!(await scrollTo(el, targetTop, DEMO.reveal, id))) return false;
+      if (!(await wait(DEMO.settle, id))) return false;
+
+      // The hand reaches in from below the screen's foot on first mount — where
+      // a thumb comes from — and simply travels between targets after that.
+      const ringY = centreY - el.scrollTop;
+      setRing((r) =>
+        r
+          ? { ...r, x: centreX, y: ringY }
+          : {
+              x: centreX,
+              y: ringY,
+              from: { x: centreX, y: screenH + 44 },
+              pressed: false,
+              pressKey: 0,
+            }
+      );
+      return await wait(DEMO.approach, id);
+    };
+
+    /**
+     * The read-through. Runs once per loop, before anything is pressed: the hand
+     * travels down the outcome heading and each recommended option in turn,
+     * resting on each, touching none of them. Deliberately unhurried — this beat
+     * is the reader being shown there is a set to choose from, and rushing it
+     * would make it read as the demo failing to click rather than declining to.
+     */
+    const runScan = async (id: number) => {
+      const points = latest.current.scan;
+      if (points.length === 0) return true;
+      for (const [i, point] of points.entries()) {
+        if (latest.current.imageIndex !== point.onImage) {
+          latest.current.navigate(point.onImage);
+          if (!(await wait(DEMO.pageSwap, id))) return false;
+        }
+        if (!(await reachTo(point, id))) return false;
+        // The first point is the outcome heading; the rest are options to weigh.
+        if (!(await wait(i === 0 ? DEMO.scanSettle : DEMO.scanDwell, id)))
+          return false;
+      }
+      return await wait(DEMO.scanCommit, id);
+    };
+
     const runLoop = async (id: number) => {
       if (!(await wait(DEMO.lead, id))) return;
 
       while (runIdRef.current === id) {
+        if (!(await runScan(id))) return;
+
         for (const step of latest.current.steps) {
           // The loop can only drive a trigger that is on screen. After a paged
           // step this is what brings the carousel back to the source screen.
@@ -277,39 +404,10 @@ export function useHotspotDemo<T extends DemoHotspot>({
             continue;
           }
 
-          // 1. REVEAL. The hotspot's coordinates are percentages of the capture,
-          // so its centre is arithmetic off the scroll content height. Parking
-          // it at a known fraction of the screen is what lets every later beat
-          // work in flat screen coordinates and ignore scroll entirely.
-          const contentHeight = el.scrollHeight;
-          const screenW = el.clientWidth;
-          const screenH = el.clientHeight;
-          const centreY = ((step.y + step.h / 2) / 100) * contentHeight;
-          const centreX = ((step.x + step.w / 2) / 100) * screenW;
-          const maxScroll = Math.max(0, contentHeight - screenH);
-          const targetTop = Math.min(
-            Math.max(centreY - screenH * REVEAL_ANCHOR, 0),
-            maxScroll
-          );
-          if (!(await scrollTo(el, targetTop, DEMO.reveal, id))) return;
-          if (!(await wait(DEMO.settle, id))) return;
-
-          // 2. APPROACH. The hand reaches in from below the screen's foot on
-          // first mount — where a thumb comes from — and simply travels between
-          // triggers after that.
-          const ringY = centreY - el.scrollTop;
-          setRing((r) =>
-            r
-              ? { ...r, x: centreX, y: ringY }
-              : {
-                  x: centreX,
-                  y: ringY,
-                  from: { x: centreX, y: screenH + 44 },
-                  pressed: false,
-                  pressKey: 0,
-                }
-          );
-          if (!(await wait(DEMO.approach, id))) return;
+          // 1 + 2. REVEAL and APPROACH — scroll the trigger to a known fraction
+          // of the screen, then move the hand onto it. Shared with the scan, so
+          // a read and a press position the hand identically.
+          if (!(await reachTo(step, id))) return;
 
           // 3. PRESS.
           if (!(await pressAnd(demoPressId(step), id))) return;
@@ -328,8 +426,8 @@ export function useHotspotDemo<T extends DemoHotspot>({
               r
                 ? {
                     ...r,
-                    x: screenW * OK_TARGET.x,
-                    y: screenH * OK_TARGET.y,
+                    x: el.clientWidth * OK_TARGET.x,
+                    y: el.clientHeight * OK_TARGET.y,
                   }
                 : r
             );

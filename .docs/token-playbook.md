@@ -34,54 +34,67 @@ Two corollaries:
 | Well-specified mechanical work (apply a known pattern, batch rename, config) | Main session after `/model sonnet` | Sonnet | Same outcome at a fraction of the price; switch back with `/model` |
 | "Where does X live / how does Y work" codebase questions | Ask Claude to *use an Explore agent* | inherits | The agent reads dozens of files in its own context; only the answer returns |
 | Verifying a UI change looks right | `visual-qa` agent (`.claude/agents/visual-qa.md`) | Sonnet | Captures via `scripts/screenshot.mjs`, looks at the images itself, returns text findings. Zero images in your session |
-| Wanting an opinion on a design, not just a check | `design-crit` agent (`.claude/agents/design-crit.md`) | Fable | Same screenshot machinery, but gives peer-level critique: hierarchy, type, rhythm, composition |
+| Wanting an opinion on a design, not just a check | `design-crit` agent (`.claude/agents/design-crit.md`) | Opus | Same screenshot machinery, but gives peer-level critique: hierarchy, type, rhythm, composition |
 | New UI where the design isn't settled yet | `fd` agent (`.claude/agents/fd.md`, the frontend designer) | Opus | Designs and builds: explores existing components, implements, iterates against its own screenshots. Opus has strong design instincts at half Fable's price — the right trade for a long screenshot-heavy loop; escalate a single run to Fable by asking for it |
 | Motion-heavy work: animated covers, hero shaders, scroll-linked or canvas/WebGL effects | `ms` agent (`.claude/agents/ms.md`, the motion designer) | Opus | Same design-and-build loop as `fd`, specialised in the site's three motion surfaces (Motion for React, Canvas 2D covers, Paper Shaders); always verifies reduced-motion and dark passes |
-| Reviewing or rewriting prose across a whole case study | `writer` agent (`.claude/agents/writer.md`) | Fable | Reads the full pages in its own context, applies the ux-writer skill's tests, returns only findings. For a one-line copy tweak mid-conversation, use the skill inline instead |
+| Reviewing or rewriting prose across a whole case study | `writer` agent (`.claude/agents/writer.md`) | Opus | Reads the full pages in its own context, applies the ux-writer skill's tests, returns only findings. For a one-line copy tweak mid-conversation, use the skill inline instead |
 | Big feature you haven't scoped | `/plan` first | Fable | A researched plan makes the build session short and linear instead of exploratory |
 | A workflow you repeat (copy review, visual check, release steps) | A skill in `.claude/skills/` | n/a | Instructions load only when invoked, instead of being re-explained every time |
+| Applying an already-decided change across many files | `batch` agent (`.claude/agents/batch.md`) | Haiku | Renames, import rewrites, repetitive edits. Costs a fraction of the main session and keeps the sweep out of your context. Only once the decision is made — it is instructed not to exercise judgment |
 | Multi-step work inside one session | Ask for a task list (TaskCreate) | n/a | Keeps long work on rails; fewer wasted detour turns |
 
-## Fable vs Opus: the judgment-density rule
+## Fable vs Opus: what the premium actually buys
 
-Model choice follows one heuristic: **weigh how judgment-dense the work is
-against how many tokens the run burns.** Fable costs exactly 2× Opus
-($10/$50 vs $5/$25 per million tokens), so the premium only pays off where
-the tokens are few and the judgment is everything.
+**Every agent in this project runs on Opus or below.** That is deliberate, and
+it replaces an earlier rule here that put `design-crit` and `writer` on Fable.
 
-- `design-crit` is the Fable case: a run is short and bounded (capture,
-  look, write a critique — roughly a dollar on Fable vs fifty cents on
-  Opus), and the entire value of the agent *is* the judgment. Paying a few
-  extra cents for the best available taste on the thing the agent exists
-  to judge is the right trade.
-- `fd` is the Opus case: a long design → build → screenshot
-  → refine loop where every iteration re-reads code and images. The 2×
-  premium compounds across the whole loop, and Opus's design taste is
-  nearly as good — so the premium buys little. Escalate a single run to
-  Fable by asking for it ("design this with fable").
+That rule said: the run is short, so the 2× premium ($10/$50 vs $5/$25 per
+million) is cheap, and judgment is the whole deliverable — so buy the best
+model. The flaw is that it argued the premium was *affordable*, not that it
+bought anything. Those are different claims.
+
+Fable's real edge over Opus is sustained coherence on demanding multi-step
+reasoning and long-horizon autonomous work — overnight refactors, hard
+multi-hour agentic runs. None of the agents here do that:
+
+- `design-crit` looks at eight images and writes 400 words of opinion. That is
+  perception and taste, not reasoning depth, and Opus has strong native design
+  instincts.
+- `writer` reads a page and applies a voice ruleset that is already written
+  down. What holds the voice is the `ux-writer` skill and the fixed rules
+  (actor-first, no hyphens, no emoji, craft labels in headings) — not the
+  model tier.
+- `fd` and `ms` run long design → build → screenshot → refine loops where a
+  2× tax compounds across every iteration, which is the clearest Opus case of
+  the four.
 
 | Work profile | Model | Examples here |
 |---|---|---|
-| Judgment-dense, short output | Fable | `design-crit`, main-session decisions, copy and voice, "which direction should this go" |
-| Capable execution, long token-heavy loops | Opus | `fd`, most build-and-iterate agent work |
+| Long-horizon autonomous reasoning | Fable | Nothing here yet — an overnight refactor would qualify |
+| Design and copy judgment; build-and-iterate loops | Opus | `fd`, `ms`, `design-crit`, `writer` |
 | Well-specified implementation | Sonnet | `visual-qa`, applying a known pattern |
-| Mechanical | Haiku | renames, capture, formatting sweeps |
+| Mechanical | Haiku | `batch` agent: renames, import rewrites, formatting sweeps |
 
-One more Fable case that doesn't apply to this portfolio (yet): very long
-autonomous runs — overnight refactors, hard multi-hour agentic work — where
-Fable's long-horizon coherence justifies the cost even at volume. Until
-something here looks like that, the practical rule stays: **Fable where the
-tokens are few and the judgment is everything; Opus where the loop is long.**
-(How to actually run work overnight — awake laptop vs cloud — is in
-`.docs/overnight-runs.md`.)
+Escalate any single run by asking ("design this with fable", "crit this with
+fable"). The default stays Opus: **pay for Fable when the work needs coherence
+held across hours, not when the deliverable merely needs taste.**
+
+One Opus caveat worth knowing, since it shaped `writer`: Opus 5 writes longer
+by default and is more inclined to widen scope. Both are promptable — `writer`
+carries a short "Length and scope" section for exactly this — but if an agent
+starts padding its reports, that is the cause, and the fix is a line in the
+agent file, not a model upgrade.
+
+(How to actually run work overnight — awake laptop vs cloud, the one shape that
+would justify Fable — is in `.docs/overnight-runs.md`.)
 
 ## Model switching: three layers
 
 You almost never switch models by hand. The layers, from least to most manual:
 
 1. **Custom agents — automatic.** The model is baked into the agent file's
-   frontmatter (`model: sonnet` in `visual-qa.md`, `model: fable` in
-   `design-crit.md`). Every run uses that model without you thinking about it.
+   frontmatter (`model: sonnet` in `visual-qa.md`, `model: haiku` in
+   `batch.md`). Every run uses that model without you thinking about it.
    This is the main trick: encode the model choice once, and the right model
    becomes the default.
 2. **Ad-hoc delegation — just ask.** Claude can assign a model per agent launch.
@@ -99,10 +112,11 @@ Agents (own context — anything noisy or image-heavy belongs here):
 | Agent | Model | Use for |
 |---|---|---|
 | `visual-qa` (`.claude/agents/`) | Sonnet | Pass/fail checking: overflow, breakpoints, style-rule compliance. Cheap, run often |
-| `design-crit` (`.claude/agents/`) | Fable | Opinionated critique: hierarchy, typography, spacing rhythm, composition, motion. Premium, run when you want a peer's opinion |
+| `design-crit` (`.claude/agents/`) | Opus | Opinionated critique: hierarchy, typography, spacing rhythm, composition, motion. Run when you want a peer's opinion rather than a defect list |
 | `fd` (`.claude/agents/`, frontend designer) | Opus | Design-and-build for new UI: makes the design decisions, implements them, iterates against its own screenshots. Long token-heavy loops, so Opus over Fable; per-run Fable escalation available on request |
 | `ms` (`.claude/agents/`, motion designer) | Opus | Design-and-build for motion and shader work: animated covers, hero shaders, scroll-linked and canvas/WebGL effects. Same long-loop economics as `fd` |
-| `writer` (`.claude/agents/`, ux writer) | Fable | Batch prose review or rewrite across a case study or the site. Loads the ux-writer skill as its rubric; short judgment-dense runs, the design-crit case |
+| `writer` (`.claude/agents/`, ux writer) | Opus | Batch prose review or rewrite across a case study or the site. Loads the ux-writer skill as its rubric — the skill and the fixed voice rules do the work, not the model tier |
+| `batch` (`.claude/agents/`) | Haiku | Applying an already-decided change across many files: renames, import rewrites, formatting sweeps. Never judges, never screenshots |
 | Explore (built-in) | inherits | "Where is the card hover animation defined?" codebase questions |
 | Plan (built-in) | inherits | Scoping a feature before building |
 | `vercel:performance-optimizer` | inherits | Core Web Vitals, image loading, bundle size — run before sharing the site |
@@ -119,8 +133,8 @@ Skills (loaded knowledge, run in the main conversation):
 | `/code-review`, `/simplify` | Quality passes on a diff before committing |
 
 The split to remember: **visual-qa often, design-crit when it matters.** QA on
-Sonnet catches defects for cents; crit on Fable spends premium tokens on the
-thing premium models are actually for.
+Sonnet catches defects for cents; crit on Opus buys a peer's opinion, which is
+a different question and worth asking less often.
 
 ## Session hygiene
 
@@ -144,7 +158,8 @@ thing premium models are actually for.
   (320/768/1440 by default, `--dark`, `--reduced-motion`, overflow detection).
   Nobody writes ad-hoc screenshot code anymore.
 - `.claude/agents/visual-qa.md` — the Sonnet screenshot-verifier described above.
-- `.claude/agents/design-crit.md` — the Fable design critic described above.
+- `.claude/agents/design-crit.md` — the Opus design critic described above.
 - `.claude/agents/ms.md` — the Opus motion designer described above.
+- `.claude/agents/batch.md` — the Haiku batch editor described above.
 - `CLAUDE.md` — a token-efficiency section telling every future session to use
   the above and to delegate broad exploration to Explore agents.

@@ -35,7 +35,7 @@ export function StatCallout({
       />
       <p className="mt-3 text-sm font-medium">{label}</p>
       {detail ? (
-        <p className="mt-1 text-sm text-muted-foreground">{detail}</p>
+        <p className="mt-1 text-sm font-medium text-leaf">{detail}</p>
       ) : null}
     </div>
   );

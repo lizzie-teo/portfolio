@@ -54,3 +54,25 @@ scratchpad/
 # Local design explorations — kept on disk, never committed or deployed.
 # The shader/dither tuner at src/app/dev/dither is deliberately NOT here.
 /src/app/explore/
+
+# The nine leg clips of the home fly-through — ~99MB of generated footage that
+# would live in git history forever. Kept on disk, served from somewhere else.
+# The RANGE MATTERS: leg-0-hero.mp4 and leg-9-hero.mp4 are small stage-setters
+# the page needs, and a plain leg-*.mp4 would swallow them. Posters and scene
+# stills stay committed too — they are what the page falls back to.
+/public/assets/world/leg-[0-9].mp4
+
+# Research source material, not site assets. Nothing in src/ references these;
+# they are the archive behind the parked Phase 2 module.
+/public/assets/healthdirect/usability-tests-doc/
+
+# Prototype source dumps. Anything under public/ is SERVED, never imported —
+# committing these would publish client prototype source at a fetchable URL.
+/public/assets/**/*.jsx
+
+# Third-party skill bundles, installed by `npx skills update` and restorable
+# from skills-lock.json. Committing them churns the diff on every update.
+# ux-writer is the project's own skill and stays.
+/.agents/
+/.claude/skills/*
+!/.claude/skills/ux-writer/

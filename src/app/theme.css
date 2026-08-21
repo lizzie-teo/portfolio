@@ -29,6 +29,90 @@
   --font-weight-normal: 400;
   --font-weight-medium: 500;
 
+  /* ── THE COVER LINE — 40 → 88px, WORN BY TWO SURFACES ────────────────────
+     The site's largest fluid display line: the name of a whole thing, set as
+     the opening of the surface it names. Two wear it:
+
+       a case study's cover — the project's name on its dark leaf plate,
+                              `coverHeading` → CaseStudyShell's `h1`
+       the home page's bands — "Selected work", "Explorations", "Substack",
+                              `bandHeading` (typography.ts)
+
+     WHY THE HOME BANDS TAKE THE COVER'S SIZE (owner's call, Aug 2026). "the
+     selected work explorations and writing take on the size of project titles
+     like Funding Finder in the first section of case study" — the band names
+     are the home page's chapter breaks, and a reader who has met "Funding
+     Finder" at 88px on a cover meets "Selected work" at 88px on the way back.
+     One scale for "the name of a thing", whichever surface it is the opening
+     of.
+
+     WHAT THIS REPLACED, in one pass, because the failure is instructive. The
+     bands were first typeset from the walk's GLASS PANE — same face, same 600,
+     same -0.02em, same 30 → 36px — on the argument that a reader meets the
+     pane and the band names on one scroll. It measured identical and did not
+     look it: the pane's ramp floors at 24px for its panel's sake and reaches
+     36px only at 1441, so on every window between 861 and 1441 the same role
+     rendered small in a narrow column beside a picture and full-size alone on
+     an empty sheet. And the display face has no 600 of its own — regular
+     covers 300–500, bold 600–900 — so the bands jumped a whole file while the
+     pane did not move. The lesson, worth keeping: a relationship that is
+     obviously a different size reads as a hierarchy, and one that is
+     almost-but-not-quite the same reads as a mistake. The pane is
+     self-contained again (world.css, THE PANE'S TYPE ROLES).
+
+     WHY THE TOKENS LIVE HERE AND NOT ONLY IN typography.ts. The role now has
+     two consumers whose values must not drift, and theme.css is the one place
+     both a Tailwind class string and a plain stylesheet can read. Assembled
+     into a role exactly once, as `.type-cover` in globals.css.
+
+     THE VALUES ARE THE COVER'S, UNCHANGED — the bands moved onto them, nothing
+     was retuned to meet the bands:
+
+       SIZE — the top rung of the editorial ladder, on the ladder's shared
+       375 → 1440px anchors, so it stays parallel to every case-study role
+       below it and the order can never invert (typography.ts, THE EDITORIAL
+       LADDER). To retune, move both endpoints and recompute both terms with
+       the formula there.
+
+       WEIGHT 600 and TRACKING -0.03em are the editorial family's, which is
+       what the cover has always been. On the home page that means the band
+       name is the one editorial-voice object in a gallery: the card titles
+       under it stay `font-medium` at -0.015em, so the two are told apart by
+       family as well as by the 3.7× size step.
+
+       LEADING 1.08 is display leading, and it is safe here for the reason it
+       is safe on a cover — this line is one or two words on a wide measure and
+       does not wrap.
+
+     NOT FOR /work OR /explorations. Their shelf headings keep `galleryHeading`
+     (30 → 36px): both pages open with their own `h1` at 48 to 60px, and an
+     `h2` at 88px under it is an inverted outline, not a chapter break. This
+     role only fits a page whose bands ARE the structure.
+
+     Resolved sizes are tabulated in .docs/type-scale.md. */
+  --type-cover-size: clamp(2.5rem, 1.4437rem + 4.507vw, 5.5rem);
+  --type-cover-weight: 600;
+  --type-cover-leading: 1.08;
+  --type-cover-tracking: -0.03em;
+
+  /* THE RUBRIC ROLE'S LETTERFIT, and it is a REPAIR rather than a new role.
+     `world/world.css` (.sw-copy__title) has read `--type-rubric-weight` and
+     `--type-rubric-tracking` since the pane rebalance, on the stated reasoning
+     that the pane and the home bands should not drift apart — but the two
+     tokens were never declared, here or anywhere. Both declarations were
+     therefore invalid at computed-value time, so the /world chapter titles fell
+     back to the INHERITED weight and to normal tracking, which is not what any
+     comment on either side of the reference describes.
+
+     The values are `galleryHeading`'s (typography.ts: `font-medium`,
+     `tracking-[-0.015em]`), because that is the role the pane's comment names.
+     Size is deliberately NOT declared: `galleryHeading` steps 30 → 36px at
+     `md:` rather than ramping, the pane sizes itself from `--sw-title-size`,
+     and nothing reads a `--type-rubric-size`. Declaring one would be inventing
+     a ramp neither consumer wants. */
+  --type-rubric-weight: 500;
+  --type-rubric-tracking: -0.015em;
+
   --background: oklch(0.9965 0.0026 106.45); /* #FEFEFC soft off-white */
   --foreground: oklch(0.3385 0.0081 75.29); /* #3A3733 — 11.7:1 on background */
   --primary: oklch(0.2749 0.007 67.53); /* #2A2724 ink — 14.9:1 with white */
@@ -58,6 +142,94 @@
   --muted-foreground: oklch(0.4341 0.0117 72.51); /* #55504A */
   --accent: oklch(0.9347 0.0087 84.57); /* #ECE9E3 */
   --accent-foreground: oklch(0.3931 0.0134 76.45); /* #4A453E — 7.8:1 */
+
+  /* Graph rule — the line of a RULED SHEET, and not the same thing as `--rule`
+     below, which is this site's structural hairline (a rule under a heading, a
+     divider between list rows) drawn from the ink at 20% and declared with its
+     own long history. This one is graph paper: it never divides anything, it is
+     tiled at a 20px cell across a whole plane, and it belongs to the surface
+     rather than to the content standing on it. The home page's entire lower half
+     stands on one (`GraphDesk`, painted over `--accent`).
+
+     IT IS A TOKEN RATHER THAN A CONSTANT IN THAT COMPONENT because a ruling is
+     visual language: if the quiet surface is ever re-valued, its ruling has to
+     move with it or the line stops reading as ruled INTO the paper and starts
+     reading as printed ON it. That is also why it is derived from `--accent`
+     rather than from the ink — L 0.879 against the surface's 0.935, chroma and
+     hue held to the decimal, so it is one colour at two values rather than a
+     grey laid over a warm sheet. `--rule`'s ink mix would be the wrong
+     derivation here for exactly that reason.
+
+     1.26:1 ON `--accent`, and it arrived there from both directions. Every
+     earlier ruling on that sheet carried ~1.30:1 — a number never chosen so much
+     as inherited — which was taken to 1.19:1 and read as too faint (owner's
+     calls, Aug 2026, in that order). PART OF WHY 1.19 LOOKED WRONG WAS NOT THE
+     COLOUR: the sheet was drawn with a repeating gradient whose lines rasterised
+     at mixed weights, and a line already near the edge of visible swings between
+     showing and vanishing on a fraction of a device pixel. `GraphDesk` tiles a
+     single 20 × 20 image now, so the weight is uniform and this value is being
+     judged on its own. Re-read that note before lightening again.
+
+     The floor on it is the repeat, not a contrast bar: it is decorative, carries
+     no information and is exempt from §4, but below roughly 1.10:1 a 1px line at
+     a 20px cell stops resolving as a grid on a low-contrast display. Widen the
+     cell before lightening past that. */
+  --graph-rule: oklch(0.86 0.0087 84.57); /* #D4D1CB — 1.26:1 on --accent */
+
+  /* ── LIGHT CHROME GLASS — the material of the fixed masthead and its menu ──
+     WHY THE BAR STOPPED BEING A FLAT PLATE (owner's call, Aug 2026). It was an
+     opaque `--secondary` slab, chosen when the only surface it ever stood over
+     was `--secondary` itself. The ruled sheet changed that: `--accent` carrying
+     `--graph-rule` lines now runs from the flight's foot to the end of the page,
+     so a fixed bar scrolling over it is a lighter rectangle that CUTS THE RULING
+     DEAD at its own edge — two papers and a butt joint, on a page whose whole
+     argument (page.tsx, THE RULED SHEET) is one continuous sheet.
+
+     Glass answers it because the ruling passes under and keeps going, softened.
+     The bar reads as laid ON the sheet rather than as a patch cut out of it.
+
+     WHITE, NOT CREAM, AND ONE TOKEN APART. This is `--card` — pure white —
+     because the sheet beneath is already warm (`--accent`, hue 84.6°) and a warm
+     tint over warm paper is the flat-slab problem again with a blur on it. The
+     warmth arrives THROUGH the glass instead of being painted into it. Point this
+     at `--secondary` for cream and nothing else has to change.
+
+     `--chrome-glass-solid` is the opaque fallback, and it is `--secondary`
+     because that is exactly what the bar was before the glass: what a browser
+     without `backdrop-filter` gets, and what a reader who has asked for reduced
+     transparency gets. Both paths are in globals.css.
+
+     ONE MATERIAL AT EVERY WIDTH AND ON EVERY ROUTE (owner's call, Aug 2026).
+     The bar used to be three different things — transparent over the garden
+     flight, solid grout on a case study, glass everywhere else — and which one
+     you got also depended on the viewport, because what stands BEHIND the bar on
+     `/` changes at 861px. It read as a bar that could not decide whether it had a
+     fill. It is glass on every route now; only the TINT SOURCE follows the tone,
+     so a dark page gets dark glass rather than a white bar with white type on it.
+
+     THIS REVERSES THE `bare` ARGUMENT, and deliberately. world.css refused a
+     plate over the artwork three times ("frosted chrome is a standing no on this
+     site") on the grounds that chrome laid over an engraving is chrome laid over
+     an engraving. The counter-argument that won: a masthead that is present but
+     unreadable, and differently unreadable at each width, is worse than one that
+     is honestly a bar. `bare` now governs INK only — the flight still sets its
+     own `--sw-ink` — not whether the bar has a surface. */
+  --chrome-glass: var(--card);
+  --chrome-glass-solid: var(--secondary);
+  --chrome-glass-tint: 74%;
+  --chrome-glass-edge: var(--border);
+
+  /* Heading ink — the colour of an in-flow section heading (`sectionHeading`)
+     on a light reading surface. Separated from --foreground because a heading
+     and its body copy are two different jobs: a project scope may want its
+     section titles carrying the brand's deepest tone while the paragraphs under
+     them stay neutral warm ink (§"Two-layer theming" — product colour frames
+     the page, it does not colour the reading experience). The shell keeps them
+     identical, so nothing changes unless a scope opts in. Whatever a scope sets
+     here must clear the §4 bar as large text on --card AND --background.
+     Headings on DARK surfaces (leafHeading, a dark-tone FeatureChips band) are
+     out of scope: they carry --leaf-foreground and override this. */
+  --heading: var(--foreground);
 
   /* Note ink — the fixed dark ink for diagram note chips that sit on fixed
      light pastel surfaces (e.g. the Healthdirect journey mint/pink). It is
@@ -114,6 +286,50 @@
 
   --border: oklch(0.9173 0.0092 78.28); /* #E7E3DD whisper-warm hairline */
   --input: oklch(0.9173 0.0092 78.28);
+  /* Rule — the STRUCTURAL divider, distinct from --border above. --border seals
+     a container edge and is decorative; --rule draws the lines INSIDE a diagram
+     that carry meaning — column-header underlines, row rules, a stacked-list
+     stage separator, a quote bar.
+
+     A SHELL CONSTANT, not part of the project-theme contract: a scope must not
+     retint it. The same structural treatment has to read identically across
+     every case study, so this is one of the neutral tokens (with --foreground,
+     --muted-foreground, and the shadows) that the product colour never reaches.
+
+     Derived rather than picked, as diluted body ink. Two properties earn it:
+     --foreground is neutral in every scope by contract, so neutrality here is
+     structural instead of something each scope has to remember; and mixing
+     toward transparent means this one declaration is also the dark-mode value,
+     since it recomposes against whatever surface it lands on. It can only ever
+     be wrong where the body ink is already wrong.
+
+     THE VALUE IS ANCHORED TO THE IA FLOW, not chosen in the abstract. 20% is
+     literally what `IaFlow` already draws its connector lines at
+     (`bg-foreground/20`, `border-[1.5px] border-foreground/20`) — Tailwind's
+     /20 opacity modifier compiles to this same color-mix, so the two are the
+     same declaration written twice. Both diagram modules on the Healthdirect
+     case study therefore share one line language: a reader who has just parsed
+     the IA flow meets the same stroke in the journey map and the landscape
+     review. (Its node OUTLINES are foreground/30 and the dashed modal outline
+     is /35 — different roles, don't match those.) If IaFlow's line colour ever
+     moves, this moves with it.
+
+     DELIBERATE 1.4.11 EXCEPTION — measured 1.44:1 on white #FFFFFF, 1.43:1 on
+     the Healthdirect card #F6F9F9, 1.43:1 on its page #F3F7F7. That is well
+     BELOW the 3:1 non-text-contrast bar, and below the 2:1 this token carried
+     before. Do not "fix" it back up on reading the spec — see the exception
+     recorded in style-rules §12, and note the history: it was 1.11:1 and
+     effectively invisible, was raised to 3:1, rejected twice as too dark, sat
+     at 2:1, and was then anchored here to match the IA flow. The mix tracks
+     its surface so closely that all three land within 0.01 of each other.
+
+     WIDTH IS PART OF THE MATCH. IaFlow draws at 1.5px; every rule using this
+     token draws at 1px, so a rule reads a shade lighter than the connector it
+     is matched to. Verified at 320–1440: the marks still read as the same line
+     language, and the mobile stage separator still divides. If this is ever
+     lowered further, re-check that separator first — it is the only structural
+     mark on the narrow layout and the first thing to disappear. */
+  --rule: color-mix(in oklab, var(--foreground) 20%, transparent);
   --input-background: #ffffff;
   --switch-background: #c9c3ba;
   --ring: oklch(0.2749 0.007 67.53); /* matches primary */
@@ -174,6 +390,13 @@
   --shadow-card: 0 2px 12px oklch(0.35 0.03 80 / 0.09), 0 1px 4px oklch(0.35 0.03 80 / 0.04);
   --shadow-bubble: 0 1px 8px oklch(0.35 0.03 80 / 0.07), 0 0.5px 2px oklch(0.35 0.03 80 / 0.03);
   --shadow-elevated: 0 4px 24px oklch(0.35 0.03 80 / 0.12), 0 2px 8px oklch(0.35 0.03 80 / 0.06);
+  /* Float — the ramp's furthest and softest rung, for a card resting well
+     above a tinted panel rather than lifting a hair off the page. Read it
+     against --shadow-elevated: further (16px drop, 48px blur vs 4/24) but
+     lighter per pixel (0.09 vs 0.12), so the extra distance arrives as
+     diffusion, not as a darker edge. The contact pass stays faint for the
+     same reason — a crisp near shadow would undo the softness. */
+  --shadow-float: 0 16px 48px oklch(0.35 0.03 80 / 0.09), 0 4px 14px oklch(0.35 0.03 80 / 0.04);
 
   --apple-pay-blue: oklch(0.61 0.236 258);
   --apple-pay-surface: oklch(0.07 0.01 258);
@@ -218,11 +441,14 @@
      --primary / --ring       brand hue, deepened to ≥4.5:1 with white
      --accent(-foreground)    brand-tinted hover/focus surface
      --secondary(-foreground) brand-tinted quiet panel
-     --border / --input       brand-warmed hairline
+     --border / --input       brand-warmed decorative hairline
+     --heading                in-flow section-heading ink, if the scope wants
+                              its titles in the brand's deepest tone
      --chart-1..5             module data-viz, if the project charts
 
    plus module tokens specific to that project, prefixed clearly. Text
-   (--foreground), cards (--card), muted, and shadows stay neutral: the
+   (--foreground), structural rules (--rule), muted, and shadows stay neutral:
+   the
    product colour frames the page; it never colours the reading experience.
    Saturated brand colour belongs in imagery, not in large token surfaces.
 ────────────────────────────────────────────────────────────────────────────── */
@@ -270,6 +496,20 @@
   --leaf-foreground: #ffffff;
   --grout: #10262f; /* HDA Teal deepened below the leaf */
   --grout-foreground: #ffffff;
+  /* Section headings on the light reading tiles take the styleguide's core
+     Base Teal rather than the neutral warm ink. This used to track --grout
+     (#10262f, 14.7:1) so the titles were literally cut from the material of the
+     dark plates between the tiles, but at that depth they read as near-black:
+     the tie to the leaves came through as weight, not as colour. Base Teal is
+     the same family two steps up — light enough that a title reads as teal on
+     sight, dark enough to stay the page's firmest ink. Deliberately NOT tracking
+     --grout or --leaf any more: heading ink and plate material are now two
+     decisions, and lightening the heading must not lighten the plates.
+     #1e4759 is 9.4:1 on the card #F6F9F9 and 9.3:1 on the page #F3F7F7 — past
+     the §4 bar for large text and past AAA body, with headroom to go lighter
+     still if the titles want more air. Body copy stays neutral, so only the
+     titles carry the colour. */
+  --heading: #1e4759; /* HDA Base Teal */
   /* Intro emphasis — the case study's coral, lightened until it clears WCAG
      AA as text on the deep teal leaf (5.4:1 on #183947). The rail-active coral
      #e37778 is a fill behind white and reads too dark for text here. */
@@ -411,6 +651,10 @@
   --muted-foreground: oklch(0.78 0.012 80); /* #BBB7AF */
   --accent: oklch(0.34 0.009 70);
   --accent-foreground: oklch(0.9 0.008 80);
+  /* The graph ruling INVERTS in dark: a line cut into a dark sheet catches light
+     rather than casting shade, so this is --accent LIGHTENED by the same step
+     the light token is darkened by — 1.26:1 either way, hue and chroma held. */
+  --graph-rule: oklch(0.3948 0.009 70); /* #494641 — 1.26:1 on --accent */
 
   --destructive: oklch(0.6697 0.1297 30.79); /* #D97463 — 5.2:1 with dark text */
   --destructive-foreground: oklch(0.2373 0.0073 67.47);
@@ -447,6 +691,7 @@
   --shadow-card: 0 2px 12px oklch(0 0 0 / 0.28), 0 1px 4px oklch(0 0 0 / 0.18);
   --shadow-bubble: 0 1px 8px oklch(0 0 0 / 0.24), 0 0.5px 2px oklch(0 0 0 / 0.14);
   --shadow-elevated: 0 4px 24px oklch(0 0 0 / 0.36), 0 2px 8px oklch(0 0 0 / 0.22);
+  --shadow-float: 0 16px 48px oklch(0 0 0 / 0.34), 0 4px 14px oklch(0 0 0 / 0.18);
 
   --chart-1: oklch(0.9 0.008 80);
   --chart-2: oklch(0.78 0.01 78);

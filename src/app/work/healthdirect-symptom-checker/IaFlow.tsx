@@ -521,7 +521,7 @@ export function IaFlow({
             </div>
             <motion.p
               variants={v.node}
-              className="mt-5 text-center text-sm leading-relaxed text-muted-foreground"
+              className="mt-5 text-center text-sm font-medium leading-relaxed text-leaf"
             >
               From here the result can be saved to a user account, or shared by
               email, print, or SMS.

@@ -122,7 +122,7 @@ export function MediaFrame({
         radius={radius}
       />
       {caption ? (
-        <figcaption className="mt-3 max-w-prose text-sm leading-relaxed text-muted-foreground">
+        <figcaption className="mt-3 max-w-prose text-sm font-medium leading-relaxed text-leaf">
           {caption}
         </figcaption>
       ) : null}

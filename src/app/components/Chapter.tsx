@@ -3,6 +3,7 @@ import Image from "next/image";
 import { CollapsingLeaf } from "./CollapsingLeaf";
 import { MaskReveal } from "./MaskReveal";
 import { MotionReveal } from "./MotionReveal";
+import { leafHeading } from "./typography";
 
 type ChapterProps = {
   /** Anchor id — must match the id passed to ChapterMarker. */
@@ -55,15 +56,27 @@ type ChapterProps = {
    Chapters, tiles inside chapters, and the shell-level stack all use this. */
 export const tileGap = "space-y-2 md:space-y-3";
 
-/* Anchor-jump landing offset for every anchored case-study section. Clicking a
+/* Anchor-jump landing offset for every anchored section on the site. Clicking a
    chapter or section link in the rail, dock, or marker lands the section top
-   ~1cm below the viewport edge — a small breathing gap above a full leaf rather
-   than flush to the top. This is the single source of truth: the shell hero,
-   Chapter, ArtifactSection, and every case-study module apply it, and there is
-   deliberately no global scroll-padding-top stacking on top of it, so the offset
-   resolves to exactly 1cm everywhere. Reuse this on any new case-study section
-   that is an anchor target so the whole page family stays consistent. */
-export const anchorScrollOffset = "scroll-mt-[1cm]";
+   ~1cm below the masthead — a small breathing gap above a full leaf rather than
+   flush against the bar. This is the single source of truth: the shell hero,
+   Chapter, ArtifactSection, every case-study module, and the home page's four
+   bands apply it, and there is deliberately no global scroll-padding-top
+   stacking on top of it, so the offset resolves to exactly the same value
+   everywhere. Reuse this on any new section that is an anchor target so the
+   whole site stays consistent.
+
+   THE HEADER TERM IS NOT DECORATION. The masthead is a fixed bar now
+   (SiteHeader), so a bare 1cm would land every section UNDER it — the gap the
+   1cm was chosen for would be spent clearing chrome instead.
+   `--site-header-bottom` is published by SiteHeader from the live bar's bottom
+   edge, which is the only reliable source: the row wraps to a second line on a
+   narrow phone and the bar is inset from the top on the garden flight, so the
+   clearance is a function of the viewport and the route rather than a constant.
+   The fallback covers the frame before hydration and matches the unwrapped bar
+   sitting flush at the top. */
+export const anchorScrollOffset =
+  "scroll-mt-[calc(1cm+var(--site-header-bottom,3.75rem))]";
 
 /* The "reading page" tile rhythm: horizontal padding matches the standard
    tile, while vertical padding runs noticeably more generous and keeps
@@ -79,61 +92,24 @@ export const readingTilePadding =
    value instead of each repeating the literal. */
 export const tilePadding = "p-6 sm:p-8 md:p-10 lg:p-12";
 
-/* The canonical top-level section heading. Every top-level section title wears
-   this one display line, whether the module tiles itself (EngineAudit,
-   LandscapeReview, JourneyMap, IaFlow) or renders through ArtifactSection, so
-   the look can never drift and no section title falls back to the small
-   uppercase eyebrow. That eyebrow style is reserved for captions and kickers,
-   never for section titles. */
-export const sectionHeading =
-  "text-2xl font-semibold tracking-[-0.03em] md:text-3xl lg:text-4xl";
+/* The type roles this file's modules wear now live in one registry with every
+   other role on the site — including the home page's — so the ladder can be
+   read in one place and no role can drift from its family. See
+   `./typography.ts` for the values and reasoning, and .docs/type-scale.md for
+   the resolved mobile→desktop table.
 
-/* The chapter-leaf title — the largest section heading, worn only by a chapter
-   opener plate on its dark leaf surface. It is a top-level `h2` like every other
-   section, but a chapter opener is a distinct display role and steps up above
-   `sectionHeading` in the same family (28 → 52px). Named, not inline, so a leaf
-   title can never drift from this one size. */
-export const leafHeading =
-  "text-[clamp(1.75rem,3.6vw,3.25rem)] font-semibold leading-[1.12] tracking-[-0.03em] text-leaf-foreground";
-
-/* A nested subsection heading (ArtifactSection with headingLevel 3, and every
-   content-level h3 — persona cards, roadmap items, scorecard titles): a clear
-   two steps down from sectionHeading at desktop (h2 36px → h3 24px) so a nested
-   heading reads unmistakably below its section, never as a second h2, and never
-   reverting to an eyebrow. This is the single content-h3 style — do not size
-   nested headings ad hoc; reach for this token. */
-export const subsectionHeading =
-  "text-lg font-semibold tracking-[-0.03em] md:text-xl lg:text-2xl";
-
-/* A content-level h4 — the deepest heading the case-study outline goes (§12:
-   h2 section → h3 subsection → h4, never deeper). It names one part *inside* a
-   subsection: the "Before" and "After" states of a comparison exhibit, and any
-   future peer at that depth. One step below subsectionHeading at desktop
-   (h3 24px → h4 18px) in the same display family, so depth still reads from
-   size alone and an h4 never draws level with the h3 above it.
-
-   This is a heading role, not a label role. The small uppercase tracked eyebrow
-   (§3) remains the right treatment for a caption or kicker that happens to use
-   a heading tag for outline reasons — reach for this token only when the text
-   genuinely titles a block of content. */
-export const minorHeading =
-  "text-base font-semibold tracking-[-0.03em] md:text-lg";
-
-/* The canonical lede that sits directly beneath a sectionHeading /
-   subsectionHeading — the sentence or short paragraph that frames the section
-   (an ArtifactSection takeaway, or the intro paragraph a self-tiled module
-   renders under its own heading, e.g. EngineAudit, LandscapeReview). One
-   treatment so the heading→lede pairing never drifts in size, colour, measure,
-   or the gap above it: full-strength foreground reading text (§4 — the lede is
-   primary reading copy, not muted metadata) at the same body size as the
-   case-study cover intro (CaseStudyShell), i.e. text-base with no desktop
-   step-up, capped to a reading measure. Apply it to the single element that
-   immediately follows the heading — do not add a competing top margin on a
-   wrapper. Diagram modules (JourneyMap, IaFlow) are exempt: their heading is
-   followed by a legend or persona block, not a lede. See .docs/style-rules.md
-   §"Section heading + lede". */
-export const sectionLede =
-  "mt-3 max-w-prose text-base leading-relaxed text-foreground";
+   Re-exported here so the case-study modules that have always imported them
+   from Chapter keep working; import from either path. */
+export {
+  coverHeading,
+  displayHeading,
+  leafHeading,
+  minorHeading,
+  sectionHeading,
+  sectionLede,
+  statementHeading,
+  subsectionHeading,
+} from "./typography";
 
 /* The well below a section's heading+lede block, before its artifact or
    content. One shared gap (56px on desktop) so the heading→lede pairing reads

@@ -112,13 +112,21 @@ actual prop surface before using one.
    up through wide desktop.
 2. Treat accessibility, keyboard use, touch input, and reduced motion as
    acceptance criteria, not polish. Hover-only effects must not fire on tap.
-3. Iterate against your own eyes: confirm the dev server responds at
-   http://localhost:3000 (start `npm run dev` in the background if not),
-   then capture with the project script — never ad-hoc Playwright:
+3. **Screenshots are off by default — they are the most expensive thing you
+   do, and the owner is paying for every one.** They are also the weakest tool
+   you have: stills freeze time, so they cannot verify the thing motion work
+   actually turns on — feel, timing, hover, interruption. Reason the timeline
+   through in code first.
+
+   Capture ONLY when the brief explicitly asks for it, or when a still would
+   settle something you genuinely cannot derive — a composition you have never
+   seen, or a suspected broken frame. When you do, say in your report why it
+   was necessary, batch every route, width and pass into ONE run, and expect a
+   permission prompt: the project is configured so the owner approves each
+   capture. If they decline, finish the work and flag what stayed unverified.
+   Never ad-hoc Playwright; the script is the only path:
    `node scripts/screenshot.mjs <routes> --out=<scratchpad>/motion`
-   For this agent the `--reduced-motion` and `--dark` passes are mandatory,
-   not optional. Look at the captures as compositions, refine, recapture.
-   Do not ship the first draft.
+   `--reduced-motion` and `--dark` are extra passes on that same single run.
 4. Screenshots freeze time, so also walk the timeline in your head and in
    your report: idle → hover-in → hover-out mid-flight → reduced motion.
    Every state must be reachable and reversible.

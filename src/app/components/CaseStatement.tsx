@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { cornerClasses, type TileCorners } from "./Chapter";
+import { cornerClasses, statementHeading, type TileCorners } from "./Chapter";
 import { CollapsingLeaf } from "./CollapsingLeaf";
+import { InsightCallout } from "./InsightCallout";
 import { MotionReveal } from "./MotionReveal";
 import { StatCallout } from "./StatCallout";
 
@@ -10,6 +11,13 @@ type StatementStat = {
   detail?: string;
 };
 
+type StatementQuote = {
+  /** Verbatim, quote marks included — this is somebody speaking. */
+  text: string;
+  /** Who said it and where, e.g. "Usability testing participant". */
+  source?: string;
+};
+
 type CaseStatementProps = {
   /** The statement line — short display copy, not a paragraph. */
   children: ReactNode;
@@ -17,8 +25,11 @@ type CaseStatementProps = {
   eyebrow?: string;
   /** Headline outcomes shown as the proof row below the statement. */
   stats?: StatementStat[];
+  /** A verbatim quote as the proof below the statement — the other way to
+      evidence the claim. Pass one or the other, not both. */
+  quote?: StatementQuote;
   /** Quiet label anchoring the proof row, e.g. "The result". Optional. */
-  statsEyebrow?: string;
+  proofEyebrow?: string;
   /** Corner rounding for the tile surface — "bottom" when the statement
       closes a grouped slab. */
   corners?: TileCorners;
@@ -30,15 +41,18 @@ type CaseStatementProps = {
  * Distinct from InsightCallout — that is an attributed research pull quote
  * (quote marks, source rule); this is an unattributed thesis line, sized to
  * read like an advertising statement rather than reading copy. Optionally
- * carries the headline outcomes beneath a divider as its proof row — claim
- * above, evidence below — with the stats sized down so the line still leads.
+ * carries a proof row beneath a divider — claim above, evidence below —
+ * either as headline outcomes (`stats`) or as one verbatim quote (`quote`,
+ * borrowing InsightCallout's quote bar at its supporting size). Whichever it
+ * is, it is sized down so the statement line still leads.
  * One per page.
  */
 export function CaseStatement({
   children,
   eyebrow,
   stats,
-  statsEyebrow,
+  quote,
+  proofEyebrow,
   corners = "all",
 }: CaseStatementProps) {
   /* The statement tile shares the leaf arrival (CollapsingLeaf): under a
@@ -61,33 +75,43 @@ export function CaseStatement({
             {eyebrow}
           </p>
         ) : null}
-        <p className="mt-6 max-w-[13em] font-heading text-[clamp(1.875rem,5.2vw,4rem)] font-semibold leading-[1.06] tracking-[-0.03em] text-foreground">
+        {/* Size comes from the shared `statementHeading` rung, never from an
+            inline clamp — this line and the outcome statement had already
+            drifted apart while both were hand-sized. */}
+        <p className={`mt-6 max-w-[13em] ${statementHeading} text-foreground`}>
           {children}
         </p>
 
-        {stats?.length ? (
+        {stats?.length || quote ? (
           <div className="mt-10 border-t border-border pt-10 md:mt-14 md:pt-14">
-            {statsEyebrow ? (
+            {proofEyebrow ? (
               <p className="mb-8 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground md:mb-10">
-                {statsEyebrow}
+                {proofEyebrow}
               </p>
             ) : null}
-            <dl className="grid grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-8">
-              {stats.map((stat, index) => (
-                <div key={stat.label}>
-                  <dt className="sr-only">{stat.label}</dt>
-                  <dd>
-                    <StatCallout
-                      size="md"
-                      value={stat.value}
-                      label={stat.label}
-                      detail={stat.detail}
-                      delay={index * 0.05}
-                    />
-                  </dd>
-                </div>
-              ))}
-            </dl>
+            {stats?.length ? (
+              <dl className="grid grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-8">
+                {stats.map((stat, index) => (
+                  <div key={stat.label}>
+                    <dt className="sr-only">{stat.label}</dt>
+                    <dd>
+                      <StatCallout
+                        size="md"
+                        value={stat.value}
+                        label={stat.label}
+                        detail={stat.detail}
+                        delay={index * 0.05}
+                      />
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            ) : null}
+            {quote ? (
+              <InsightCallout size="supporting" context={quote.source}>
+                {quote.text}
+              </InsightCallout>
+            ) : null}
           </div>
         ) : null}
       </MotionReveal>

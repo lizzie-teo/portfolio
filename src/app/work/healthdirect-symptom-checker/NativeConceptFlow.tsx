@@ -424,7 +424,7 @@ export function NativeConceptFlow({
           </div>
         </div>
         {scrollable ? (
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-3 text-sm font-medium leading-relaxed text-leaf">
             This screen runs longer than the phone. Scroll inside it to see the
             rest.
           </p>

@@ -34,13 +34,18 @@ export type TouchRingProps = {
 // is position: fixed, tracks real pointer events, and is hard-disabled on coarse
 // pointers, which is exactly the audience this has.
 //
-// LEGIBILITY IS THE WHOLE PROBLEM. The ring crosses two substrates in one loop:
-// a white product screenshot, then the near-black grout of an open popup. A
-// single tone reads on one and vanishes on the other, so the object carries
-// both — a dark translucent pad with a dark inner hairline for the white
-// screens, and a light hairline ringing it on the outside for the dark popup.
-// Whichever substrate it is over, one of the two is doing the work and the other
-// is quietly invisible. No tone swapping, no substrate detection.
+// It matches the pointer in the hero clip on this same page
+// (`/assets/healthdirect/hero/prototype.mp4`): a plain circle, white hairline
+// outline, translucent white inside. One page, one prototype pointer — a reader
+// who has watched the hero and then reaches the decisions band should recognise
+// the same hand, not meet a second convention.
+//
+// LEGIBILITY IS THE WHOLE PROBLEM, and white alone does not solve it: the ring
+// crosses two substrates in one loop — a white product screenshot, then the
+// near-black grout of an open popup. On the popup the outline carries it; on a
+// white screen the outline is gone and the *shadow* is what draws the disc,
+// which is exactly how the hero clip's own pointer stays visible over white
+// paper. Both are always on. No tone swapping, no substrate detection.
 //
 // Purely decorative and inert: aria-hidden, pointer-events-none. Everything it
 // demonstrates is reachable by touching the real hotspots underneath, and under
@@ -82,14 +87,12 @@ export function TouchRing({ x, y, from, pressed, pressKey }: TouchRingProps) {
       // loop's dismissal beat is the ring pressing the popup's own X.
       className="pointer-events-none absolute left-0 top-0 z-20"
     >
-      {/* The pad. The radial is lit off-centre so it reads as a soft fingertip
-          catching light rather than a symmetrical target reticle. `border` sits
-          inside the box and `ring` outside it, which is how one element carries
-          both the dark and the light hairline. */}
-      <span className="absolute inset-0 rounded-full border border-grout/40 bg-radial-[circle_at_38%_30%] from-grout/42 from-25% to-grout/12 ring-1 ring-grout-foreground/55 backdrop-blur-xs" />
-      {/* The contact point. Small, and the reason the ring reads as precise:
-          it names the pixel being pressed instead of gesturing at a region. */}
-      <span className="absolute left-1/2 top-1/2 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-grout/75 ring-1 ring-grout-foreground/45" />
+      {/* The disc: white hairline, translucent white fill, soft drop shadow.
+          Flat rather than gradient-lit — the hero clip's pointer is a plain
+          circle, and a radial highlight would read as a different object at the
+          same size. The shadow is not decoration: it is the only thing holding
+          the disc's edge over a white screenshot. */}
+      <span className="absolute inset-0 rounded-full border border-white/85 bg-white/30 shadow-elevated" />
       {/* Contact ripple, in the same action green as HOTSPOT_AFFORDANCE's wash,
           so the ring's press and the hotspot lighting up underneath it are
           visibly one event. Keyed on pressKey so a second press re-fires it

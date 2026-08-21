@@ -171,7 +171,7 @@ export function ChapterMarker({ chapters }: ChapterMarkerProps) {
                 reason: the 60vh cap is enforced on the chapter list alone, so an
                 expanded chapter scrolls beneath the way out instead of pushing
                 it off the top. Reading down the stack the tiers stay in order:
-                site (Main tree), page (chapters), position (the pill's own
+                site (Selected work), page (chapters), position (the pill's own
                 label). Below xl this is the reader's only persistent route back
                 to site level, which is where the problem bit hardest. */}
             <ChapterNavMasthead />

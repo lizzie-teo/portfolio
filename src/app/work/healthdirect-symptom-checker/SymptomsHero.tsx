@@ -1,9 +1,10 @@
 "use client";
 
 import { GrainGradient } from "@paper-design/shaders-react";
+import { PlayIcon, RotateCwIcon } from "lucide-react";
 import { motion, useInView, useReducedMotion } from "motion/react";
 import Image from "next/image";
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { cornerClasses, type TileCorners } from "@/app/components/Chapter";
 import { CollapsingLeaf } from "@/app/components/CollapsingLeaf";
 import { motionDuration, motionEase } from "@/app/lib/motion";
@@ -35,9 +36,8 @@ import { motionDuration, motionEase } from "@/app/lib/motion";
    (useInView, once): the stage plays a single forward pass — bloom in, hold,
    then the backdrop dissolves to the grout and SETTLES there, the screenshots
    left floating on the revealed page plane. The bloom, fill, and screenshots
-   are all inset-0 / composition-agnostic, so the identical layers drive either
-   the side-by-side (md+) or the stacked (below md) composition; only the
-   trigger differs.
+   are all inset-0 / composition-agnostic, so the identical layers sit under the
+   stacked column at every width; only the trigger differs.
 
    The FILL div is rendered unconditionally and holds opacity 1 at rest, in the
    pending pre-resolve pass, with no WebGL, and under reduced motion, so the
@@ -111,40 +111,28 @@ const SHADOW_LIFT = "9px 20px 42px 4px rgb(0 0 0 / 0.35)";
 /* The wash flows fast enough to read as moving ink, not a crawl (cf. VEIL). */
 const BLOOM_SPEED = 0.5;
 
-/* Below-md phone frame — a lift of FeatureChips' PhoneFrame device styling
-   (kept in sync as shared constants so the two frames never drift). The bezel
-   stays soft at BEZEL_RADIUS; the screen clips one standard token tighter to
-   SCREEN_RADIUS so the inner corner reads as a crisp cutout, not a card.
-   (This project remaps --radius, so rounded-xl resolves to ~0.875rem here.)
-   The screen holds a real device viewport (SCREEN_ASPECT, 360:800) and the tall
-   full-page capture scrolls INSIDE it like a prototype — a bounded scroller,
-   but deliberately WITHOUT overscroll-contain, so at its top and bottom a
-   continued drag chains to the page and never re-traps page scroll. */
-const BEZEL_RADIUS = "rounded-[1.5rem]";
-const SCREEN_RADIUS = "rounded-xl";
-/* Standard mobile viewport (9:20). The screen holds this fixed shape and the
-   tall page scrolls within it, so the phone reads as a real handset, not a
-   7000px strip. */
-const SCREEN_ASPECT = "aspect-[360/800]";
+/* ── The prototype clip ──────────────────────────────────────────────────────
+   The phone slot carries a screen recording of the working prototype rather
+   than a still. The recording was made in the prototype's own device
+   presentation, so a black handset bezel with rounded corners is BAKED INTO
+   the footage: no PhoneFrame is wrapped around it, or the device would wear two
+   bezels.
 
-/* Keydown inside the bounded phone screen: arrows scroll the capture and stop
-   there so the key press never bubbles up to page the outer stage or move page
-   focus. Native focusable-scroll already covers Space / Page / Home / End; the
-   two explicit arrow cases keep "arrow keys scroll it" true where a browser
-   would otherwise defer to an ancestor handler. Lifted verbatim from
-   FeatureChips' PhoneFrame. (Boundary scroll-chaining to the page is
-   intentional — see the frame note above; no overscroll-contain here.) */
-function scrollOnArrows(event: KeyboardEvent<HTMLDivElement>) {
-  event.stopPropagation();
-  const el = event.currentTarget;
-  if (event.key === "ArrowDown") {
-    event.preventDefault();
-    el.scrollBy({ top: 48 });
-  } else if (event.key === "ArrowUp") {
-    event.preventDefault();
-    el.scrollBy({ top: -48 });
-  }
-}
+   Which means the video's rectangle has to be clipped back to the device shape
+   it already draws, or its four square black corners print on the stage. Both
+   numbers below are measured off the footage, not chosen:
+
+   - PROTOTYPE_ASPECT is the encode's own 798x1674.
+   - PROTOTYPE_CLIP is the device's outer corner, 115px in a 798px-wide frame,
+     expressed per-axis (115/798 = 14.4% of width, 115/1674 = 6.9% of height) so
+     the corner stays CIRCULAR at any rendered size — a single percentage would
+     go elliptical on a 1:2.1 box. 115px is the largest radius that clips no
+     device pixel (measured: 0 lit pixels removed at 115, 54 removed at 120),
+     and it leaves the same ~8px black rim at the corners that the footage
+     already carries down its straight edges, so the rim reads as bezel.
+   Re-measure both if the clip is ever re-recorded. */
+const PROTOTYPE_ASPECT = 798 / 1674;
+const PROTOTYPE_CLIP = "14.4% / 6.9%";
 
 type ScreenshotProps = {
   src: string;
@@ -203,157 +191,185 @@ function Screenshot({
   );
 }
 
-/** One below-md phone prototype: a dark bg-grout bezel device whose screen holds
-    a fixed 360:800 handset viewport (SCREEN_ASPECT), with the tall full-page
-    capture scrolling inside it. The inner scroller is focusable and
-    arrow-scrollable and carries NO overscroll-contain, so at its top and bottom
-    a continued drag chains to the page and never re-traps page scroll. Both
-    below-md phones render through this one helper so they are guaranteed
-    identical rather than hand-duplicated. */
-function PhonePrototype({ src, alt, ratio }: PhoneCapture) {
+/** The prototype clip in its slot. One <video> serves every breakpoint — the
+    composition around it changes, the element does not, so the 6MB encode is
+    never fetched twice on one page.
+
+    The clip ships raw (a <video src> bypasses next/image entirely), so it is
+    `preload="none"` behind its poster: nothing but the 48KB WebP still is
+    fetched until playback is actually asked for, which is what keeps a reduced
+    motion reader — who never starts it — off the download. Playback itself is
+    driven from the parent, so the replay control and the in-view gate share one
+    source of truth.
+
+    It does NOT loop. The recording is a single 1m45s walkthrough with a real
+    beginning and end, so it plays once and rests on its last frame; watching it
+    again is a deliberate act via the replay chip, not something that happens to
+    you if you linger. `onEnded` is what tells the parent the run is over. */
+function PrototypeVideo({
+  clip,
+  videoRef,
+  onEnded,
+  onPlay,
+}: {
+  clip: PrototypeClip;
+  videoRef: RefObject<HTMLVideoElement | null>;
+  onEnded: () => void;
+  onPlay: () => void;
+}) {
   return (
-    <div className="w-full max-w-[19rem]">
-      <div
-        className={`bg-grout p-2 shadow-sc-hero outline-none has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-leaf-foreground has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-leaf ${BEZEL_RADIUS}`}
-      >
-        <div className={`relative overflow-hidden ${SCREEN_RADIUS}`}>
-          <div
-            tabIndex={0}
-            role="group"
-            aria-label={`Scrollable preview: ${alt}`}
-            onKeyDown={scrollOnArrows}
-            className={`${SCREEN_ASPECT} overflow-y-auto outline-none [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${SCREEN_RADIUS}`}
-          >
-            <Image
-              src={src}
-              alt={alt}
-              width={1080}
-              height={Math.round(1080 / ratio)}
-              priority
-              sizes="(min-width: 420px) 288px, 92vw"
-              className="block h-auto w-full"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
+    <video
+      ref={videoRef}
+      className="block h-full w-full object-cover"
+      src={clip.src}
+      poster={clip.poster}
+      /* A silent <video> with no `controls` is not focusable and carries no
+         implicit role, so assistive tech can skip it entirely and the alt text
+         goes unread. role="img" is the settled pattern for an illustrative
+         clip like this: it announces once, as the picture it functions as. The
+         replay affordance is a real button elsewhere in the stage. */
+      role="img"
+      aria-label={clip.alt}
+      muted
+      playsInline
+      preload="none"
+      onEnded={onEnded}
+      onPlay={onPlay}
+    />
   );
 }
 
 /**
  * Case-study hero: the redesigned checker on a muted slate-teal stage tile.
- * The composition is width-driven at md. Above md the desktop and mobile
- * captures sit side by side, flat and top-aligned, bleeding off the tile's
- * bottom edge — the reviewed showcase proportions. Below md the desktop
- * capture is dropped and the hero becomes TWO stacked scrollable phone
- * prototypes — the Symptoms input step on top, the Assessment step below —
- * each a dark bezel device whose screen holds a real handset viewport (360:800)
- * and scrolls its tall full-page capture INSIDE it like a prototype. Both
- * render through one PhonePrototype helper, so the devices are identical; each
- * inner scroller carries no overscroll-contain, so at its top and bottom edge a
- * continued drag chains to the page and never re-traps page scroll. The frame
- * is lifted from FeatureChips' PhoneFrame, minus its hotspot/popup machinery —
- * a plain scrollable device.
+ * One centred stacked column at every width — the running prototype clip on
+ * top, a landscape crop of the desktop capture beneath it. Only the two
+ * members' widths change with the breakpoint (the clip 30% of the stage above
+ * md, near full width below it; the capture 66% above md, full width below),
+ * so it is ONE <video> element across every breakpoint and a 6MB encode is
+ * never fetched twice on one page.
+ *
+ * The phone in the composition is the prototype ACTUALLY RUNNING — a screen
+ * recording of the working flow, landing through symptoms and assessment to a
+ * "Seek immediate medical care" result and on into the service finder. It
+ * carries its own device bezel in the footage, so nothing frames it;
+ * PROTOTYPE_CLIP just clips the rectangle back to the handset shape the
+ * recording already draws.
  *
  * A "bloom then dissolve" joins the stage to the site's motion language: a
- * teal ink wash blooms in behind the screenshots, then the whole backdrop —
- * the wash and the slate fill — melts to transparent, revealing the shell
- * surface behind the panel so the media is left floating on the page plane.
- * The screenshots stay crisp above the field (relative z-10) throughout, the
- * stacked phones included. On lg+ the moment is a reversible hover; below lg it
- * plays once on scroll-into-view and settles at the dissolved composition. The
- * md+ pair also steps forward (scale, deeper shadow) on the lg hover; the
- * below-md stack takes neither — both phones keep a static shadow-sc-hero
- * (equal to the rest shadow) so their device shadows never double, and the
- * backdrop reveal alone carries the touch moment there.
+ * teal ink wash blooms in behind the media, then the whole backdrop — the wash
+ * and the slate fill — melts to transparent, revealing the shell surface behind
+ * the panel so the media is left floating on the page plane. The media stays
+ * crisp above the field (relative z-10) throughout. On lg+ the moment is a
+ * reversible hover; below lg it plays once on scroll-into-view and settles at
+ * the dissolved composition. The pair also steps forward (scale, deeper shadow)
+ * on the lg hover.
+ *
+ * Playback is its own gate, independent of that moment. The clip runs ONCE,
+ * muted, starting when the handset itself is meaningfully scrolled into view —
+ * the same rule on desktop and touch — pausing the instant it leaves and
+ * resuming where it left off on the way back. It does not loop: at the end of
+ * the walkthrough it rests on its last frame. It never autostarts under reduced
+ * motion, where the poster stands in as the static composition and the control
+ * below is the way in. That control is a replay chip at the stage's upper-right,
+ * in the same liquid-glass material as the artifact viewer's tour control, so
+ * the page speaks one floating-chrome language rather than two.
+ *
+ * Note for future edits: replacing the pause affordance with replay-only is a
+ * deliberate call by the author, and it trades away the WCAG 2.2.2 (Pause,
+ * Stop, Hide) mechanism this stage used to carry — a 1m45s clip that starts on
+ * its own now has no in-page stop. If that becomes a problem, the fix is a
+ * second control or a chip that pauses while playing, not a return to looping.
  */
-/* Default composition — the assessment-steps pairing. At md+ a PORTRAIT desktop
-   capture (73.3%) sits beside a slim portrait phone (23.1%). Below md the desktop
-   capture is dropped and two phone prototypes stack, each on its fixed 360:800
-   screen, so the stage floor changes with the breakpoint: md+ keeps a fixed
-   aspect band (md:aspect-[100/58.22]); below md there is NO stage aspect — the
-   two 360:800 screens (plus the gap and padding) drive the leaf floor instead,
-   exactly like the case study's other content leaves. Omitting the base aspect
-   is what lets the collapse rest snug on the stacked phones rather than on an
-   aspect band that would over- or under-shoot them. */
-const DEFAULT_STAGE_ASPECT = "md:aspect-[100/58.22]";
+/* NO stage aspect at any width — the stacked column's own height is the leaf
+   floor, exactly like the case study's other content leaves.
+   The side-by-side composition needed a fixed band (md:aspect-[100/58.22])
+   because it deliberately ran the tall portrait desktop capture off the tile's
+   bottom edge, and only a declared floor could say where that cut landed. The
+   stacked column shows both captures whole, so a declared band could only
+   over- or under-shoot it: content height is now the honest floor. The cost is
+   that above md the column is taller than 110svh on a short laptop, where the
+   CollapsingLeaf pin quietly becomes a no-op (its documented behaviour for any
+   section taller than the open leaf) — the arrival still lands the clip whole
+   with the desktop capture entering beneath it. Below lg, where viewports are
+   proportionally taller, the collapse still runs. */
+const DEFAULT_STAGE_ASPECT = "";
 
+/* The desktop capture is a 1800x2578 FULL-PAGE capture — a scrolled page, not a
+   screen. Stacked at the foot of the column it has to read as a desktop SCREEN,
+   so the frame crops it to its own above-the-fold band: 1800x1246, top-anchored,
+   which is masthead + nav + the four-step progress bar + the whole Symptoms step
+   down to the bottom edge of the teal (1246px is measured off the asset — the
+   teal/footer seam). Everything below, the phone-number band and the government
+   footer, is the "long page" tell and is cropped away. objectPosition pins the
+   crop to the top; no img scale, since the crop is the whole framing.
+
+   It takes the FULL column at every width, with no max-width cap. A desktop
+   capture is 1800px of interface, so the only thing that makes it legible is
+   width: held to 66-72% under a 44rem cap it rendered about 634px at a
+   1440px viewport — roughly a third of life size, at which the page reads as a
+   thumbnail of itself rather than as the design. Full column takes the same
+   viewport to 960px. The stack is what buys this: side by side the capture had
+   to leave room for the phone beside it, and stacked it does not. Do not
+   re-introduce a cap to "balance" it against the clip — the clip carries its own
+   cap and the two are sized independently on purpose. */
 const DEFAULT_DESKTOP: HeroCapture = {
   src: "/assets/healthdirect/hero/symptoms-prompt-desktop.webp",
   alt: "The redesigned Symptoms step on desktop: Vomiting and Sore throat added under My symptoms, one at a time.",
-  ratio: 1800 / 2578,
-  aspectClassName: "aspect-square md:aspect-[1800/2578]",
+  ratio: 1800 / 1246,
+  aspectClassName: "aspect-[1800/1246]",
   objectPosition: "50% 0%",
-  imgClassName: "origin-top scale-[1.3] md:origin-center md:scale-100",
-  sizes: "(min-width: 768px) 66vw, 100vw",
-  widthClassName: "w-full md:w-[73.3%]",
+  /* The column is the viewport less the shell's gutters (px-4 → 2xl:px-64) and
+     the media row's own (px-4 → lg:px-12), so `sizes` subtracts both rather than
+     guessing a vw fraction — at full width an over-estimate costs real bytes. */
+  sizes:
+    "(min-width: 1536px) calc(100vw - 608px), (min-width: 1280px) calc(100vw - 480px), (min-width: 1024px) calc(100vw - 256px), (min-width: 768px) calc(100vw - 128px), (min-width: 640px) calc(100vw - 96px), calc(100vw - 64px)",
+  widthClassName: "w-full",
 };
 
-const DEFAULT_MOBILE: HeroCapture = {
-  src: "/assets/healthdirect/hero/assessment-mobile.webp",
-  alt: "The Assessment step on mobile, asking for body temperature with one-tap answer options.",
-  ratio: 540 / 1198,
-  sizes: "(min-width: 768px) 21vw, 62vw",
-  widthClassName: "w-[62%] max-w-72 md:w-[23.1%] md:max-w-none",
+/** The running clip placed in the stage. `alt` is the video's accessible name —
+    a <video> carries no alt attribute, so it is spoken from aria-label; keep it
+    describing what the recording SHOWS, the same job the screenshot alt did.
+    `widthClassName` is the composition lever, matching HeroCapture's. */
+type PrototypeClip = {
+  src: string;
+  poster: string;
+  alt: string;
+  widthClassName: string;
 };
 
-/* Below md the hero is TWO stacked scrollable phone prototypes, each carrying a
-   full-length page capture (not the single-viewport mockup the md+ side-by-side
-   uses, DEFAULT_MOBILE). Each capture's tall page scrolls inside a fixed 360:800
-   device screen, so the whole interface is viewable by scrolling the prototype.
-   Kept as their own captures so the md+ phone mockup stays a fixed-aspect device
-   shot rather than a 6000-7000px sliver. `PhoneCapture` is the trio the frame
-   reads (src/alt/ratio); the ratio is the capture's own, used only to compute
-   the intrinsic <Image> height (the visible height is the 360:800 screen). */
-type PhoneCapture = Pick<ScreenshotProps, "src" | "alt" | "ratio">;
-
-/* TOP prototype — the Symptoms input step. */
-const DEFAULT_MOBILE_PAGE_TOP: PhoneCapture = {
-  src: "/assets/healthdirect/hero/symptoms-input-mobile.webp",
-  alt: "The Symptoms step on mobile, entering symptoms one at a time, scrolled through the full page.",
-  ratio: 1080 / 6204,
-};
-
-/* BOTTOM prototype — the Assessment step. */
-const DEFAULT_MOBILE_PAGE: PhoneCapture = {
-  src: "/assets/healthdirect/hero/assessment-facepain-mobile.webp",
-  alt: "The Assessment step on mobile, asking whether the person has face pain, scrolled through the full page.",
-  ratio: 1080 / 7320,
+const DEFAULT_CLIP: PrototypeClip = {
+  src: "/assets/healthdirect/hero/prototype.mp4",
+  poster: "/assets/healthdirect/hero/prototype-poster.webp",
+  alt: "A recording of the redesigned symptom checker running on a phone: starting a check, clearing the triple zero warning and the background questions, entering Vomiting and Lower back pain one at a time, reaching a 'Seek immediate medical care' result with what to do next and the virtual, urgent, and emergency options, then opening an urgent care clinic in the service finder with its hours and map.",
+  widthClassName:
+    "w-full max-w-[19rem] md:w-[36%] md:max-w-[20rem] lg:w-[33%] xl:w-[30%]",
 };
 
 /** A capture placed in the stage: the screenshot props plus its `widthClassName`
-    — the composition lever. Below md the pair stacks (wide capture full width,
-    phone a centred column); at md the two sit side by side and their widths
-    plus the row gap sum to ~100%. Parameterised so the same stage can carry a
-    PORTRAIT desktop capture (the assessment steps) or a LANDSCAPE one (the
-    landing page), which want different proportions. */
+    — the composition lever. The pair stacks at every width: the capture takes
+    the full column at all of them, always wider than the clip above it.
+    Parameterised so the same stage can carry a full-page capture
+    cropped to a screen (the assessment steps) or a natively landscape one (the
+    landing page), which want different aspect crops. */
 type HeroCapture = ScreenshotProps & { widthClassName: string };
 
 export function SymptomsHero({
   corners = "all",
   stageAspectClassName = DEFAULT_STAGE_ASPECT,
   desktop = DEFAULT_DESKTOP,
-  mobile = DEFAULT_MOBILE,
-  mobilePageTop = DEFAULT_MOBILE_PAGE_TOP,
-  mobilePage = DEFAULT_MOBILE_PAGE,
+  clip = DEFAULT_CLIP,
 }: {
   /** Corner rounding for the stage surface — "top" when the hero caps the
       introduction slab. */
   corners?: TileCorners;
-  /** Stage aspect ratio (base + md). Drives the CollapsingLeaf floor, so it
-      changes with the captures inside: a tall stacked column below md, a wide
-      showcase band above it. */
+  /** Optional stage aspect ratio, overriding the content-driven floor. Empty by
+      default: the stacked column's own height is the CollapsingLeaf floor. Kept
+      as a prop for a future pairing that wants a declared band. */
   stageAspectClassName?: string;
-  /** The wide capture (left). Portrait by default; a landscape landing capture
-      supplies its own ratio and width. md+ side-by-side only — not shown below
-      md, where the stack is two phone prototypes instead. */
+  /** The wide capture, beneath the clip at every width. */
   desktop?: HeroCapture;
-  /** The phone capture (right) — the md+ side-by-side device mockup. */
-  mobile?: HeroCapture;
-  /** The full-length page capture scrolled inside the TOP below-md phone. */
-  mobilePageTop?: PhoneCapture;
-  /** The full-length page capture scrolled inside the BOTTOM below-md phone. */
-  mobilePage?: PhoneCapture;
+  /** The running prototype clip, on top at every width. */
+  clip?: PrototypeClip;
 }) {
   const reduce = useReducedMotion() ?? false;
 
@@ -414,19 +430,89 @@ export function SymptomsHero({
   // speed 0 stops the library's rAF loop entirely; static under reduced motion.
   const bloomSpeed = reduce || !live ? 0 : BLOOM_SPEED;
 
-  /* The stage shares the leaf arrival (CollapsingLeaf): it opens at the full
-     leaf height — showing more of the screenshots than the tuned crop — and
-     collapses onto its aspect-ratio height, the bottom edge cropping the
-     screenshots progressively until the reviewed composition rests. The
-     aspect classes stay on the collapsing surface as its natural floor.
+  /* ── Clip playback ────────────────────────────────────────────────────────
+     Deliberately NOT tied to the bloom moment: the reader should be able to
+     watch the prototype run without holding a hover, and the moment should
+     still play for someone who has let the clip finish.
+
+     The gate is the CLIP's own box, not the stage's. The stage leaf arrives
+     110svh tall and runs taller again above md, so a fraction of IT can be
+     satisfied by a sliver of empty slate at the top of the viewport — the clip
+     would be running well before anyone could see it. Probing the handset
+     itself, at a substantial fraction, means "playing" and "on screen in front
+     of the reader" are the same thing at every width, desktop and touch alike.
+     0.45 is picked to be reachable: the handset is a 1:2.1 box that renders
+     roughly 640-670px tall, so a stricter fraction would never resolve on a
+     short phone viewport. The probe is live (not `once`), so the clip also
+     stops decoding the moment it scrolls away instead of burning battery
+     off-screen, and picks up where it left off on the way back.
+
+     `ended` retires the gate once the walkthrough has run its course: without
+     `loop` the video stops on its own, and this keeps a later scroll-past from
+     restarting a clip the reader has already watched. Replay clears it.
+
+     `userStarted` is the opt-in that lets the control override reduced motion —
+     where the clip must never autostart, but a reader who presses the control
+     has asked for it, so refusing would be removing the content rather than the
+     motion. */
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const clipRef = useRef<HTMLDivElement>(null);
+  const [ended, setEnded] = useState(false);
+  const [userStarted, setUserStarted] = useState(false);
+  // Latched off the video's own `play` event — the moment playback ACTUALLY
+  // begins, not the moment we ask for it, so a refused autoplay leaves the chip
+  // reading "Play". Never cleared: it is what the control's glyph and label
+  // read from, so the chip says "Play" exactly once, before anything has run,
+  // and "Replay" from then on — including while the clip is scrolled away
+  // mid-run.
+  const [hasRun, setHasRun] = useState(false);
+  const onScreen = useInView(clipRef, { amount: 0.45 });
+  const playing = onScreen && !ended && (!reduce || userStarted);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (!playing) {
+      video.pause();
+      return;
+    }
+    // Re-assert muted as a PROPERTY before playing. React renders `muted` as an
+    // attribute, which the server HTML carries but iOS does not always honour —
+    // and an unmuted inline video is exactly what mobile Safari refuses to
+    // autoplay. Setting the property is what makes the gesture-free play legal.
+    video.muted = true;
+    // Play can still be refused; swallow the rejection so a refusal leaves the
+    // poster showing rather than throwing an unhandled promise.
+    void video.play().catch(() => {});
+  }, [playing]);
+
+  /* Replay — rewind to the first frame and run the walkthrough again. Clearing
+     `ended` is what re-opens the gate above; `userStarted` is what makes the
+     control work under reduced motion, where nothing has autostarted. The
+     explicit play() covers the case where neither flag actually changes (a
+     reader replaying a clip that is already running), which would leave the
+     effect with nothing to react to. */
+  const replay = () => {
+    const video = videoRef.current;
+    setEnded(false);
+    setUserStarted(true);
+    if (!video) return;
+    video.currentTime = 0;
+    video.muted = true;
+    void video.play().catch(() => {});
+  };
+
+  /* The stage shares the leaf arrival (CollapsingLeaf): where the stacked
+     column is shorter than the open leaf it opens at the full leaf height and
+     collapses onto the column's own height, resting snug on the composition.
+     Where the column is taller — above md on a short laptop — the floor wins
+     and the pin quietly becomes a no-op, exactly as it does for any tall
+     section.
 
      w-full pins the width definite so the collapse only ever moves the bottom
-     edge. This is the one leaf whose floor is an aspect ratio, not content
-     height; while the leaf's min-height overshoots that ratio (110svh on
-     arrival), an auto width would let the aspect ratio transfer the tall
-     height back into a wide width and balloon the stage past its lane. A
-     100% width leaves the ratio only the height to compute, so the width
-     stays exactly as tuned.
+     edge, and so a caller that does pass `stageAspectClassName` can never have
+     the ratio transfer a 110svh height back into a wide width and balloon the
+     stage past its lane.
 
      The leaf background is TRANSPARENT — the slate fill lives in its own
      absolutely-positioned layer below so it can dissolve. When the fill melts,
@@ -510,20 +596,50 @@ export function SymptomsHero({
         />
       )}
 
-      {/* md+ pair — crisp above the field (z-10), hidden below md where the
-          framed phone below takes over. On desktop hover the pair steps into
-          focus: it scales up to a clearly readable HOVER_SCALE while each
-          capture's shadow deepens (SHADOW_REST → SHADOW_LIFT), so growing
-          bigger reads as lifting toward the viewer. The scale step is the LG
-          HOVER read only (`hoverActive`); transform-origin is the top edge so
-          growth spills only into the already-cropped bottom bleed — no gap
-          opens above. On hover-out the scale reverses subtler/faster; Motion
-          retargets mid-flight. Under reduced motion the scale pins to 1 and
-          each shadow to SHADOW_REST — no lift. The shadow lift rides the shared
-          `active`, so it deepens on both triggers as the field clears beneath
-          the pair. */}
+      {/* The media — crisp above the field (z-10) at every width. ONE centred
+          column at every breakpoint: the running clip on top, the desktop
+          capture beneath it. Only the two members' widths change with the
+          breakpoint, never the structure, so the <video> stays a single element
+          and the 6MB encode is fetched once no matter what is on screen.
+
+          Stacking is what makes the clip big: side by side it had 23% of the
+          stage width to live in, and a 1:2.1 portrait phone in a quarter-width
+          column is a sliver. On its own line it takes 36% at md easing to 30%
+          at xl — a 30 to 55% wider handset at every breakpoint — and, more to
+          the point, has nothing beside it to be measured against.
+
+          The clip's percentages ease DOWN as the stage widens because it is the
+          height-hungry member: at a fixed percentage a 1:2.1 box grows twice as
+          fast as the stage does, and the whole column's height rides on it. The
+          20rem cap stops it entirely past about 1600px, so very wide screens
+          get more slate air rather than a taller lockup.
+
+          The capture below it is the opposite case and carries NO cap: it is
+          landscape, so width costs it little height, and it is 1800px of
+          interface that only width can make legible. See DEFAULT_DESKTOP —
+          capping the two together was what made it read as a thumbnail.
+
+          On desktop hover the row steps into focus: it scales up to a clearly
+          readable HOVER_SCALE while each frame's shadow deepens (SHADOW_REST →
+          SHADOW_LIFT), so growing bigger reads as lifting toward the viewer.
+          The scale step is the LG HOVER read only (`hoverActive`);
+          transform-origin is the top edge so growth spills only into the
+          already-cropped bottom bleed — no gap opens above. On hover-out the
+          scale reverses subtler/faster; Motion retargets mid-flight. Under
+          reduced motion the scale pins to 1 and each shadow to SHADOW_REST — no
+          lift. The shadow lift rides the shared `active`, so it deepens on both
+          triggers as the field clears beneath the media.
+
+          The column's own height (both boxes plus the gap and padding) is what
+          the leaf floor rests on at every width — see DEFAULT_STAGE_ASPECT.
+          Which is also why the vertical padding is deliberately ASYMMETRIC
+          (pt-8 → xl:pt-12 against pb-12 → xl:pb-24) rather than a single py-*:
+          with the floor set by content, the bottom padding IS the gap between
+          the capture and the tile's edge, and matching it to the top left the
+          capture sitting almost on that edge. The column now hangs from the top
+          with air beneath it; do not "balance" it back to py-*. */}
       <motion.div
-        className="relative z-10 hidden w-full items-center gap-6 px-4 pt-[7%] will-change-transform sm:px-6 md:flex md:flex-row md:items-start md:gap-[3.6%] md:px-8 md:pt-[min(4%,4.5rem)] lg:px-12"
+        className="relative z-10 flex w-full flex-col items-center gap-6 px-4 pb-12 pt-8 will-change-transform sm:px-6 md:gap-8 md:px-8 md:pb-16 md:pt-10 lg:px-12 lg:pb-20 xl:gap-10 xl:pb-24 xl:pt-12"
         style={{ transformOrigin: "50% 0%" }}
         initial={false}
         animate={{ scale: hoverActive ? HOVER_SCALE : 1 }}
@@ -532,9 +648,37 @@ export function SymptomsHero({
           ease: hoverActive ? motionEase.out : motionEase.in,
         }}
       >
-        {/* The wide capture (left/top). Its width and crop come from the
-            `desktop` config, so the same slot carries either a portrait
-            assessment capture or a landscape landing capture. */}
+        {/* The running clip — top of the stack, and the object the composition
+            is built around. The radius and the overflow clip sit on the
+            SHADOW-BEARING element, not on an inner wrapper, so the lift shadow
+            follows the handset's rounded corners instead of haloing a square
+            around them. */}
+        <motion.div
+          ref={clipRef}
+          className={`${clip.widthClassName} overflow-hidden`}
+          style={{
+            aspectRatio: PROTOTYPE_ASPECT,
+            borderRadius: PROTOTYPE_CLIP,
+          }}
+          initial={false}
+          animate={{ boxShadow: active ? SHADOW_LIFT : SHADOW_REST }}
+          transition={{
+            duration: active ? FOCUS_IN : motionDuration.slow,
+            ease: active ? motionEase.out : motionEase.in,
+          }}
+        >
+          <PrototypeVideo
+            clip={clip}
+            videoRef={videoRef}
+            onEnded={() => setEnded(true)}
+            onPlay={() => setHasRun(true)}
+          />
+        </motion.div>
+        {/* The wide capture — beneath the clip, at every width. Wider than the
+            phone so the pair reads as two surfaces of one product, and shorter,
+            so the clip keeps the composition's weight. Its width and crop come
+            from the `desktop` config, so the same slot carries either the
+            assessment steps or a landing capture. */}
         <motion.div
           className={`${desktop.widthClassName} rounded-xs`}
           initial={false}
@@ -554,51 +698,56 @@ export function SymptomsHero({
             sizes={desktop.sizes}
           />
         </motion.div>
-        {/* The phone capture (right/bottom). */}
-        <motion.div
-          className={`${mobile.widthClassName} rounded-xs`}
-          initial={false}
-          animate={{ boxShadow: active ? SHADOW_LIFT : SHADOW_REST }}
-          transition={{
-            duration: active ? FOCUS_IN : motionDuration.slow,
-            ease: active ? motionEase.out : motionEase.in,
-          }}
-        >
-          <Screenshot
-            src={mobile.src}
-            alt={mobile.alt}
-            ratio={mobile.ratio}
-            aspectClassName={mobile.aspectClassName}
-            objectPosition={mobile.objectPosition}
-            imgClassName={mobile.imgClassName}
-            sizes={mobile.sizes}
-          />
-        </motion.div>
       </motion.div>
 
-      {/* Below md: two stacked scrollable phone prototypes — the Symptoms input
-          step on top, the Assessment step below — replacing the md+ desktop
-          capture (which stays in the side-by-side above md). Both ride above the
-          dissolving field at z-10 exactly as the md+ pair does, and both render
-          through the one PhonePrototype helper so the two devices are identical:
-          the same 360:800 screen, the same focusable, arrow-scrollable inner
-          scroller with NO overscroll-contain, so each chains to the page at its
-          top and bottom edges and neither re-traps page scroll. Each keeps a
-          static shadow-sc-hero (no active scale or shadow lift) so device
-          shadows never double — the backdrop dissolve alone carries the touch
-          moment. The two fixed-aspect screens are what the leaf floor rests on
-          below md (see DEFAULT_STAGE_ASPECT). */}
-      <div className="relative z-10 flex flex-col items-center gap-8 px-4 py-8 md:hidden">
-        <PhonePrototype
-          src={mobilePageTop.src}
-          alt={mobilePageTop.alt}
-          ratio={mobilePageTop.ratio}
-        />
-        <PhonePrototype
-          src={mobilePage.src}
-          alt={mobilePage.alt}
-          ratio={mobilePage.ratio}
-        />
+      {/* Replay control — the clip runs once, so the only thing worth offering
+          is another run of it. It rides at z-40, ABOVE the hover catcher, or
+          the catcher would swallow the click; the pointer handlers on the chip
+          re-assert `hovered` because leaving the catcher for the chip fires the
+          catcher's hover-end in the same dispatch, and without them reaching
+          for the control would collapse the bloom under your cursor.
+
+          Under reduced motion nothing has autostarted, so the same control is
+          the way IN: it reads "Play" with a play glyph until the clip has run,
+          and becomes "Replay" with the rewind glyph afterwards — one button,
+          labelled for what it will actually do next. Same rewind idiom as the
+          IA flow's reset.
+
+          Pinned to the stage's UPPER-right, which is the one corner that is
+          always both visible and uncropped. Not the clip (it is centred at md+,
+          so a chip glued to it would float in the middle of the stage), and not
+          the stage's lower-right: the leaf arrives 110svh tall, so its bottom
+          edge — and anything glued to it — starts a tenth of a viewport below
+          the fold, and above md the stacked column is taller again, putting
+          that corner a whole screen down. The top edge is pinned and still, and
+          the stack now leaves it in clear stage rather than over the phone's
+          shoulder. Same liquid-glass material as the
+          artifact viewer's tour chip (style-rules "Glass surfaces": one
+          floating-chrome language, and a new surface only if it can take the
+          same idiom). */}
+      <div className="pointer-events-none absolute inset-0 z-40 flex items-start justify-end p-4">
+        <div
+          className="tour-glass-chip pointer-events-auto rounded-full p-1 text-leaf-foreground sm:p-1.5"
+          onPointerEnter={interactive ? () => setHovered(true) : undefined}
+          onPointerLeave={interactive ? () => setHovered(false) : undefined}
+        >
+          <button
+            type="button"
+            aria-label={
+              hasRun
+                ? "Replay the prototype recording"
+                : "Play the prototype recording"
+            }
+            onClick={replay}
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-leaf-foreground outline-none transition-colors hover:bg-primary/35 focus-visible:ring-2 focus-visible:ring-leaf-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-leaf active:bg-primary/50"
+          >
+            {hasRun ? (
+              <RotateCwIcon aria-hidden="true" className="size-4" />
+            ) : (
+              <PlayIcon aria-hidden="true" className="size-4" />
+            )}
+          </button>
+        </div>
       </div>
     </CollapsingLeaf>
   );

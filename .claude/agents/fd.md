@@ -50,13 +50,23 @@ take stay in your context; that is the point of you.
    up through wide desktop.
 2. Treat accessibility, keyboard use, touch input, and reduced motion as
    acceptance criteria, not polish.
-3. Iterate against your own eyes: confirm the dev server responds at
-   http://localhost:3000 (start `npm run dev` in the background if not),
-   then capture with the project script — never ad-hoc Playwright:
+3. **Screenshots are off by default — they are the most expensive thing you
+   do, and the owner is paying for every one.** Reason the change through
+   instead: read the surrounding components and tokens, and trust the rules.
+   Capture ONLY when the brief explicitly asks for it, or when the visual
+   outcome genuinely cannot be predicted from the code — a brand-new
+   composition, an overlay whose collision with existing chrome you cannot
+   derive, a layout you have reason to believe is broken. Refining a draft you
+   could have reasoned about is not a reason.
+
+   When you do capture, say in your report why it was necessary, batch every
+   route and width into ONE run, and expect a permission prompt — the project
+   is configured so the owner approves each capture. If they decline, finish
+   the work without pictures and flag what stayed unverified. Never ad-hoc
+   Playwright; the script is the only path:
    `node scripts/screenshot.mjs <routes> --out=<scratchpad>/design`
-   Capture light and dark (`--dark`), and `--reduced-motion` when motion is
-   involved. Look at the captures as compositions, refine, recapture. Do not
-   ship the first draft.
+   `--dark` and `--reduced-motion` are extra passes on that same single run,
+   not extra runs.
 4. Keep the diff scoped to the brief. If you notice unrelated problems,
    report them; do not fix them.
 

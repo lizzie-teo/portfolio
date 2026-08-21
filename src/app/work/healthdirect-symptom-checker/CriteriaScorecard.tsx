@@ -10,14 +10,27 @@ import { motionDuration, motionEase } from "@/app/lib/motion";
  * criterion holding its name and the bar we set. Every criterion gets the
  * same frame so the six read as a single agreed target, not a ranking.
  *
+ * Colour runs the reverse of the reading tiles around it: the section is the
+ * light teal quiet panel (--secondary, Tile surface="secondary") and the cells
+ * are white, so the six read as objects set on the brand field. White, not the
+ * theme's retinted --card: at 0.98 lightness the card token barely lifts off
+ * the #e6f5f5 mint, and the retint exists to stop pure white glaring against
+ * the deep-teal leaves — a hazard these inner cells don't face. Each cell
+ * carries --shadow-float, the ramp's furthest and softest rung, and no border:
+ * the hairline read as almost nothing against the mint and only pencilled an
+ * edge onto a card whose whole job is to float, so the shadow holds the six
+ * above the field on its own. --shadow-card sat them too close and
+ * --shadow-elevated draws a harder edge; float trades the near shadow for a
+ * long diffuse one, which is what the distance costs at six repeats.
+ *
  * Two kinds share the frame. A measurable criterion leads with its figure as
  * the dominant mark. A qualitative one has no number, so a full-scale
  * context-matching icon stands where the figure would and the judged statement
  * carries the weight. Both marks — figure and icon — are set large in the deep
- * leaf teal (--leaf #183947, the case study's darkest brand teal; 10.9:1 on the
- * bg-secondary mint), the same scale and colour as the outcome scorecard this
- * pairs with, so an icon and a number read as equal-weight marks; bar and
- * result are told apart by copy and context, not size.
+ * leaf teal (--leaf #183947, the case study's darkest brand teal; 12.3:1 on
+ * white), the same scale and colour as the outcome scorecard this pairs with,
+ * so an icon and a number read as equal-weight marks; bar and result are told
+ * apart by copy and context, not size.
  *
  * Figures count up from zero every time they scroll into view (CountUp), on
  * the cell stagger's own cadence; "AA" has no digits and stays static in the
@@ -115,7 +128,7 @@ export function CriteriaScorecard({ className }: { className?: string }) {
         <motion.div
           key={c.label}
           variants={v.cell}
-          className="flex flex-col rounded-xl border border-border bg-secondary p-6 md:p-8"
+          className="flex flex-col rounded-xl bg-white p-6 md:p-8 shadow-float"
         >
           <dt className={eyebrow}>{c.label}</dt>
           {c.kind === "metric" ? (
@@ -125,7 +138,7 @@ export function CriteriaScorecard({ className }: { className?: string }) {
                 delay={shouldReduce ? 0 : index * 0.05}
                 className="text-4xl font-semibold leading-[0.95] tracking-[-0.02em] text-leaf break-words md:text-5xl"
               />
-              <span className="text-sm leading-relaxed text-muted-foreground">
+              <span className="text-sm font-medium leading-relaxed text-leaf">
                 {c.detail}
               </span>
             </dd>

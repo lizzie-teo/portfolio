@@ -21,6 +21,7 @@ import { motionDuration, motionEase } from "../lib/motion";
 import { useIsDesktop } from "../lib/useIsDesktop";
 import {
   DEMO_DISMISS_ID,
+  type DemoScanPoint,
   demoPressId,
   useHotspotDemo,
 } from "../lib/useHotspotDemo";
@@ -30,7 +31,6 @@ import { MotionReveal } from "./MotionReveal";
 import { TouchRing } from "./TouchRing";
 import {
   anchorScrollOffset,
-  sectionContentGap,
   sectionHeading,
   sectionLede,
   subsectionHeading,
@@ -41,7 +41,7 @@ import {
  * point of the field is that WHICH STATE THIS IS is carried in words, as real
  * DOM text, on both the desktop stage and the mobile gallery — never by a
  * colour, a position in a row, or a reading order the reader has to infer. The
- * two states of a pair sit at the same width (see the `w-[46%]` pair path), so
+ * two states of a pair sit at the same width (see the `w-[42%]` pair path), so
  * equal width on equal-width captures is equal zoom and the comparison is fair;
  * the label is what says which is which.
  */
@@ -189,11 +189,35 @@ export type Feature = {
   /** One to three real product screenshots shown for the active feature. */
   images: FeatureScreenshot[];
   /**
+   * ONE state marker for the whole group, drawn once across the top of the media
+   * stage rather than per capture.
+   *
+   * The per-capture `state` says which frame is the OLD one, so it only makes
+   * sense where the frames differ in state. Where every capture is the SAME
+   * state — two views of one shipped screen, say the results list and the filter
+   * panel that sets it — the state is a property of the exhibit, not of either
+   * picture, and repeating the same word over both would read as a comparison
+   * that isn't there. This draws it once, spanning the row.
+   *
+   * Mutually exclusive with per-capture `state` in practice: the group caption
+   * wins on the mobile gallery, where only one frame is on screen at a time.
+   */
+  groupState?: CaptureState;
+  /**
    * Optional mobile-only prototype hotspots (see Hotspot). Additive: leaving it
    * undefined keeps a feature's mobile gallery a plain swipe of every image, and
    * the desktop grid never reads this field.
    */
   hotspots?: Hotspot[];
+  /**
+   * Optional read-through the auto-demo performs once per loop, before it
+   * presses anything (see DemoScanPoint in useHotspotDemo). Regions, not
+   * triggers: the hand rests on each in turn and touches none of them, so the
+   * reader sees the set of options before one of them is demonstrated. Only
+   * meaningful alongside `demoStep` hotspots; ignored on desktop like the rest
+   * of the prototype layer.
+   */
+  demoScan?: DemoScanPoint[];
 };
 
 export type FeatureChipsProps = {
@@ -235,6 +259,13 @@ export type FeatureChipsProps = {
 
 // The 80ms chip→image offset: the panel morph leads, the screenshots answer.
 const IMAGE_LEAD = 0.08;
+
+// Tighter than the shared `sectionContentGap` this band used to take. That gap
+// is tuned for a section whose content starts as a block of its own; here the
+// content is a top-loaded media stage that already carries generous internal
+// padding above its first capture, so the standard gap stacked two gaps on top
+// of each other and left the lede floating well clear of the exhibit it frames.
+const INTRO_GAP = "mt-6 md:mt-8";
 
 /**
  * The band's tone-dependent classes, in one place.
@@ -280,7 +311,7 @@ type MobileSkin = {
   frameless: string;
   /** The "Before" / "After" word above a comparison frame (CaptureState). */
   stateLabel: string;
-  /** Its one line summary, a step quieter than the word above it. */
+  /** Its one line summary, set at the same ink as the word above it. */
   stateSummary: string;
   /**
    * The rule under an unshipped state: the band's own hairline, carrying no
@@ -330,11 +361,15 @@ const MOBILE_SKIN: Record<"light" | "dark", MobileSkin> = {
     // No hairline: these captures are white product UI on the deep leaf, so
     // luminance already closes their edge and a light border would ring them.
     frameless: "shadow-sc-hero",
-    // 80% white on the leaf is 9.4:1 — the state word is load-bearing (it is
-    // what tells Before from After), so it sits a step brighter than the note
-    // ink beneath it rather than joining the quiet metadata.
-    stateLabel: "text-leaf-foreground/80",
-    stateSummary: "text-leaf-foreground/70",
+    // Both at the full theme ink, not a dip of it. The state marker is the one
+    // part of a comparison that CANNOT be inferred from the picture — the word
+    // is what tells Before from After, and the summary carries the actual claim
+    // about the frame — so it takes the band's foreground token outright rather
+    // than joining the quiet metadata at 70/80%. Pairing them at one strength
+    // also keeps the order right: a summary dipped less than the word above it
+    // would read brighter than its own label.
+    stateLabel: "text-leaf-foreground",
+    stateSummary: "text-leaf-foreground",
     stateRuleIdle: "bg-leaf-foreground/30",
     stateRuleShipped: "bg-rail-tile-active",
     footnote: "text-leaf-foreground/65",
@@ -347,7 +382,7 @@ const MOBILE_SKIN: Record<"light" | "dark", MobileSkin> = {
   light: {
     heading: "text-foreground",
     body: "text-muted-foreground",
-    note: "text-muted-foreground",
+    note: "text-leaf",
     controlBar: "border-primary/15 bg-card shadow-card",
     control: cn(
       CONTROL_BASE,
@@ -443,11 +478,16 @@ function StateCaption({
         />
       </span>
       {state.summary || reserveSummary ? (
+        // Set at the chip body's size (text-sm), not a caption size: this line
+        // carries the actual claim about the capture and is often the only
+        // reading of it a scanner takes, so it is body copy that happens to sit
+        // over a picture rather than a figure legend under one. The uppercase
+        // label above stays text-xs — that IS a label.
         // min-h reserves one line on every frame of a pair, so two summaries of
         // different length still start their captures' images on the same line.
         <p
           className={cn(
-            "mt-2 min-h-[1lh] text-xs leading-relaxed",
+            "mt-2 min-h-[1lh] text-sm leading-relaxed",
             skin.stateSummary
           )}
         >
@@ -545,6 +585,24 @@ export function FeatureChips({
   // it swipes (see fitRow handling in the media row's classes).
   const fitRow = count >= 3 && !fixedWidth;
   const scroll = fixedWidth;
+  // The exhibit's state, drawn once above the whole row (see Feature.groupState).
+  const groupState = shown.groupState;
+  // Any exhibit whose captures carry state markers — a before-and-after, or
+  // several views of one state under a group caption. It only governs the GAP:
+  // a comparison has to read as two separate frames being weighed against each
+  // other, and the showcase's standard 32px set gap leaves them close enough to
+  // scan as one continuous strip. Stated rows take double that (64px) at every
+  // count, so the reader's eye has to cross a real interval to get from one
+  // state to the other. Unstated groups (the decisions band's four-phone walk)
+  // keep the 32px rhythm — those captures ARE one continuous sequence.
+  const stated =
+    Boolean(groupState) || desktopImages.some((image) => image.state);
+  // A stated group of at most two: a before-and-after pair, or two captures of
+  // one state under a single caption. Sized to match the pinned decisions
+  // captures (300px ceiling) rather than the percentage rhythm the other
+  // multi-shot groups use.
+  const statedGroup = count <= 2 && stated;
+  const statePair = statedGroup && count === 2;
 
   // Width of each capture inside the bounded stage. count === 1 fills it (the
   // single composite); a fitting pair takes hero proportions so it never needs
@@ -556,19 +614,31 @@ export function FeatureChips({
     // (Accessible) as well as a full-stage composite — w-full would blow a
     // portrait phone up to the whole stage.
     if (image.displayWidth) return "";
-    // A comparison capture always takes the pair track, and never a fixed pixel
-    // width. Two reasons, and they are the same reason twice:
-    //  - A pair must FIT. Two pinned 300px captures plus their gap overflow the
-    //    stage at lg, so the "after" is pushed off the edge and has to be swiped
-    //    to. A comparison you have to swipe to complete is not a comparison; the
-    //    percentage track fits at every width the stage mounts at.
-    //  - A solo comparison keeps the same track rather than filling the stage.
-    //    Equal width is equal zoom, which is what makes the exhibit fair, and it
-    //    would be odd for the one unshipped recommendation to be the biggest
-    //    picture in the section purely because nothing shipped beside it.
+    // A comparison capture takes a percentage track CAPPED at the decisions
+    // showcase's pinned phone width (300px), so the before-and-after reads at
+    // the same scale as the design-decisions captures further down the page —
+    // the two bands are one argument and a phone shot should not change size
+    // between them. Percentage-with-a-ceiling rather than a pinned width,
+    // because a pair must FIT: two pinned 300px captures plus their gap
+    // overflow the stage at lg, so the "after" would be pushed off the edge and
+    // have to be swiped to, and a comparison you have to swipe to complete is
+    // not a comparison. The track shrinks below 300 to fit the narrow stage and
+    // never grows past it on a wide one. A solo comparison keeps the same track
+    // rather than filling the stage: equal width is equal zoom, which is what
+    // makes the exhibit fair, and it would be odd for the one unshipped
+    // recommendation to be the biggest picture in the section purely because
+    // nothing shipped beside it.
     // Guarded at two, which is what a before-and-after is; a longer group of
     // states would fall through to the sizing paths below.
-    if (image.state && count <= 2) return "w-[46%]";
+    // 42%, not the 46% an unstated pair takes: the stated gap is double the
+    // showcase's set gap (64px, see `stated`), and the pair must still FIT the
+    // narrowest stage the desktop branch mounts at — at lg the stage is ~560px
+    // inside its gutters, where two 46% tracks plus 64px overflow it and the
+    // "after" would be clipped off the right edge. The 4% each track gives up
+    // buys the interval between them, and only bites between lg and xl: from xl
+    // up both tracks are already at their 300px ceiling, so the wider gap costs
+    // the captures nothing at the sizes the band is mostly read at.
+    if (statedGroup) return "w-[42%] max-w-[300px]";
     if (count === 1) return "w-full";
     if (fitRow) {
       // Four portrait phone shots. Below 2xl the desktop stage isn't wide
@@ -597,10 +667,10 @@ export function FeatureChips({
   // next/image sizes hints matched to the widthClass above.
   const imageSizes = (image: FeatureScreenshot) => {
     if (image.displayWidth) return `${image.displayWidth}px`;
-    // Matches the pair track above, solo or paired — the stage only mounts from
-    // lg, so the pair sizing is the only hint that ever applies.
-    if (image.state && count <= 2)
-      return "(min-width: 1024px) 28vw, (min-width: 768px) 34vw, 44vw";
+    // Matches the capped pair track above: 300px is its ceiling at every width
+    // the stage mounts at, so it is a safe (never under-requesting) hint, and
+    // the same one the pinned decisions captures use.
+    if (statedGroup) return "300px";
     if (count === 1) return "(min-width: 1024px) 60vw, 92vw";
     if (fitRow) {
       // The stage only mounts from lg up, and columns hold at 240px through the
@@ -668,6 +738,106 @@ export function FeatureChips({
           transition: { duration: motionDuration.fast, ease: motionEase.out },
         },
       };
+
+  // Carries the group's stagger down one level when a group caption pushes the
+  // captures into their own row (see the render). The caption is the group's
+  // first child and takes the lead delay; the captures follow it, so the row
+  // only re-declares the per-child stagger, not the lead.
+  const rowVariants: Variants = shouldReduce
+    ? { initial: {}, animate: {} }
+    : { initial: {}, animate: { transition: { staggerChildren: 0.05 } } };
+
+  // The stage's own gutters, held apart from the row layout below because a
+  // group caption splits the two onto different elements.
+  const stagePadding =
+    "px-4 pt-6 sm:px-6 md:px-8 md:pt-8 lg:px-10 xl:px-12 2xl:px-16";
+
+  // How the captures sit across the stage.
+  const rowLayout =
+    count === 1
+      ? "h-full w-full items-start justify-center"
+      : fitRow
+        ? cn(
+            // Below 2xl: a scroll-snapped swipe row (four portrait phones can't
+            // sit legibly across a narrow desktop / iPad-landscape stage), each
+            // held at its 240px ceiling on the same 32px gap the pairs use —
+            // one gap rhythm across the showcase. A STATED row of three takes
+            // the doubled comparison gap instead (see `stated`); the row is
+            // w-max, so the wider interval costs it scroll distance, not
+            // capture width, and at 2xl three 240px columns plus two 64px gaps
+            // (848px) still fit the ~968px stage unswiped.
+            "mx-auto w-max snap-x snap-mandatory scroll-px-4 items-start",
+            stated ? "gap-16" : "gap-8",
+            // From 2xl up the row is full width and the four shrink to fit,
+            // centred.
+            "2xl:w-full 2xl:snap-none 2xl:justify-center"
+          )
+        : scroll
+          ? cn(
+              // A two-shot fixed-width pair centres and sits on the 32px set gap
+              // (gap-8), swiping only when even that overflows a narrow stage.
+              "mx-auto w-max snap-x snap-mandatory scroll-px-4 items-start",
+              count === 2 ? "gap-8" : "gap-12"
+            )
+          : statePair
+            ? // The capped pair centres on the doubled comparison gap (64px,
+              // see `stated`), so the two states are weighed across a real
+              // interval rather than scanned as one strip. Its tracks pay for
+              // that interval at 42% each (see widthClass).
+              "w-full items-start justify-center gap-16"
+            : "w-full items-start justify-center gap-[3.6%]";
+
+  // A group caption is set to the bounding box of the captures it names, not to
+  // the stage: its rule is the visual tie between the word and the frames, and a
+  // rule running 150px past both captures reads as a divider for the band rather
+  // than a marker for the exhibit. A capped pair spans exactly two tracks plus
+  // their gap (42% + 42% + 64px), which is also its 664px ceiling once both
+  // captures hit the 300px cap, so the caption tracks the pair at every width.
+  // Anything else fills the stage, which is what those layouts already do.
+  const groupCaptionWidth = statePair
+    ? "mx-auto w-[calc(84%_+_4rem)] max-w-[664px]"
+    : "w-full";
+
+  const figures = desktopImages.map((image) => (
+    <motion.figure
+      key={image.src}
+      variants={itemVariants}
+      className={cn("m-0 flex-none snap-start", widthClass(image))}
+      style={image.displayWidth ? { width: image.displayWidth } : undefined}
+    >
+      {/* The state marker on a comparison capture, above the frame it names.
+          Above, because this stage top-loads its captures and hard-clips
+          whatever runs past the band's bottom edge: anything set under an image
+          here is the first thing lost, and a label the reader cannot see is
+          worse than no comparison at all. A group caption (groupState) draws
+          the same marker once across the whole row instead. */}
+      {image.state ? (
+        <StateCaption as="figcaption" state={image.state} skin={skin} />
+      ) : null}
+      {/* Shadow, hairline, and radius on the same element so the lift follows
+          the rounded-xs screenshot with no square halo (CLAUDE.md screenshot
+          carve-out). On the dark leaf the black shadow-card all but vanishes, so
+          the captures lift on the hero's soft shadow-sc-hero and separate from
+          the leaf by luminance, exactly as the hero does. On the light band the
+          shadow is real but not always enough: a capture can be a mint panel on
+          the mint band (the Service Finder crop), so the hairline is what closes
+          its edge. Same treatment as the mobile branch's frameless slide. */}
+      <div className={cn("w-full overflow-hidden rounded-xs", skin.frameless)}>
+        <Image
+          src={image.src}
+          alt={image.alt}
+          width={image.width}
+          height={image.height}
+          sizes={imageSizes(image)}
+          // Screenshots carry fine UI text and 1px borders that default q75
+          // softens; 90 (whitelisted in next.config) keeps the captures crisp at
+          // the swipe-gallery scale.
+          quality={90}
+          className="block h-auto w-full"
+        />
+      </div>
+    </motion.figure>
+  ));
 
   return (
     <section
@@ -741,7 +911,7 @@ export function FeatureChips({
             // hand the enlarged media stage more room; 17rem still holds the
             // expanded card's two-paragraph body at a comfortable measure.
             "lg:grid lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] lg:items-start lg:gap-8 xl:gap-10",
-            hasIntro && sectionContentGap
+            hasIntro && INTRO_GAP
           )}
         >
           {/* Media stage — first in DOM so it sits above the chips on mobile
@@ -791,91 +961,39 @@ export function FeatureChips({
                     animate="animate"
                     exit="exit"
                     className={cn(
-                      "flex px-4 pt-6 sm:px-6 md:px-8 md:pt-8 lg:px-10 xl:px-12 2xl:px-16",
-                      count === 1
-                        ? "h-full w-full items-start justify-center"
-                        : fitRow
-                          ? cn(
-                              // Below 2xl: a scroll-snapped swipe row (four
-                              // portrait phones can't sit legibly across a
-                              // narrow desktop / iPad-landscape stage), each held
-                              // at its 240px ceiling on the same 32px gap the
-                              // pairs use — one gap rhythm across the showcase.
-                              "mx-auto w-max snap-x snap-mandatory scroll-px-4 items-start gap-8",
-                              // From 2xl up the row is full width and the four
-                              // shrink to fit, centred.
-                              "2xl:w-full 2xl:snap-none 2xl:justify-center"
-                            )
-                          : scroll
-                            ? cn(
-                                // A two-shot fixed-width pair centres and sits on
-                                // the 32px set gap (gap-8), swiping only when even
-                                // that overflows a narrow stage.
-                                "mx-auto w-max snap-x snap-mandatory scroll-px-4 items-start",
-                                count === 2 ? "gap-8" : "gap-12"
-                              )
-                            : "w-full items-start justify-center gap-[3.6%]"
+                      stagePadding,
+                      // A group caption stacks above the row (see groupState);
+                      // without one, this element IS the row.
+                      groupState ? "flex flex-col" : cn("flex", rowLayout)
                     )}
                   >
-                    {desktopImages.map((image) => (
-                      <motion.figure
-                        key={image.src}
+                    {/* One state marker across the top of the exhibit, sized to
+                        the row beneath it rather than to either capture — the
+                        word belongs to both frames, so it spans both. */}
+                    {groupState ? (
+                      <motion.div
                         variants={itemVariants}
-                        className={cn(
-                          "m-0 flex-none snap-start",
-                          widthClass(image)
-                        )}
-                        style={
-                          image.displayWidth
-                            ? { width: image.displayWidth }
-                            : undefined
-                        }
+                        className={cn("w-full", groupCaptionWidth)}
                       >
-                        {/* The state marker on a comparison capture, above the
-                            frame it names. Above, because this stage top-loads
-                            its captures and hard-clips whatever runs past the
-                            band's bottom edge: anything set under an image here
-                            is the first thing lost, and a label the reader
-                            cannot see is worse than no comparison at all. */}
-                        {image.state ? (
-                          <StateCaption
-                            as="figcaption"
-                            state={image.state}
-                            skin={skin}
-                          />
-                        ) : null}
-                        {/* Shadow, hairline, and radius on the same element so
-                            the lift follows the rounded-xs screenshot with no
-                            square halo (CLAUDE.md screenshot carve-out). On the
-                            dark leaf the black shadow-card all but vanishes, so
-                            the captures lift on the hero's soft shadow-sc-hero
-                            and separate from the leaf by luminance, exactly as
-                            the hero does. On the light band the shadow is real
-                            but not always enough: a capture can be a mint panel
-                            on the mint band (the Service Finder crop), so the
-                            hairline is what closes its edge. Same treatment as
-                            the mobile branch's frameless slide. */}
-                        <div
-                          className={cn(
-                            "w-full overflow-hidden rounded-xs",
-                            skin.frameless
-                          )}
-                        >
-                          <Image
-                            src={image.src}
-                            alt={image.alt}
-                            width={image.width}
-                            height={image.height}
-                            sizes={imageSizes(image)}
-                            // Screenshots carry fine UI text and 1px borders that
-                            // default q75 softens; 90 (whitelisted in next.config)
-                            // keeps the captures crisp at the swipe-gallery scale.
-                            quality={90}
-                            className="block h-auto w-full"
-                          />
-                        </div>
-                      </motion.figure>
-                    ))}
+                        <StateCaption state={groupState} skin={skin} />
+                      </motion.div>
+                    ) : null}
+                    {/* The row. Nested inside the group only when a caption sits
+                        above it, and a motion element rather than a plain div so
+                        the per-capture stagger survives that extra level —
+                        Motion propagates variants to child motion components,
+                        and a plain wrapper would stop the chain and land every
+                        capture at once. */}
+                    {groupState ? (
+                      <motion.div
+                        variants={rowVariants}
+                        className={cn("flex", rowLayout)}
+                      >
+                        {figures}
+                      </motion.div>
+                    ) : (
+                      figures
+                    )}
                   </motion.div>
                 </AnimatePresence>
               </div>
@@ -1088,7 +1206,7 @@ export function FeatureChips({
           // interaction and no tall screenshot is clipped to an illegible
           // sliver. Replaces the desktop CollapsingLeaf stage + accordion,
           // which have no working small-screen translation.
-          <div className={cn("space-y-12", hasIntro && sectionContentGap)}>
+          <div className={cn("space-y-12", hasIntro && INTRO_GAP)}>
             {features.map((feature) => (
               <MobileFeatureSection
                 key={feature.id}
@@ -1137,6 +1255,8 @@ function MobileFeatureSection({ feature, skin }: MobileFeatureSectionProps) {
       <MobileGallery
         images={feature.images}
         hotspots={feature.hotspots}
+        demoScan={feature.demoScan}
+        groupState={feature.groupState}
         galleryLabel={title}
         skin={skin}
       />
@@ -1158,12 +1278,15 @@ const EMPTY_DEMO_STEPS: ResolvedHotspot[] = [];
 type MobileGalleryProps = {
   images: FeatureScreenshot[];
   hotspots?: Hotspot[];
+  demoScan?: DemoScanPoint[];
+  /** One state for the whole gallery, in place of a per-slide state caption. */
+  groupState?: CaptureState;
   galleryLabel: string;
   skin: MobileSkin;
 };
 
 // The mobile design gallery, built to match the usability-findings carousel
-// (`FindingsCarousel` in UsabilityFindings.tsx) so the two galleries read as one
+// (`FindingsCarousel` in _parked/UsabilityFindings.tsx) so the two galleries read as one
 // system. A paged, one-slide-at-a-time model (AnimatePresence mode="wait", the
 // same crossfade + x-offset `slideVariants`, `slideOffset` 0 under reduced
 // motion) with the same rounded-full control pill: prev arrow · dot pills
@@ -1191,6 +1314,8 @@ type MobileGalleryProps = {
 function MobileGallery({
   images,
   hotspots,
+  demoScan,
+  groupState,
   galleryLabel,
   skin,
 }: MobileGalleryProps) {
@@ -1321,7 +1446,16 @@ function MobileGallery({
             announces the state with the slide. The row is drawn on every slide
             of a gallery that uses states, so the phone below never shifts as
             you page between a captioned frame and an uncaptioned one. */}
-        {images.some((image) => image.state) ? (
+        {/* A group state names the exhibit rather than the slide, so it is drawn
+            once and never changes as you page — no reserveSummary needed, since
+            one caption cannot vary in height against itself. */}
+        {groupState ? (
+          <StateCaption
+            state={groupState}
+            skin={skin}
+            className="mx-auto w-full max-w-[19rem] px-2"
+          />
+        ) : images.some((image) => image.state) ? (
           <StateCaption
             state={current.state ?? { label: "" }}
             skin={skin}
@@ -1340,6 +1474,7 @@ function MobileGallery({
             imageIndex={currentSlide.imageIndex}
             hotspots={currentHotspots}
             demoSteps={demoSteps}
+            demoScan={demoScan}
             galleryRef={galleryRef}
             onDemoActiveChange={setDemoActive}
             onNavigate={navigateToImage}
@@ -1406,7 +1541,7 @@ function MobileGallery({
         {images.some((image) => image.note) ? (
           <p
             className={cn(
-              "mx-auto mt-3 min-h-[3lh] max-w-[19rem] px-2 text-left text-xs leading-relaxed",
+              "mx-auto mt-3 min-h-[3lh] max-w-[19rem] px-2 text-left text-xs font-medium leading-relaxed",
               skin.note
             )}
           >
@@ -1700,6 +1835,8 @@ type PersistentPhoneFrameProps = {
    * Empty for every feature that has not opted in, which makes the demo inert.
    */
   demoSteps?: ResolvedHotspot[];
+  /** The read-through the demo runs before its first press (Feature.demoScan). */
+  demoScan?: DemoScanPoint[];
   /** The gallery root: the demo's in-view gate and handover surface. */
   galleryRef: RefObject<HTMLElement | null>;
   /** Reports whether the demo is driving, so the stage can silence aria-live. */
@@ -1739,6 +1876,7 @@ function PersistentPhoneFrame({
   imageIndex,
   hotspots = [],
   demoSteps = EMPTY_DEMO_STEPS,
+  demoScan,
   galleryRef,
   onDemoActiveChange,
   onNavigate,
@@ -1808,6 +1946,7 @@ function PersistentPhoneFrame({
 
   const demo = useHotspotDemo<ResolvedHotspot>({
     steps: demoSteps,
+    scan: demoScan,
     imageIndex,
     galleryRef,
     openPopup: demoOpenPopup,

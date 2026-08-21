@@ -43,7 +43,7 @@ export default function ExplorationsIndexPage() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader tone="light" />
 
-      <main className="overflow-x-clip">
+      <main id="main" tabIndex={-1} className="overflow-x-clip outline-none">
         <div className="mx-auto w-full max-w-[1100px] px-4 pb-20 pt-6 sm:px-6 md:px-8 md:pt-10 lg:pb-28">
           <header className="border-b border-border pb-10 md:pb-14">
             <h1 className="max-w-[22ch] font-heading text-3xl font-semibold tracking-[-0.02em] sm:text-4xl lg:text-5xl">

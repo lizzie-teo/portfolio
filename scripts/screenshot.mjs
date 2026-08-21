@@ -33,6 +33,16 @@
 //                       carries one id.
 //   --hover=<selector>  after warm-up, real-hover the element and capture
 //   --focus=<selector>  after warm-up, focus the element and capture
+//   --element=<sel>     capture each element matching the selector as its own
+//                       file instead of photographing the page. The file name
+//                       comes from the element's `data-shot` attribute (falling
+//                       back to its index), so a harness page can emit a whole
+//                       named set in one pass. This is how artwork is produced
+//                       from live components — a phone-frame screen, a chart —
+//                       rather than by hand-rolling Playwright somewhere else.
+//   --scale=<n>         deviceScaleFactor, default 1. Use 2 when the capture is
+//                       going to ship as an image asset rather than being read
+//                       as evidence.
 //   --delay=<ms>        wait this long immediately before the shutter, after
 //                       every other positioning step. For a self-running,
 //                       looping effect that has no trigger to hover or click —
@@ -90,9 +100,21 @@ for (const width of widths) {
     viewport: { width, height },
     colorScheme: opts.dark ? "dark" : "light",
     reducedMotion: opts["reduced-motion"] ? "reduce" : "no-preference",
-    deviceScaleFactor: 1,
+    deviceScaleFactor: opts.scale ? parseFloat(String(opts.scale)) : 1,
   });
   const page = await context.newPage();
+
+  // Console/page errors, reported alongside the capture. The Next dev overlay
+  // shows an issue count in the corner of every shot and then hides what it is;
+  // this is how you find out without leaving the screenshot tool.
+  if (opts.console) {
+    page.on("console", (msg) => {
+      if (msg.type() === "error" || msg.type() === "warning") {
+        console.log(`  [${msg.type()}] ${msg.text()}`);
+      }
+    });
+    page.on("pageerror", (err) => console.log(`  [pageerror] ${err.message}`));
+  }
 
   for (const route of routes) {
     await page.goto(new URL(route, base).href, { waitUntil: "networkidle" });
@@ -317,6 +339,28 @@ for (const width of widths) {
     // Last thing before the shutter, so it composes with any positioning above.
     if (opts.delay !== undefined) {
       await page.waitForTimeout(parseInt(String(opts.delay), 10));
+    }
+
+    // ELEMENT CAPTURE — a named set out of one harness page. Each match is
+    // clipped to its own bounding box, so the output is the artwork itself
+    // rather than a photograph of a page that happens to contain it. Nothing
+    // else in this loop applies (no full-page flag, no overflow report): the
+    // page is scaffolding, not the subject.
+    if (opts.element) {
+      const handles = await page.$$(String(opts.element));
+      if (handles.length === 0) {
+        console.error(`  no element matched ${opts.element} @${width}px`);
+        process.exitCode = 2;
+      }
+      for (const [index, handle] of handles.entries()) {
+        const name =
+          (await handle.getAttribute("data-shot")) ?? String(index).padStart(2, "0");
+        const file = path.join(outDir, `${name}.png`);
+        await handle.screenshot({ path: file });
+        saved.push({ file, overflow: 0 });
+        console.log(file);
+      }
+      continue;
     }
 
     const slug = route === "/" ? "home" : route.replace(/^\/|\/$/g, "").replace(/\//g, "-");

@@ -261,7 +261,7 @@ export function ArtifactViewer({
         </span>
       </motion.button>
       {caption ? (
-        <figcaption className="mt-3 max-w-prose text-sm leading-relaxed text-muted-foreground">
+        <figcaption className="mt-3 max-w-prose text-sm font-medium leading-relaxed text-leaf">
           {caption}
         </figcaption>
       ) : null}
@@ -520,7 +520,7 @@ export function ArtifactViewer({
                         }}
                       >
                         <p className="text-sm font-semibold">{step.title}</p>
-                        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                        <p className="mt-1 text-sm font-medium leading-relaxed text-leaf">
                           {step.caption}
                         </p>
                       </motion.div>
@@ -531,7 +531,7 @@ export function ArtifactViewer({
                 <>
                   <MediaSurface label={label} ratio={ratio} src={src} />
                   {caption ? (
-                    <p className="pt-4 text-sm leading-relaxed text-muted-foreground">
+                    <p className="pt-4 text-sm font-medium leading-relaxed text-leaf">
                       {caption}
                     </p>
                   ) : null}

@@ -108,6 +108,54 @@ refuses to write anything that fails. Both flags are load-bearing: without
 is a dry run that reports and writes nothing. Use it rather than hand-rolling
 ffmpeg — the gates are easy to get subtly wrong, as above.
 
+### When 0.99 is the wrong bar: `--min-ssim=<n>`
+
+Some footage cannot clear 0.99 at any useful bitrate, because the thing SSIM is
+measuring is the *content*. `/world`'s engraved legs print paper grain into
+every frame: at CRF 23 they score 0.976–0.989, and the control says the bar is
+wrong rather than the encode — **a near-lossless CRF 18 pass scores 0.9899 and
+comes out LARGER than the source** (8196KB vs 7841KB on leg 7). Matched 1:1
+crops at CRF 23 are indistinguishable from source. A gate that fails
+near-lossless is not measuring damage.
+
+So the tool takes `--min-ssim=<n>`, and the rule around it is the same rule as
+everywhere else in this section: **run the CRF 18 control first and set the bar
+to the floor the control establishes** — never to whatever number makes the
+encode pass. It lives on the command line, not in the script, so the override
+shows up in the shell history that produced the asset:
+
+```sh
+node scripts/shrink-asset.mjs --blend --write --min-ssim=0.975 public/assets/world/leg-*.mp4
+```
+
+Do not reach for this because an encode failed. Reach for it after a control
+has told you the failure is the gate's.
+
+### `--gop=<n>` is a keyframe interval, and on `/world` it is load-bearing
+
+x264 defaults to a ~250-frame GOP. That is right for playback and wrong for
+video that is SCRUBBED, where the browser has to land on an arbitrary frame:
+with one keyframe in a 121-frame clip, a seek cannot be served without decoding
+everything up to it, so the picture steps instead of moving. `scrub-engine.js`
+states the requirement in its own header — `-g 8` for the master, `-g 4` for the
+mobile tier. On `/world`'s line art `-g 8` costs about 5% in bytes.
+
+**`/world`'s legs must stay `--gop=1` (all-intra), and this is now a structural
+dependency, not an optimisation.** The page no longer scrubs `<video>` at all:
+`src/app/world/film/` decodes each leg through WebCodecs and draws frames to a
+canvas, which is what took it from 33 to 120 new frames a second at reading
+speed. That decoder requires every sample to be independently decodable.
+`mp4-intra.ts` validates it and returns `null` if it is not — so a well-meaning
+re-encode that drops the flag does not error, it silently drops the page back to
+the jagged path. Re-encode the legs with:
+
+```sh
+node scripts/shrink-asset.mjs --blend --write --min-ssim=0.975 --gop=1 public/assets/world/leg-*.mp4
+```
+
+Do not set `--gop` on ordinary playback video. There it buys nothing and costs
+weight for every visitor.
+
 ## 4. Never re-encode or downscale a master
 
 "Unreferenced" and "safe to touch" are different sets, and degrading a master is
