@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useMotionValueEvent, useScroll, useTransform } from "motion/react";
+import { anchorLandingTarget } from "../lib/use-anchor-scroll";
 import { ScrollWorld } from "../world/ScrollWorld";
 import { WorldGlassCard } from "../world/WorldGlassCard";
 import { FlightExit } from "./FlightExit";
@@ -129,6 +130,67 @@ export function HomeFlight({ children }: { children?: React.ReactNode }) {
     };
   }, [veil]);
 
+  /* ── THE HASH IS RE-LANDED ONCE THE TRACK HAS ITS HEIGHT ──────────────────
+     ARRIVING AT `/#work` FROM ANYWHERE ELSE USED TO DUMP THE READER AT THE TOP
+     OF THE WALK, and intermittently, which is why it read as flaky rather than
+     as broken. The mechanism is an ordering one:
+
+       · `#work` is a SIBLING BELOW the flight, and the flight's scroll track is
+         built by the engine in ScrollWorld's mount effect (a passive effect —
+         it runs after paint). Until it runs, the engine container is the height
+         of the hidden SEO copy block and nothing else.
+       · The browser's hash landing — and Next's, on a client-side navigation —
+         happens BEFORE that, in the commit. At that moment `#work` is a few
+         hundred pixels down a short document, so the scroll lands there.
+       · The engine then lays the track out and the document grows by eleven
+         thousand pixels UNDERNEATH the reader. They are now parked on the
+         floppy at the top of the walk, with `#work` in the address bar.
+
+     Whether it looked right afterwards came down to Chrome's scroll anchoring
+     deciding whether to compensate for content growing above the viewport,
+     which is exactly the kind of thing that lands differently on a warm cache
+     than a cold one. Hence "sometimes".
+
+     So the hash is landed again here, once, after the track exists. This effect
+     is the right place for it by construction: child effects run before their
+     parent's, so ScrollWorld's engine mount and SiteHeader's
+     `--site-header-bottom` publish (which the 1cm landing is measured from)
+     have both already happened. The rAF gives the growth a frame to settle
+     before the position is read.
+
+     INSTANT, NEVER EASED: this is an arrival, not a navigation, and the
+     distance it covers is the whole film (use-anchor-scroll.ts, THE FILM IS NOT
+     SCRUBBED BY A NAVIGATION).
+
+     BACK/FORWARD IS LEFT ALONE. The browser restores a real scroll position on
+     a history traversal and that position is the reader's, not the hash's;
+     overriding it would replace one wrong landing with another. */
+  useEffect(() => {
+    const id = window.location.hash.slice(1);
+    if (!id) return;
+    const entry = performance.getEntriesByType("navigation")[0] as
+      | PerformanceNavigationTiming
+      | undefined;
+    if (entry?.type === "back_forward") return;
+
+    const frame = requestAnimationFrame(() => {
+      const element = document.getElementById(id);
+      if (!element) return;
+      const top = anchorLandingTarget(element);
+      // Already there: the browser got it right on its own (a hash naming the
+      // walk itself, or a page whose track was up before the landing).
+      if (Math.abs(top - window.scrollY) < 4) return;
+      window.scrollTo({ top, behavior: "instant" });
+      // Same keyboard-continuity contract as every other anchor landing on the
+      // site: Tab continues from the band, not from the top of the document.
+      if (!element.hasAttribute("tabindex")) {
+        element.setAttribute("tabindex", "-1");
+      }
+      element.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   return (
     <>
       {/* `id="skills"` — the first entry in the masthead's contents line
@@ -205,33 +267,48 @@ export function HomeFlight({ children }: { children?: React.ReactNode }) {
             faded out over the bands; this one is already at zero, and out of
             the accessibility tree, half a viewport in. */}
         <FlightFork />
-        {/* The standing exit — "Skip to the work" at the foot of the pane,
-            fading up as the pane lands beside the film and out again across leg
-            8 so it is gone before the sign-off's own button offers the ending
-            (world.css, THE STANDING EXIT). It used to be a control inside the
-            fork above, which expired half a viewport in; a door that is only
-            open on the first screen is a door most readers never see.
+        {/* The walk's ONE door — "View selected work", a button flush to the
+            foot of the pane, on every leg, from the first paint to the handover
+            into the work band (world.css, THE STANDING EXIT). It used to be two
+            objects: a quiet sentence-link here that faded out across leg 8, and
+            a real button the engine built inside the sign-off's own copy
+            article. They are one control as of Aug 2026 (owner's call), so the
+            handover at the ending moves nothing.
 
-            IT DOES NOT STAND ON THE FLOPPY SCREEN, and that is a decision
-            rather than an omission — it is furniture of the pane and the pane
-            is not there yet. Removed and reinstated in Aug 2026; world.css (THE
-            GATE WAS REMOVED ONCE) has both arguments and notes that the first
-            screen's door is the masthead's own Work item.
+            IT STANDS ON THE FLOPPY SCREEN, and that reverses a twice-settled
+            call. It used to ride `--wgc-copy` and fade up with the pane, on the
+            argument that it is furniture PRINTED on the panel; a solid button
+            carries its own ground, and the way out has to be visible on the
+            first screen. Both sides are in world.css (THE GATE IS GONE).
 
             AFTER THE FORK, FOR THE SAME KEYBOARD REASON the fork is after the
             masthead: both are fixed layers with their own z-indexes, so DOM
             order costs nothing visually, and a reader tabbing in from the top
             should meet the site's navigation, then the arrival's cue, then the
-            exit. The cue holds nothing focusable, so in practice this link is
-            the first tab stop inside the flight — once it is on screen. Before
-            that it is not a tab stop at all, which is what `--wgc-copy-vis` is
-            for (WorldGlassCard). */}
+            exit. The cue holds nothing focusable, so in practice this button is
+            the first tab stop inside the flight, and it is one from the first
+            frame. */}
         <FlightExit />
         {/* The plain-markup mirror of the flight's copy. The engine hides this
             block on mount; crawlers, link previews and no-JS visitors read it
             from the served HTML. Keep it in sync with the CONFIG copy in
             world/ScrollWorld.tsx: each h3 is a scene's `label` and each p is
             that scene's `title`.
+
+            TWO PARAGRAPHS HAVE NO h3 OVER THEM, and that is the mirror doing
+            its job rather than two missing headings. An h3 here is a scene's
+            `label`, and `label` is what puts a dot on the trail — so the two
+            panes that speak without being stops on the walk have none: leg 1's
+            title card and the sign-off. Both DO carry an eyebrow on the page
+            ("Product designer" and "In practice"), and neither is mirrored here
+            on purpose: an eyebrow is lockup furniture, and an h3 reading
+            "Product designer" would put a role heading over a sentence that is
+            already the role stated in full.
+
+            Legs 6 and 8 contribute nothing at all, which is also correct. Leg 6
+            has no title of its own (chapter 7's sentence spans it on the page)
+            and leg 8 is the wordless pull-back. A leg that says nothing to a
+            reader says nothing to a crawler.
 
             IT NO LONGER OWNS THE <h1>, and the whole block stepped down a level
             when it stopped. The masthead's wordmark is the page's heading now
@@ -249,43 +326,32 @@ export function HomeFlight({ children }: { children?: React.ReactNode }) {
             below — which is the same shape a reader with JavaScript gets, minus
             the block. If a heading level moves here, move the whole ladder.
 
-            THE FOOT IS THE ENDING, and it is two things: the closing sentence
-            and the one button. The address that used to follow the button went
-            with the pane's own letterhead line (world/ScrollWorld.tsx, THE
-            ENDING OFFERS ONE THING TO DO) — this block mirrors the flight, so
-            it must not offer a route the flight has stopped offering. A reader
-            without JavaScript meets a finished machine and a reachable set of
-            bands, which is the requirement — the walk's rest state has to be a
-            hero that works without the film. */}
+            THE FOOT IS THE ENDING, and it is two things: the sign-off's line
+            and the one button. No address — the pane's letterhead
+            line was removed and this block mirrors the flight, so it must not
+            offer a route the flight has stopped offering. A reader without
+            JavaScript meets a finished machine and a reachable set of bands,
+            which is the requirement: the walk's rest state has to be a hero
+            that works without the film. */}
         <div data-sw-seo>
           <h2>
             A walk through what I do, from the first conversation to the shipped
             screen
           </h2>
-          <h3>Collaboration</h3>
-          <p>
-            Cross functional by habit, and the people side is the part I like.
-          </p>
+          <p>I make complicated products simpler to use.</p>
           <h3>Systems thinking</h3>
-          <p>Ten years of making complicated products feel easy.</p>
+          <p>Ten years of improving complex workflows for teams and users.</p>
           <h3>Prototyping</h3>
-          <p>
-            Drawing it on paper, building it in Figma, then prompting it into
-            code.
-          </p>
+          <p>Prototyping with paper, Claude Code or Figma.</p>
           <h3>Design systems</h3>
           <p>Building atomic design systems a team can run without me.</p>
-          <h3>Design engineering</h3>
+          <h3>Bridging design &amp; code</h3>
           <p>Handing over files an engineer or an AI can build from.</p>
-          <h3>Usability testing</h3>
-          <p>Watching people use a design and fixing what they get stuck on.</p>
           <h3>Start to finish</h3>
-          <p>Taking a product from the first sketch to the shipped screen.</p>
+          <p>Taking a product from discovery to the shipped screen.</p>
+          <p>Each case study shows how I work and what shipped.</p>
           <p>
-            I’m a product designer and I make complicated products simpler to use.
-          </p>
-          <p>
-            <a href="#work">See the work</a>
+            <a href="#work">View selected work</a>
           </p>
         </div>
       </ScrollWorld>

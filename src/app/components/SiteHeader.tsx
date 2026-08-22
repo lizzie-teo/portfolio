@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { siteNav, siteNavSections } from "../lib/site-nav";
 import { useActiveSection } from "../lib/use-active-section";
-import { useAnchorScroll } from "../lib/use-anchor-scroll";
+import { jumpWouldScrubFilm, useAnchorScroll } from "../lib/use-anchor-scroll";
 import { HERO_VEIL_INK } from "./HeroInkVeil";
 import { useHeroTone } from "./HeroToneContext";
 
@@ -282,6 +282,65 @@ export function SiteHeader({ tone, flush }: SiteHeaderProps) {
   const activeSection = useActiveSection(isHome ? siteNavSections : []);
   const handleAnchor = useAnchorScroll();
 
+  /* ── THE NAME IS THE WAY BACK TO THE FLOPPY ────────────────────────────────
+     Everywhere else `href="/"` is a real navigation and the router lands the
+     reader at the top of the new page. ON `/` ITSELF IT IS NOT: the walk is the
+     front door, the reader is somewhere inside eleven thousand pixels of scrub
+     track, and a link to the URL they are already on is a no-op — the router
+     has nothing to change, so nothing moves and the wordmark reads as broken.
+     Worse after any anchor: the masthead's items push `#work`/`#writing`, so
+     the link back to bare `/` is a hash-clearing history entry that still
+     leaves the scroll position exactly where it was.
+
+     So on the home route the wordmark stops being a link and becomes the way
+     home in the only sense that page has: back to scroll 0, where the floppy
+     assembles over the desk.
+
+     INSTANT, VIA THE SHARED PREDICATE rather than a hardcoded jump
+     (use-anchor-scroll.ts, THE FILM IS NOT SCRUBBED BY A NAVIGATION). From
+     anywhere on `/` the return crosses the whole track, so in practice this
+     always takes the instant path — easing it would play the walk backwards at
+     roughly 15x. The predicate is still what decides, so a future home page
+     without a scrub track gets the site's ordinary glide (`auto` defers to
+     `html { scroll-behavior: smooth }`, which reduced motion already switches
+     off in globals.css) for free.
+
+     `replaceState`: going back to the top of the page you are on is not a step
+     in the reader's history, and making Back cost two presses is a poor answer
+     to somebody who has just asked to start over. Same call FlightExit makes.
+
+     NO FOCUS MOVE IS NEEDED, unlike the anchor hook's landings: the element
+     that was clicked is the wordmark, and the wordmark is at the top of the
+     page the reader has just been returned to. Focus is already where the jump
+     went. */
+  const handleWordmark = useCallback(
+    (event: React.MouseEvent<HTMLAnchorElement>) => {
+      // Off `/` this is an ordinary link; let the router have it.
+      if (!isHome) return;
+      // Let the browser own new-tab / modified / non-primary clicks.
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+      event.preventDefault();
+      setMenuOpen(false);
+      if (window.location.hash) {
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+      window.scrollTo({
+        top: 0,
+        behavior: jumpWouldScrubFilm(window.scrollY, 0) ? "instant" : "auto",
+      });
+    },
+    [isHome],
+  );
+
   // Publish the bar's live BOTTOM EDGE for the anchor-landing offset, and for
   // the garden flight's picture inset (see above). Every
   // anchored section lands 1cm below the bar now rather than 1cm below the
@@ -491,6 +550,7 @@ export function SiteHeader({ tone, flush }: SiteHeaderProps) {
       href="/"
       className={`group relative -my-3 block shrink-0 py-3 md:-my-4 md:py-4 ${focusRing}`}
       aria-label="Lizzie Teo homepage"
+      onClick={handleWordmark}
     >
         {/* The whole masthead is set in the display face, wordmark and nav
             alike, so nothing on the row reads as a second typeface. That is a

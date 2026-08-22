@@ -51,6 +51,19 @@ function cubicBezier([x1, y1, x2, y2]: readonly number[]) {
 }
 const easeInOut = cubicBezier(motionEase.inOut);
 
+/**
+ * The landing position for an anchored element, read live. Exported because the
+ * flight's arrival re-lands on it after the scrub track exists (HomeFlight, THE
+ * HASH IS RE-LANDED ONCE THE TRACK HAS ITS HEIGHT) — a second implementation of
+ * "where does #work sit" would be a second answer.
+ */
+export function anchorLandingTarget(element: Element) {
+  return landingTarget(
+    element,
+    parseFloat(getComputedStyle(element).scrollMarginTop) || 0,
+  );
+}
+
 /* ── THE FILM IS NOT SCRUBBED BY A NAVIGATION ──────────────────────────────
    `/` opens on the garden flight: eleven thousand pixels of scroll track whose
    whole purpose is that scroll position IS playback position. Ease a jump
@@ -269,12 +282,42 @@ export function useAnchorScroll() {
           cancelAnimationFrame(frame);
           frame = 0;
         }
-        removeEventListener("wheel", cancel);
+        removeEventListener("wheel", onWheel);
         removeEventListener("touchstart", cancel);
         removeEventListener("keydown", cancel);
       };
+      /* ── MOMENTUM IS NOT A GESTURE, AND TREATING IT AS ONE WAS A REAL BUG ──
+         Every wheel event used to cancel, which meant the commonest way to use
+         this nav broke it: scroll down the bands with a trackpad, reach up,
+         click "Work". A macOS trackpad keeps firing wheel events for up to a
+         second and a half after the fingers leave the glass, so the flick that
+         got the reader there was still arriving when the glide started and
+         killed it on its first frame. The reader stayed put, the URL said
+         `#work`, and clicking again — by then the tail had run out — worked.
+         Intermittent by construction.
+
+         THE TELL IS THE SHAPE OF THE DELTAS, not their size and not the clock.
+         An inertia tail decays monotonically; a hand back on the glass makes
+         the numbers go UP. So a wheel event only takes the scroll back when it
+         is bigger than the last one seen, which a real gesture manages within a
+         frame or two of starting and a tail never manages at all. A grace
+         window would not do: the tail routinely outlives any window short
+         enough to keep the nav feeling interruptible.
+
+         Touch and keys stay immediate. Neither has an inertia tail that reaches
+         the page as events — iOS momentum scrolling fires no touchstart — so
+         there is nothing to tell apart. */
+      let lastDelta = Infinity;
+      const onWheel = (event: WheelEvent) => {
+        const delta = Math.abs(event.deltaY) + Math.abs(event.deltaX);
+        if (delta > lastDelta) {
+          cancel();
+          return;
+        }
+        lastDelta = delta;
+      };
       // A user grabbing the scroll back wins immediately.
-      addEventListener("wheel", cancel, { passive: true });
+      addEventListener("wheel", onWheel, { passive: true });
       addEventListener("touchstart", cancel, { passive: true });
       addEventListener("keydown", cancel);
 

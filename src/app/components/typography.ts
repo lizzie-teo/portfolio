@@ -308,22 +308,30 @@ export const bandHeading = "type-cover";
    wrap to two or three lines inside a fixed plate and must not blow the box
    floor the row is aligned to.
 
-   IT IS PINNED TO 30px TO MATCH THE WORLD PANE, and that is the whole reason
-   the `sm:text-4xl` step is gone. /world's left glass pane sets its chapter
-   titles at 30px on a 336px column — the base rule in world.css ramps 30 → 36,
-   but the desktop block (`@media (min-width: 861px)`, .sw-copy__title) then
-   re-caps it at 1.875rem, which is the size a reader actually sees on any
-   desktop. The home cards sit on a comparable ~300px measure in the same
-   display face, so a 36px card title read a full step louder than the pane it
-   is supposed to rhyme with.
+   IT WAS PINNED TO 30px TO MATCH THE WORLD PANE, AND THE PANE HAS SINCE MOVED.
+   THE RHYME IS BROKEN AND THIS IS A NOTE, NOT A DECISION. The `sm:text-4xl`
+   step was dropped from this token because the walk's chapter titles capped at
+   1.875rem on desktop and a 36px card read a full step louder than the pane it
+   was supposed to answer. That cap is `2.25rem` now (world.css, THE PANE'S TYPE
+   ROLES — the owner asked for a bigger chapter line twice and settled on
+   `text-4xl`), so the two are a step APART again, in the other direction: the
+   pane reaches 36px from about 1442px of width and the card holds 30.
 
-   NOT MIRRORED AS A CLAMP, deliberately. The pane's desktop ramp starts at 24px
-   at 861 and climbs to 30 by ~1082 — it gets SMALLER as the layout widens into
-   its two-plate form, because the panel is narrowing at the same time. A card
-   has no such moment, so copying the curve would import an inversion that only
-   makes sense over there. The pane's ceiling is the number worth matching, and
-   30px is also where the card already sat below 640px, so the step-down is the
-   removal of an outlier rather than a new size.
+   WHAT RESTORING IT WOULD TAKE is putting the step back — `text-3xl` →
+   `text-4xl` at the desktop breakpoint, which is the same 36px the pane now
+   caps at. THAT IS THE OWNER'S CALL AND IT IS NOT MADE HERE. The cards are a
+   different surface from the walk, they sit in a grid of identical windows
+   rather than alone on a panel, and `cardHeading` below already took the home
+   grid's own titles DOWN to 24px for reasons that have nothing to do with the
+   pane. Whether the rhyme is still worth having is a composition question, not
+   an arithmetic one.
+
+   NOT MIRRORED AS A CLAMP, deliberately, and that half still holds. The pane's
+   desktop ramp starts at 24px at 861 and climbs — it gets SMALLER as the layout
+   widens into its two-plate form, because the panel is narrowing at the same
+   time. A card has no such moment, so copying the curve would import an
+   inversion that only makes sense over there. If the rhyme is ever restored it
+   is the pane's CEILING that is matched, never its curve.
 
    LoFiProjectCard's animated outcome figure quotes this token rather than
    re-specifying it: same face, step, weight, leading, and tracking, so the

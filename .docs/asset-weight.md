@@ -156,6 +156,22 @@ node scripts/shrink-asset.mjs --blend --write --min-ssim=0.975 --gop=1 public/as
 Do not set `--gop` on ordinary playback video. There it buys nothing and costs
 weight for every visitor.
 
+### Leg weight is paired to the prefetch window — change one, check the other
+
+`scrub-engine.js`'s `lookahead` decides how far ahead of the reader a leg starts
+downloading, and the right value depends on how heavy a leg is. It is really a
+bytes-in-flight budget wearing a scroll distance as a costume.
+
+It was `1.6` viewports while the legs averaged ~9.5MB. The 2026-08-22 CRF 23 pass
+took them to ~5.5MB, which bought nearly a whole extra leg of lead for the same
+bytes, so it is now `2.4` (a leg spans 1.05–1.30vh, so 2.4vh is ~2 legs ahead).
+
+**Re-encode the legs HEAVIER and this has to come back down**, or a reader on a
+middling connection starts meeting poster stills mid-walk. Lighter, and there is
+free lead time going unclaimed. The `slowNet` branch (`0.4`) is not part of this
+trade — it protects the readers a wider window hurts, and file size does not
+change what a 2G connection wants.
+
 ## 4. Never re-encode or downscale a master
 
 "Unreferenced" and "safe to touch" are different sets, and degrading a master is

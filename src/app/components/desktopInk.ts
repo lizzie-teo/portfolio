@@ -20,11 +20,12 @@
  * makes them read as windows on a single surface. It is also why no project's
  * colour appears in the wallpaper — a shared ground cannot belong to one entry.
  *
- * SO THE PROJECT'S COLOUR IS SPENT ENTIRELY ON THE HOVER, and on the one thing
- * in this vernacular that already means "the window you are pointing at": the
- * title bar of the active window. At rest every window is inactive and its bar
- * is plain stock. Point at one and its bar floods with the project's own hue.
- * The interaction is the operating system's, not an effect laid over it.
+ * SO THE PROJECT'S COLOUR IS SPENT ENTIRELY ON THE HOVER, and on the thing in
+ * this vernacular that already means "the window you are pointing at": the
+ * active window. At rest every window is inactive — bare bar, grey mark. Point
+ * at one and it becomes that project's window: the bar floods with the theme's
+ * hue and the mark takes the theme's primary. The stock and the frame do not
+ * move. The interaction is the operating system's, not an effect laid over it.
  *
  * CONTRAST, measured rather than assumed. Every value below is stated against
  * the surface it actually sits on:
@@ -159,48 +160,93 @@ export const desktopRibbon = {
 } as const;
 
 /**
- * The title-bar tone a card floods with when it becomes the active window.
+ * WHAT A WINDOW TURNS INTO WHEN IT BECOMES THE ACTIVE ONE.
  *
- * CASE STUDIES TAKE THEIR CLIENT'S COLOUR, and take it verbatim: each value is
- * the primary bloom hex from that project's field in `projectFields.ts`, which
- * is itself derived from the `--primary` token in the project's own
- * `[data-project-theme]` scope. Restated here rather than imported because
- * those hexes live inside a composed `background-image` string and parsing one
- * back out would be worse than writing it down — the same reason `loFiInk`
- * restates rather than reaches. If a project's primary moves, this moves with
- * it as a deliberate re-derivation.
+ * CASE STUDIES TAKE THEIR CLIENT'S COLOUR, and now they take THE CASE STUDY'S
+ * OWN: every value below is read off that project's `[data-project-theme]`
+ * scope in theme.css, so pointing at a card on the home band shows the colours
+ * the page behind it is built from —
  *
- * WRITING FLOODS CHARCOAL, and that is the one entry here that is not a
- * borrowed hue. An article has no client, so there is no brand to reveal, and
- * giving it a pastel of its own would be claiming an identity a Substack post
- * does not have — the argument `loFiInk` already makes about its writing
- * payoff. Flooding the bar with the site's own ink says the opposite of the
- * four cards beside it: this one is hers. The bar's label reverses to stock,
- * which is the only reason `barInk` exists as a field at all.
+ *   bar   a pastel of the scope's `--primary`, flooding the title bar
+ *   mark  that same `--primary`, raw. The mark is line work at the card's own
+ *         stroke, so it is the one drawn edge that can carry hue without
+ *         turning the window into a coloured box.
+ *
+ * AND NOTHING ELSE TAKES IT. The window's body keeps the resting cream in both
+ * states. A third value ran here for a pass — the scope's `--accent` fading in
+ * as the stock behind the mark and the name — and it came off on the owner's
+ * call (Aug 2026): the colour behind the title was more than the moment wanted,
+ * and the bar plus the mark already says whose window this is. If it is ever
+ * revisited, the contrast note to carry forward is that `quiet` #55504a lands
+ * at 6.3–6.8:1 on those accents, under the §4 7:1 bar, so a tinted body needs
+ * its filing line deepened to `ink`.
+ *
+ * Restated here as hexes rather than read from the tokens, for the reason
+ * `loFiInk` restates too: this palette is consumed from inline `style` objects
+ * on a surface that has no project scope on it, so `var(--accent)` here would
+ * resolve to the SHELL's accent and every card would flood the same grey. If a
+ * project's primary moves in theme.css, these move with it as a deliberate
+ * re-derivation.
+ *
+ * TWO OF THE FOUR BARS WERE THE WRONG HUE and are re-derived (Aug 2026). The
+ * pastels used to come from `projectFields.ts` — the home-cover blooms — and on
+ * two projects that is a different colour from the case study: AP+ bloomed
+ * corporate plum #80225f while its scope runs on purple #6250bb, and Macquarie
+ * bloomed an invented indigo while MQ Health's scope runs on slate blue
+ * #415364. A card that promises plum and opens on purple is the card lying
+ * about where it goes, so the scope wins and the bloom no longer feeds this.
+ *
+ * WRITING KEEPS ITS CHARCOAL AND GAINS NOTHING ELSE, which is the whole point
+ * of the difference. An article has no client, so there is no theme to pick up:
+ * its bar floods the site's own ink and its mark stays chrome. Four windows wake
+ * up in someone's colour and the writing ones wake up in hers.
+ *
+ * CONTRAST on the active window. The bar figures are unchanged (the table at
+ * the top of this file). The mark is non-text line work and answers to §12's
+ * 3:1, measured on the stock it is actually drawn on, #f6f2e9:
+ *
+ *   #c21358 rose   5.3:1     #007f78 teal   4.4:1
+ *   #6250bb purple 5.6:1     #415364 slate  7.1:1
  */
 export type DesktopFlood = {
   /** The colour the title bar floods with on hover. */
   bar: string;
   /** The bar's label ink once flooded. Ink on every pastel; stock on charcoal. */
   barInk: string;
+  /** The mark's tone once active — the theme's `--primary`, raw. */
+  mark: string;
 };
 
 const floods: Record<string, DesktopFlood> = {
-  /* rose 336 — Funding Finder's primary bloom, --primary #c21358 as a pastel */
-  "funding-finder": { bar: "#ecbdd2", barInk: desktopInk.ink },
-  /* teal 177 — the HDA green #007f78 as a pastel */
-  "healthdirect-symptom-checker": { bar: "#b0e3e1", barInk: desktopInk.ink },
-  /* plum 321 — AP+ corporate plum #80225f as a pastel */
-  "ap-testing-portal": { bar: "#e6b7d6", barInk: desktopInk.ink },
-  /* indigo 246 — the chosen primary, flagged in projectFields as having no
-     theme scope to sample from. Replace with the rest of that entry. */
-  "macquarie-radar": { bar: "#c3bfee", barInk: desktopInk.ink },
+  /* Funding Finder — primary #c21358, as a pastel in the bar */
+  "funding-finder": { bar: "#ecbdd2", barInk: desktopInk.ink, mark: "#c21358" },
+  /* Healthdirect — HDA green #007f78 */
+  "healthdirect-symptom-checker": {
+    bar: "#b0e3e1",
+    barInk: desktopInk.ink,
+    mark: "#007f78",
+  },
+  /* AP+ — purple #6250bb */
+  "ap-testing-portal": {
+    bar: "#cdc3f3",
+    barInk: desktopInk.ink,
+    mark: "#6250bb",
+  },
+  /* Macquarie — MQ Health slate blue #415364. The quietest of the four, and
+     correctly so: MQ Health's own theme is the near-neutral one. */
+  "macquarie-radar": {
+    bar: "#c3ced7",
+    barInk: desktopInk.ink,
+    mark: "#415364",
+  },
 };
 
-/** The writing flood: the site's own ink, with the bar's label reversed. */
+/** The writing flood: the site's own ink in the bar, the bar's label reversed,
+    and a mark left in chrome — there is no client theme to pick up. */
 export const writingFlood: DesktopFlood = {
   bar: desktopInk.ink,
   barInk: desktopInk.stock,
+  mark: desktopInk.line,
 };
 
 /** Resolve a card's flood, falling back to the writing one. */

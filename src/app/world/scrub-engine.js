@@ -372,8 +372,19 @@ function mountScrollWorld(container, config) {
     for (let i = 0; i < NSEG; i++) if (y >= SEGMENTS[i].start) ci = i;
 
     // On a slow connection (Chromium signal only) shrink the prefetch window: fetch the
-    // clip you're in, not the neighbourhood. Everyone else prefetches ±1.6 viewports.
-    const lookahead = slowNet ? 0.4 : 1.6;
+    // clip you're in, not the neighbourhood. Everyone else prefetches ±2.4 viewports.
+    //
+    // THE WINDOW IS PAIRED TO LEG WEIGHT, so it moves when the encode does. It was
+    // 1.6 while the legs averaged ~9.5MB; the 2026-08-22 CRF 23 pass took them to
+    // ~5.5MB, and a window is really a bytes-in-flight budget wearing a distance as
+    // a costume — the lighter legs buy nearly a whole extra leg of lead for the same
+    // bytes. A leg spans 1.05–1.30vh of scroll, so 2.4vh is ~2 legs ahead. Re-encode
+    // the legs heavier and this has to come back down.
+    //
+    // The slowNet branch is deliberately NOT widened. It exists to protect the
+    // readers a bigger window hurts, and halving the file size does not make a
+    // 2G connection want more of them at once.
+    const lookahead = slowNet ? 0.4 : 2.4;
     for (let i = 0; i < NSEG; i++) {
       const s = SEGMENTS[i];
       if (y > s.start - lookahead * vh && y < s.end + lookahead * vh) loadClip(s);

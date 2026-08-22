@@ -70,6 +70,12 @@ scratchpad/
 # committing these would publish client prototype source at a fetchable URL.
 /public/assets/**/*.jsx
 
+# Pre-shrink copies of the nine scrubbed legs, kept because legs 1-9 have NO
+# master anywhere — the shipped file was the only copy of that footage. Made
+# before the 2026-08-22 CRF 23 pass (85.9MB -> 51.8MB). Delete once the new
+# encodes have been watched end to end and judged good.
+/.asset-originals/
+
 # Third-party skill bundles, installed by `npx skills update` and restorable
 # from skills-lock.json. Committing them churns the diff on every update.
 # ux-writer is the project's own skill and stays.

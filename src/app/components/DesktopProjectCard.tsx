@@ -25,11 +25,20 @@
  * THE HOVER IS THE OPERATING SYSTEM'S, NOT AN EFFECT. In a real desktop the
  * active window is the one with the coloured title bar and the inactive ones are
  * plain. At rest every card here is an inactive window on the same wallpaper.
- * Point at one and its bar floods with that project's own colour — the client's
- * hue, taken verbatim from `projectFields` (see `desktopInk.ts`). A case study
- * is the only kind of card with a colour to reveal; an article has no client, so
- * it floods charcoal and reverses its label instead. That difference falls out
- * of the registry rather than being styled in.
+ * Point at one and it wakes up in ITS OWN CASE STUDY'S COLOURS — read off that
+ * project's `[data-project-theme]` scope in theme.css, so the card and the page
+ * it opens are the same palette (see `desktopInk.ts`): the title bar floods with
+ * a pastel of the theme's `--primary`, and the mark takes that `--primary` raw.
+ *
+ * THE STOCK AND THE FRAME NEVER MOVE. The body stays the resting off-white
+ * (owner's call — a version that tinted it to the theme's accent read as too
+ * much colour behind the name), and the 3px outline, the bar rule and the two
+ * discs stay one uniform grey in both states. A window changing colour is the
+ * OS; a window whose outline changes colour is a different drawing.
+ *
+ * A case study is the only kind of card with a theme to reveal; an article has
+ * no client, so it floods charcoal, reverses its label, and does not tint. That
+ * difference falls out of the registry rather than being styled in.
  *
  * WHAT IS DELIBERATELY NOT HERE. The reference's left rail of labelled desktop
  * icons (MyComputer, Solitaire) is the most quotable thing in it and is the
@@ -439,8 +448,11 @@ export function DesktopWindow({
             the outline, or "a single uniform stroke on every drawn edge" stops
             being true the moment the frame softens. */}
         <div
-          className="flex grow flex-col p-4 sm:p-5"
-          style={{ color: desktopInk.line }}
+          className={cn(
+            "flex grow flex-col p-4 sm:p-5",
+            "transition-colors duration-200 ease-out",
+            "text-[color:var(--dw-mark-rest)] group-hover:text-[color:var(--dw-mark-ink)]"
+          )}
         >
           {/* SOME WINDOWS HAVE NO MARK AT ALL, and the caller decides by
               passing none. Writing was the first: it used to fall through to
@@ -493,12 +505,23 @@ export function DesktopWindow({
     </motion.article>
   );
 
-  /* The two bar inks are handed down as custom properties because the resting
-     and flooded label colours are both per-card values, and a Tailwind
-     `group-hover:` variant can read a variable but cannot be given a hex. */
+  /* Both resting/active PAIRS are handed down as custom properties, because
+     each half is a per-card value and a Tailwind `group-hover:` variant can
+     read a variable but cannot be given a hex. Two pairs: the bar's label, and
+     the mark — which the body carries as `color` and the glyph inherits through
+     `currentColor`.
+
+     NEITHER THE STOCK NOR THE FRAME IS IN THIS LIST, and neither should join
+     it. The window's body stays the same off-white in both states (owner's
+     call, Aug 2026: a tinted body was tried and read as too much colour behind
+     the name), and the outline, bar rule and discs stay one uniform grey — that
+     single stroke is the whole retro-OS register. The hue arrives in exactly
+     two places, the bar and the mark, on a window that is otherwise unchanged. */
   const linkStyle = {
     "--dw-bar-rest": desktopInk.ink,
     "--dw-bar-ink": flood.barInk,
+    "--dw-mark-rest": desktopInk.line,
+    "--dw-mark-ink": flood.mark,
   } as React.CSSProperties;
 
   /* Rectangular offset outline rather than a ring, matching the die-cut card:

@@ -182,8 +182,9 @@ import { motionEase } from "../lib/motion";
      the scene's name    a 12px tracked eyebrow under it, the chapter's word
      the scene's title   directly under that, the only sentence on the pane
      …the depth of the sheet, which is picture showing through…
-     the standing exit   "Skip to the work", one line of 14px, arriving with
-                         this pane and open until leg 8
+     the one door        "View selected work", a button flush to the foot of
+                         the pane, standing from the first paint to the
+                         handover into the work band
 
    IT WAS A FOOTER LOCKUP AND IT IS AN EYEBROW. The chapter's name used to be
    printed on the foot at 16 → 24px under a dotted contents-page leader, with
@@ -210,33 +211,81 @@ import { motionEase } from "../lib/motion";
    binding it, where the retired leader was drawn TO that measure exactly. The
    corner fade is retired; the glass is the only ground now.
 
-   THE ENDING IS THE EXCEPTION, AND IT IS TWO DIFFERENT EXCEPTIONS. Scene 8
-   (the pull-back) is empty glass: no label, no title, so no mark and no
-   eyebrow. Scene 9 carries a closing line, the page's one button and an email
-   address, and neither a mark nor an eyebrow — the eyebrow is derived from the
-   scene's `label`, the ending has none, and the no-label rule therefore
-   enforces itself with no exception written anywhere (ScrollWorld.tsx).
+   THE ENDING IS THE EXCEPTION, AND IT IS TWO DIFFERENT EXCEPTIONS.
 
-   THE STANDING EXIT IS GONE BY THEN TOO, faded out across leg 8, so the last
-   pane really is what it claims to be: one sentence and one way out. The two
-   doors go to the same place, and offering both on one screen would be the page
-   asking twice — which is why the exit leaves rather than why it is worded
-   differently. It says "Skip to the work" and the button says "See the work";
-   that difference is what the two OFFERS are (decline the walk / conclude it),
-   not a licence to stand them side by side (world.css, THE STANDING EXIT).
+   SCENE 8 IS EMPTY GLASS. No label, no eyebrow, no title, so no mark either:
+   the pull-back plays and the pane holds nothing. That is right and it is the
+   route's oldest standing decision about this leg — THE REVEAL IS THE CONTENT.
+   The camera pulls back until the whole garden turns out to be the display of a
+   small machine, and a sentence over it would be READ INSTEAD OF WATCHED,
+   because a reader's eye goes to type before it goes to a picture. This is the
+   one picture on the page that cannot survive being second.
 
-   SO THE LAST PANE IS NOT READ TOP TO BOTTOM. It has no head and no foot to
-   run between, which is exactly why it is the one article set in the MIDDLE of
-   the sheet rather than hung from either end (world.css, THE SIGN-OFF IS
-   CENTRED IN THE PANE). The column above is a contents page; this is the leaf
-   after it, with one sentence and one way out standing on their own.
+   COPY WAS PUT ON IT AND TAKEN BACK OFF, Aug 2026, and the ground is marked so
+   nobody walks it a third time. For part of one day it carried a full lockup —
+   a mark, the eyebrow "Still going", and a line about what AI is changing —
+   tried first arriving LATE on the settled frame and then EARLY on the house
+   curve. The owner removed all three parts. `ScrollWorld.tsx` (THE PULL BACK IS
+   WORDLESS) keeps the record and the one thing worth having from it: leg-8.mp4
+   measured frame by frame, four fifths of the camera move done by clip 67% and
+   NO HARD STOP anywhere — it creeps to the final frame, so "the settled frame"
+   is not a moment this footage has, which is why even the late timing could not
+   fully honour the objection.
 
-   THE HEADLINE STANDS WITHOUT A MARK, deliberately. Every chapter title needs
-   the disc because it has to start somewhere at the head of a 336px column in a
-   full-height sheet; this one is already at the sheet's optical centre with air
-   on all four sides, which is a stronger anchor than a glyph. Giving it a disc
-   would also give it the one visual signature that says "chapter", on the pane
+   SCENE 9 IS THE OTHER EXCEPTION AND IT GOES THE OTHER WAY. It carries a mark,
+   an eyebrow ("In practice") and a closing line — no `label`, so no waymarker.
+   That is a mechanism rather than a loophole: `eyebrow` became its own field
+   precisely so a pane can wear a chapter's lockup without becoming a stop on
+   the trail, since a dot here would put the ending on the rail and make it
+   chapter six. The invariant is unchanged and unqualified — a waymarker exists
+   if and only if the section has a `label` (ScrollWorld.tsx, the `Section`
+   type). Leg 1's title card uses the same mechanism for the same reason.
+
+   SO THE TWO ENDING PANES ARE OPPOSITES: one is the picture alone, the other is
+   the only lockup at this end of the piece, and the silence between them is
+   what makes the last pane land as an ending rather than as the film running
+   out.
+
+   THE ONE DOOR IS THERE THE WHOLE TIME, including on both of them. It used to
+   be two objects — a quiet sentence-link standing through the walk and a real
+   button built inside scene 9's own copy article — with the first fading out
+   across leg 8 so the second was the only door on the last screen. They are ONE
+   control as of Aug 2026 (owner's call): same button, same words, same
+   position, from its arrival on the first screen to the handover, so the
+   handover moves nothing (world.css, THE STANDING EXIT; ScrollWorld.tsx, NO
+   `cta`). The two wordings that used to distinguish them — "Skip to the work"
+   against "See the work" — are both retired; there is one offer, and it is
+   named for the band it lands on.
+
+   EVERY PANE IS READ TOP TO BOTTOM NOW, INCLUDING THIS ONE. The sign-off used
+   to be centred in the sheet, on the reasoning that it had no head and no foot
+   to run between; it has a head now, so it hangs from the same place as every
+   other article with the door at the foot (world.css, THE PANE IS ONE
+   COMPOSITION AND NOTHING IN IT EVER MOVES). The reader's eye never has to
+   re-find the type between legs, which on a page whose whole surface is a
+   moving picture is worth more than a per-pane composition.
+
+   THE HEADLINE USED TO STAND WITHOUT A MARK, and that argument is now
+   OVERRULED here and live everywhere else. It ran: every chapter title needs
+   the disc because it has to start somewhere at the head of a narrow column in
+   a full-height sheet, where this one was already at the sheet's optical centre
+   with air on all four sides — a stronger anchor than a glyph — and giving it a
+   disc would apply the one visual signature that says "chapter" to the pane
    whose whole job is to say the chapters have finished.
+
+   HALF OF IT DIED WITH THE CENTRING. This article is not centred any more, so
+   "already at the optical centre with air on all four sides" is simply not true
+   of it; it hangs from the head of a column like everything else, which is the
+   exact situation the first half of the argument says needs a disc.
+
+   THE OTHER HALF IS THE OWNER'S CALL. Scene 9 takes a mark, and what stops it
+   reading as chapter six is the RAIL: five dots, all of them behind the reader
+   by the time this pane is on screen. Leg 1's title card takes one for the
+   mirror-image reason — five dots, none of them lit, because the walk has not
+   started. The rail is now the only thing that distinguishes a chapter from a
+   pane that merely looks like one, which is thin, and it is the first thing to
+   look at if the ending ever reads as one more stop. The cheap reversal is
+   dropping this pane's eyebrow, which takes its mark with it.
 
    ON PHONES the pane is a bottom band and the mark is dropped — the arithmetic
    and the second reason are in world.css's phone block.

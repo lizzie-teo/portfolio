@@ -96,7 +96,9 @@
 
    WHY IT COULD NOT SIT IN THE PANE, which was the other candidate and is the
    one to re-read before anyone proposes it again: the copy column is
-   `--sw-copy-col` wide — 272px at 861, 411px at 1440 — and "Lizzie Teo" at the
+   `--sw-copy-col` wide — those numbers were 272px at 861 and 411px at 1440 and
+   the ramp has moved twice since (world.css, THE PANE'S TYPE ROLES); re-measure
+   before trusting them — and "Lizzie Teo" at the
    cover line's 88px cap needs about 480px. Inside the pane it wraps or it
    drops to roughly 50px. The pane and the cover line are mutually exclusive.
 

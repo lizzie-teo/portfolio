@@ -99,13 +99,16 @@
      and the longest of them needs about 19 characters a line to hold its current
      four. That puts the floor at measure ÷ size ≈ 9.1.
 
-     THE EXAMPLE THIS DERIVATION WAS WRITTEN AGAINST IS GONE, and the numbers
-     moved with it. It cited "I start by getting the business and its users to
-     want the same thing." at 69 characters; the Aug 2026 copy pass replaced
-     every title it named. The longest is now "Drawing it on paper, building it
-     in Figma, then prompting it into code." at 71, with the ending's sentence at
-     70 — so the binding case grew by two characters and the ratio was not
-     re-derived, because 9.1 was already a floor rather than a fit.
+     THE EXAMPLE THIS DERIVATION WAS WRITTEN AGAINST IS GONE, and it has now
+     gone twice. It cited "I start by getting the business and its users to want
+     the same thing." at 69 characters; a first copy pass replaced that with
+     "Drawing it on paper, building it in Figma, then prompting it into code."
+     at 71. The Aug 2026 pass replaced THAT too, and every title on the walk
+     with it. THE LONGEST IS NOW 61 CHARACTERS (leg 2, and leg 7 ties it), which
+     means the binding case has come DOWN by ten and the ratio is looser than it
+     has ever been. It is not re-derived on that basis: 9.1 was a floor rather
+     than a fit, and narrowing the panel to suit shorter copy would be spending
+     the picture's width on a copy pass that may be rewritten again.
 
      AND THE WEIGHT IN THE FIRST LINE ONLY BECAME TRUE IN THAT SAME PASS. This
      sum assumes 600. `.sw-copy__title` asked for the weight through an
@@ -131,8 +134,8 @@
      old arrangement gave it three at the narrow end and four at the wide one and
      changed over somewhere nobody had measured. It also means the panel is
      genuinely narrow when the type is small, which is what the short-window
-     cases needed — the panel's own HEIGHT is `film-w × 9/16`, so every pixel of
-     panel width is paid for twice on a short screen.
+     cases needed — on a short screen the panel's own HEIGHT is still cut from
+     `film-w × 9/16`, so every pixel of panel width is paid for twice there.
 
      34rem against a 3.75rem title was the same 9.1 ratio at the old scale.
      46vw stays the small-screen guard; it binds only well below 861px, where
@@ -200,17 +203,82 @@
      appendix keeps its own, 24 → 36px, and the two are declared apart because
      the two layouts are not the same object. On a phone the title is the head
      of a full-width band with 258–655px of measure; on desktop it is the only
-     sentence on a 224–336px column. What both ramps now share is the CAP:
-     `text-4xl`, one full standard step above where desktop used to stop
-     (`text-3xl`). That step is the owner's ask and it is the whole type change.
+     sentence on a 224–336px column. What both ramps share is the CAP:
+     `text-4xl`, which is where the owner has now put it after seeing two
+     candidates on screen. It has never been an invented value between steps —
+     it went `text-3xl` → `text-4xl` on her ask for a bigger line, then
+     `text-4xl` → `text-5xl` on the same ask a second time, and back.
 
-     THE DESKTOP FLOOR DID NOT MOVE, and holding it is what makes the cap
-     affordable. The panel's HEIGHT is `film-w × 9/16` and the panel's width is
-     this title's measure, so at 861px a taller column and a wider panel are the
-     same 236px of glass being spent twice. Raising the whole ramp would have
-     overflowed the column past the panel's foot on every short desktop window
-     (861 × 768 and 1024 × 768 both, by 30–55px). Steepening it instead — same
-     floor, one step higher cap — puts the growth where the room is.
+     ── `text-5xl` WAS BUILT AND WITHDRAWN, AND THIS IS THE VERDICT ──────────
+     48px shipped in the working tree for part of Aug 2026 and the owner looked
+     at it live: TOO BIG. It is not coming back, and neither is the slope it
+     needed. Both ends of the range have now been seen and named, so the next
+     pass has two verdicts rather than one:
+
+         ~37px at 1440 (the gentle 48px slope)   TOO SMALL — owner, Aug 2026
+         48px at 1440 (the steep 48px slope)     TOO BIG   — owner, Aug 2026
+         36px at 1440 (`text-4xl`, ships)        the step between them
+
+     THE CAP IS BELOW THE "TOO SMALL" READING AT 1440 AND THAT IS UNDERSTOOD.
+     36 is a standard step and 37 is not, so there is nothing between the two
+     verdicts to reach for; what the ramp can do instead is make sure 1440 is AT
+     the cap rather than climbing towards it, which is what the slope below
+     does. Do not read the "too small" verdict as licence to mint 40px.
+
+     THE FLOORS HAVE NEVER MOVED, and holding them is what makes each cap
+     affordable. On a short window the panel's HEIGHT is `film-w × 9/16` and its
+     WIDTH is this title's measure, so the two feed back on each other: a bigger
+     title widens the panel, a wider panel narrows the film, and a narrower film
+     makes the panel SHORTER — which is the room the taller title just asked for.
+     Every pixel of panel width is paid for twice. Raising a floor overflows the
+     column past the panel's foot on every short desktop window (861 × 768 and
+     1024 × 768 both, by 30–55px). Steepening instead — same floor, one step
+     higher cap — puts the growth where the room is.
+
+     ── WHERE THE CAP LANDS IS THE WHOLE OF THE SLOPE DECISION ──────────────
+     There is 12px of range between the desktop floor and the cap, and the only
+     free parameter is the width at which the ramp runs out of it. Three
+     candidates were modelled against the same geometry:
+
+         cap at    1024   1280   1366   1440   1600   1920
+         1920      26.0   28.7   29.6   30.6   32.4   36.0
+         1600      26.6   30.8   32.2   33.4   36.0   36.0
+         1442      27.4   32.7   34.4   36.0   36.0   36.0   ← ships
+
+     THE CAP LANDS AT 1442 BECAUSE THAT IS WHERE THE LAPTOP IS. Every other
+     landing spends the range on widths beyond the one most readers are at, and
+     the owner has already called ~37px at 1440 too small — so a ramp that hands
+     1440 anything under its cap is answering the wrong complaint. Above 1442
+     the panel is down to 26% of the window at 1600 and 22% at 1920; there is
+     nothing there for a steeper ramp to fill, which is the same reason the
+     measure is capped at all.
+
+     IT IS NOT THE 48px FAULT IN MINIATURE. That ramp reached ITS cap at 1148,
+     so 1280, 1366, 1440, 1600 and 1920 were all identical and all maximal —
+     five widths with no ramp between them. This one still moves across 861,
+     1024, 1280, 1366 and 1440 and only goes flat past the laptop.
+
+     THE OPEN LEVER, if 1280 reads thin: landing the cap at 1366 instead takes
+     1280 from 32.7 to 34.0 and costs 1366 its own step. It is one line —
+     `clamp(1.5rem, 0.221rem + 2.376vw, 2.25rem)` — and the arithmetic is the
+     table above.
+
+     WHY NOT `text-5xl` OR `text-6xl`. Both were modelled and both fit; neither
+     is an arithmetic question any more. 48px is the owner's rejected candidate
+     above. 60px takes the panel to 43–44% of the window and the film to
+     609 × 343 at 1366, at which point the two-panel balance inverts and the
+     sentence becomes the larger object. The owner has confirmed the two-panel
+     composition twice; `text-4xl` keeps the picture the subject at every width,
+     with the panel between 22% and 32% of the window.
+
+     THE EYEBROW DID NOT SCALE WITH IT, and that was judged rather than skipped.
+     At the cap the pair is 36:14, which is 2.6:1 — an ordinary
+     display-to-eyebrow relationship, and the same one the site's rubric role
+     keeps. Against changing it, 14px is ALREADY a documented exception to §4's
+     12px for uppercase eyebrows (see `--sw-eyebrow-size`), and taking it to
+     16px would be a second exception bought for one breakpoint band. It was
+     re-opened when the cap went to 48px (3.4:1) and closed again when the cap
+     came back; at `text-4xl` the question does not arise.
 
      ITS LEADING IS 1.15, which is the site's own leading for a 36px heading
      (`sectionHeading`). It ran 1.1 — display leading, borrowed from a role
@@ -241,7 +309,7 @@
 
      IT DID NOT LOOK LIKE A MATCH, which is the thing arithmetic could not tell
      us. The pane's desktop ramp floors at 24px for the panel's sake (see the
-     appendix) and only reaches 36px at 1441, while a band on an 1800px sheet
+     appendix) and only reaches 36px at 1442, while a band on an 1800px sheet
      is at its 36px cap from 852px up. So on every window between those two
      numbers the "same" role rendered 24 to 36px in a narrow column beside a
      picture and 36px alone on an empty sheet — and the display face has no
@@ -258,6 +326,13 @@
      Do not re-share them without re-reading the paragraph above. The pane's
      size is a function of the panel it sets on; nothing else on the site has
      that constraint, so nothing else can hold this ramp. */
+  /* THE PHONE RAMP. Floor `text-3xl` at 361px and under, cap `text-4xl` from
+     852px up, which is the last 9px before the desktop appendix takes over at
+     861. It went to 48px alongside the desktop ramp in Aug 2026 and came back
+     with it; the 48px version cost the landscape phone about 21px of band it
+     did not have (740 × 360 is cap-bound, so a taller title grows the copy up
+     onto the PICTURE rather than growing the band). Nothing changes at
+     320 × 568 either way — the floor binds at both. */
   --sw-title-size: clamp(1.875rem, 1.6rem + 1.22vw, 2.25rem);
   --sw-title-leading: 1.15;
 
@@ -408,54 +483,54 @@
   top: var(--sw-copy-top);
 }
 
-/* THE SIGN-OFF IS CENTRED IN THE PANE, and it is the only article that is.
-   Scene 9 carries a closing line above its button and its address
-   (ScrollWorld.tsx, THE ENDING), so what stands here is a lockup — a sentence
-   and the things to do about it — rather than controls looking for somewhere to
-   live. It carries no mark and prints no name, so it is also the one article
-   with nothing above it and nothing below it, and a block with no neighbours
-   belongs in the middle of its sheet.
+/* ══ THE PANE IS ONE COMPOSITION AND NOTHING IN IT EVER MOVES ═════════════
+   Every article on this route is positioned identically: the lockup hangs from
+   the head of the copy column (`.sw-copy` above) and the walk's one button
+   stands at the foot slot (`.sw-exit`). Nine panes, one frame, and the only
+   thing that changes between them is the words. On a page whose whole surface
+   is a moving picture, a reader's eye should never have to re-find the type.
 
-   BOTH OF THE ANCHORS THIS REPLACES WERE ANSWERS TO A DIFFERENT QUESTION.
-   Top-anchored, the buttons floated at the head of a full-height sheet with
-   nine tenths of the glass empty under them, which reads as chrome that failed
-   to load. Foot-anchored at `--sw-print-bottom` — the foot slot, which on every
-   other scene holds the walk's standing exit and used to hold the printed
-   caption as well — they read as placed, and that was the right answer while
-   the pane held nothing but buttons. (The exit has left by the time this scene
-   is on screen: it fades across leg 8 so the ending's own button is the only
-   door on the screen. See THE STANDING EXIT.) It is the wrong one now: at the foot
-   the closing line would set where a caption sets, under a whole sheet of empty
-   glass, and be read as the footnote of the page it is the conclusion of.
+   ── THIS REPLACES A CENTRED SIGN-OFF, AND THE ARGUMENT THAT JUSTIFIED IT ──
+   `.sw-copy:nth-of-type(9)` used to be stretched to the pane's full height and
+   flex-centred, and the reason was stated plainly: "It carries no mark and
+   prints no name, so it is also the one article with nothing above it and
+   nothing below it, and a block with no neighbours belongs in the middle of its
+   sheet." Two anchors were rejected on the way to it — top-hung, the buttons
+   floated at the head of a full-height sheet with nine tenths of the glass
+   empty under them; foot-anchored, they read as placed but the closing line
+   would have set where a caption sets.
 
-   `top`/`bottom` PLUS FLEX, NEVER `transform`. The engine writes an inline
-   `transform: translateY()` parallax onto this element on every scroll frame
-   (scrub-engine.js, the copy loop), so the usual `top: 50%` with a
-   `translateY(-50%)` is not available here — the next frame overwrites it. The
-   article is stretched to the full height of the pane instead and centres its
-   own children, which is a layout no transform can reach.
+   THE PREMISE IS GONE. The sign-off carries a mark and an eyebrow now (owner's
+   call, Aug 2026 — "Over to you"), so it HAS a head; and the button is no
+   longer inside its article at all, it is the standing control at the foot of
+   every pane. The article that had no neighbours has two. Legs 1 and 8 went the
+   same way in the same pass.
 
-   AND THE PARALLAX IS WHY THE RESTING BLOCK IS NOT DEAD CENTRE. The copy layer
-   drifts (0.5 − pr) × 4vh, so at the foot of the page — pr = 1, which is where
-   the reader actually stops — the block rests 2vh HIGH. That is a fifth of a
-   line at 900px tall, it lands the block on the optical centre rather than the
-   mathematical one, and it is the better place for a block of type to sit. Kept
-   deliberately: do not add an offset to cancel it.
+   SO THE THREE OBJECTS ARE RESOLVED INTO ONE COMPOSITION, and the resolution is
+   uniformity rather than grouping. Head at the top, door at the foot, on all
+   nine legs. The alternative was to bottom-group the sign-off — lockup, gap,
+   button, all sitting on the foot slot — so the last pane's sentence and its
+   button read as a single unit. It was rejected on two counts: it would have
+   put a vertical jump at the one boundary the piece cannot afford one, the
+   reader arriving at the ending to find the type has moved half a sheet; and it
+   would have left the top two thirds of the sign-off's glass empty, which is
+   the very fault the original centring pass was fixing.
 
-   ONE RULE FOR BOTH LAYOUTS on everything except the pane's own height, which
-   is the one thing the two layouts do not share — on desktop the pane is the
-   whole viewport, so `top: 0` against `bottom: 0` IS the pane, and on a phone
-   it is a bottom band whose height is `--wgc-panel`, which the phone block hands
-   this article. The
-   selector outranks both `.sw-copy` rules on specificity alone, so nothing else
-   XX   needs nothing. */
-.sw-copy:nth-of-type(9) {
-  top: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
+   AND THE PAIR STILL READS AS A PAIR, positionally rather than by adjacency.
+   The sentence at the head and the door at the foot have been one object for
+   twelve viewports by the time the reader reaches the ending; the last pane is
+   where the sentence finally names what the door goes to. That pairing is
+   learned rather than laid out, which is the strongest kind on a page this
+   long.
+
+   ON PHONES THE PANE ALREADY GROUPS THEM and nothing here changes that. Below
+   861px the copy is a bottom band, so every article is bottom-anchored just
+   above the foot slot (the phone block) and the lockup sits directly over the
+   button on every leg — the same relationship, arrived at by the band's own
+   geometry rather than by an exception. The sign-off's phone rule, which gave
+   it the band's full height so it could centre inside it, is retired with the
+   centring.
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Copy: the title, under its eyebrow, under its mark ───────────────────
    THE EYEBROW CAME BACK, and this note used to record it leaving. It was moved
@@ -479,7 +554,7 @@
    IT NO LONGER TAKES THE SITE'S `statementHeading` ROLE, and that is deliberate
    — do not "fix" it back. This file used to carry a verbatim copy of that role's
    values, because plain CSS cannot import from typography.ts. The departure is
-   the size ramp only: the role tops out at 3.75rem, and this route now caps at
+   the size ramp only: the role tops out at 3.75rem, and this route caps at
    2.25rem. Weight, family and the display voice are unchanged.
 
    IT TAKES A ROLE AGAIN, AND THE ROLE IS ITS OWN. What this title settled on
@@ -494,16 +569,26 @@
    and has a page to fill. Here it is set on a glass panel laid over a full-bleed
    engraving, and the panel's width IS the measure — so every point of type size
    is paid for twice, once in column width and once in the picture the column
-   covers. Bringing the ceiling down a full step on the standard scale (3.75rem →
-   2.25rem, text-6xl → text-4xl) narrows the panel from 636px to 428px at 1440
-   and hands 363px of frame back to the film, with no title gaining a line —
-   because the measure came down with it and the ratio that governs line breaks
-   is unchanged (see `--sw-copy-col`).
+   covers. Bringing the ceiling down two steps on the standard scale (3.75rem →
+   2.25rem, text-6xl → text-4xl) narrowed the panel from 636px to 428px at 1440
+   and handed 363px of frame back to the film, with no title gaining a line —
+   because the measure came down with it and the RATIO that governs line breaks
+   is unchanged (see `--sw-copy-col`). That property is what makes the size a
+   safe lever in either direction: a bigger title is never a shredded one, it is
+   a wider panel and a smaller picture.
 
-   The ramp is flatter than the role's for the same reason: the measure is capped
-   from about 1050px up, so there is nothing for a steeper ramp to fill.
+   THE CEILING WENT BACK ONE STEP AND THEN CAME DOWN AGAIN, and both moves are
+   the owner's: 2.25rem → 3rem on her ask for a bigger line (with a wider pane
+   explicitly approved), then 3rem → 2.25rem on seeing 48px live. The paragraph
+   above is the reasoning that still governs how far it can go, and THE PANE'S
+   TYPE ROLES carries both verdicts and the modelling behind the slope.
+
+   The ramp is flatter than the role's for the same reason: past the point where
+   the measure is capped there is nothing for a steeper ramp to fill.
    Tracking eases from -0.03em to -0.02em, which is a display setting the type no
-   longer wants at 36px, and the leading opens from 1.06 to 1.1 to match. */
+   longer wants at 36px, and the leading opens from 1.06 to 1.15 to match
+   (`--sw-title-leading`; the 1.1 this line used to name went with the same
+   pass). */
 .sw-copy__title {
   font-family: var(--sw-font-display);
   /* THE PANE'S TYPE ROLES, at the root — the size is read by the measure, the
@@ -533,7 +618,7 @@
      is still shared.
 
      COST, so it is on the record: Bold sets wider than Regular, and the phone
-     band's height is derived from `--sw-band-lines: 5` (THE BAND). The tighter
+     band's height is derived from `--sw-band-lines` (THE BAND). The tighter
      rubric tracking gives some of that width back, but a title that now sets
      to six lines on the narrowest phone grows up past the band's top edge and
      onto the PICTURE. This note used to say "onto the matte. Same paper,
@@ -640,6 +725,26 @@
   color: var(--sw-ink-quiet);
 }
 
+/* A BLINKING TERMINAL CARET WAS BUILT HERE AND REMOVED, same day, owner's
+   call. It stood after the title card's eyebrow as a `::after` on
+   `.sw-copy:nth-of-type(1) .sw-copy__eyebrow` — a 0.14em × 0.86em bar of
+   `--sw-ink`, `steps(1, end)` on opacity at 1.06s, static under
+   `prefers-reduced-motion`, out of the accessibility tree by virtue of being a
+   pseudo-element. The idea was a motif with two ends: a terminal cursor on the
+   first screen and the Macintosh writing `hello world` on the last.
+
+   TWO THINGS ARE WORTH KEEPING FROM IT. The first is a MEASUREMENT: leg-9.mp4
+   was checked frame by frame across its tail and nothing changes after the
+   lettering settles — no pixel moves more than the grain floor over the last
+   1.2 seconds — so the machine draws no caret of its own and the motif never
+   had a second end to match. The second is a RULE. A blink is time-driven, so
+   the exemption this route already claims for scroll-driven keyframes (see
+   Motion, below) would not have covered it, and it would have been the only
+   permanently animating element on the page. If any ambient loop is ever
+   proposed here again, it needs its own amendment to §7 and it needs to stop
+   under reduced motion — and it should be weighed against the fact that this
+   route has now removed one rather than keep it. */
+
 /* ── THE SCENE'S MARK ─────────────────────────────────────────────────────
    One small disc of the same glass the pane is made of, carrying a single
    line-drawn mark per chapter, standing at the head of the column above the
@@ -652,8 +757,37 @@
    is `::before` — IN FLOW, so it pushes the title down rather than overlaying
    it — and the glyph is `::after`, absolutely positioned on the same origin and
    the same box, so there is no number here that can drift from the disc's size.
-   Only the first seven are selected. The ending's two scenes carry no label and
-   no title, and they get no mark either.
+
+   ── WHICH SCENES GET ONE IS NOT A LIST OF INDICES ANY MORE ────────────────
+   It was `:nth-of-type(-n + 7)` — the seven chapters, first seven sections of
+   the chain — restated in five places (the disc, the glyph, their shared
+   arrival animation, the phone drop and the desktop solid). Aug 2026 made the
+   set discontinuous: leg 1 became a title card and leg 6 went silent, so the
+   chapters are 2, 3, 4, 5 and 7 and a one-sided cap cannot express that.
+
+   THE SELECTOR IS `:has(.sw-copy__eyebrow)`, WHICH IS THE ACTUAL RULE. A mark
+   belongs to a CHAPTER, a chapter is a scene with a name, and the engine emits
+   the eyebrow span only for a section that carries one (scrub-engine.js:264).
+   So the stylesheet now asks the DOM the same question the config answers:
+   silence a leg by dropping its `label` in ScrollWorld.tsx and its mark goes
+   with its eyebrow, with no CSS edit and no index list to fall out of step.
+   Five hand-maintained caps became one derived selector, and the next silencing
+   is free here.
+
+   SPECIFICITY IS UNCHANGED at (0,2,0) on the element and (0,2,1) with the
+   pseudo, exactly what the `nth-of-type` cap measured, so the phone and desktop
+   overrides below still win on source order the way they always did. The
+   per-index GLYPH rules are `nth-of-type` and stay that way: they are scene
+   identity, not set membership.
+
+   IF `:has()` IS UNSUPPORTED the marks simply do not paint. That is the safe
+   direction — the lockup is eyebrow over title and reads without the disc —
+   and the bar is well under what this file already requires unconditionally
+   (`color-mix`, `oklab`, `clip-path`, scroll-driven animations).
+
+   The title card carries no label and takes a mark; the silent leg and the
+   pull-back carry neither and take none; the sign-off is the title card's case
+   again at the other end. One rule, four intentions, no index list.
 
    THE GLYPHS ARE LUCIDE'S, LIFTED UNALTERED: 24 × 24, 2px stroke, round caps
    and joins, which is the stroke language every icon on this site is drawn in.
@@ -699,7 +833,7 @@
    Rejected on the way here: an accent-tinted disc or rim. The scene accent is
    already carried on the traveller and the underlay, and one more carrier turns
    a system into a pattern. */
-.sw-copy:nth-of-type(-n + 7)::before {
+.sw-copy:has(.sw-copy__eyebrow)::before {
   content: "";
   display: block;
   width: var(--sw-copy-icon);
@@ -735,7 +869,7 @@
 @supports (
   (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
 ) {
-  .sw-copy:nth-of-type(-n + 7)::before {
+  .sw-copy:has(.sw-copy__eyebrow)::before {
     -webkit-backdrop-filter: blur(24px) saturate(1.7);
     backdrop-filter: blur(24px) saturate(1.7);
   }
@@ -759,7 +893,7 @@
    glyph is given the difference back rather than being left looking wiry.
    `.sw-copy` is `position: absolute` (the engine's), so top/left 0 is the disc's
    own corner and there is no number here that can drift from its size. */
-.sw-copy:nth-of-type(-n + 7)::after {
+.sw-copy:has(.sw-copy__eyebrow)::after {
   content: "";
   position: absolute;
   top: 0;
@@ -772,54 +906,145 @@
 }
 
 /* ONE GLYPH PER CHAPTER, in the config's own order, and each one names the
-   competency the trail prints rather than illustrating the garden — the garden
-   is never captioned on this page (ScrollWorld.tsx, COPY). `lucide` names in
-   the comments so a replacement can be looked up rather than redrawn.
+   competency the eyebrow prints rather than illustrating the garden — the
+   garden is never captioned on this page (ScrollWorld.tsx, COPY). `lucide`
+   names in the comments so a replacement can be looked up rather than redrawn.
 
-   THE INDICES ARE 1 THROUGH 7 — the seven chapters, first seven sections of
-   the chain. The names in the comments below are the chapters', not the
-   indices' — read those to check a glyph is on the right sentence after any
-   change to the section chain. */
+   THE INDICES ARE THE SECTION CHAIN'S AND THE SET IS NOT CONTIGUOUS: 1, 2, 3,
+   4, 5, 7 and 9. Five of those are chapters and two are not (the title card and
+   the sign-off), which the trail tells apart and this table does not have to.
+   Sections 6 and 8 have no eyebrow, so the applier above gives them no disc —
+   `:has(.sw-copy__eyebrow)` — and a rule for either would be dead text. AN UNSET `--sw-copy-glyph` IS A BUG, NOT AN EMPTY DISC: the mask
+   declaration would be invalid at computed-value time and the `::after` would
+   paint a solid paper rectangle over the lens. Every pane with an eyebrow needs
+   a line in this table.
 
-/* Stakeholders — `users`. Two figures: the work is done with other people. */
+   THE NAMES IN THE COMMENTS ARE THE CHAPTERS', NOT THE INDICES'. Read those to
+   check a glyph is on the right sentence after any change to the section chain.
+   Both mismatches this note used to flag are closed: 3 wore `search`, written
+   for the research chapter the slot used to be, and 4 wore `component`. Neither
+   is here now, and neither should come back on those sentences.
+
+   THE FIVE CHAPTERS EACH HAVE THEIR OWN MARK, Aug 2026, where four of them
+   shared one for a while. The owner asked for five distinct glyphs and settled
+   `box` for Prototyping herself; `waypoints`, `shapes`, `code-xml` and `flag`
+   are proposed against their own sentences below, and each is a one-line swap.
+
+   THE TEST IS SILHOUETTE FIRST AND METAPHOR SECOND, and it is the test every
+   rejection in this table was made on. At 54% of the disc these read at about
+   19px on the narrowest desktop window, where a clever mark that shares an
+   outline with its neighbour is worse than a dull one that does not. The seven
+   outlines are: a squiggle over a rule, a connected lattice of circles, a
+   hexagon, three unlike loose forms, a pair of mirrored angles, a pole with a
+   banner, and offset rectangles. No two of them collide.
+
+   THIS TABLE WAS BRIEFLY INCOMPLETE, and the failure mode is the one the
+   paragraph above warns about rather than a missing picture: 3 and 4 had their
+   notes written and their declarations never landed, so both discs were
+   painting a SOLID PAPER RECTANGLE over the lens — an unset `--sw-copy-glyph`
+   invalidates the mask, it does not empty it. If a note here has no rule under
+   it, that is a bug on screen, not a to-do.
+
+   ONE GLYPH LEFT WITH ITS CHAPTER, Aug 2026, recorded rather than deleted
+   silently: `terminal` (a prompt) was on section 6, and it had already come
+   loose — its note argued it for "the title's claim is prompting", which is
+   section 3's claim, not section 6's. Section 6 is silent now, and section 3
+   took `box` rather than `terminal`: the chapter's sentence already lists three
+   tools by name, so a fourth tool as its mark says nothing the words do not.
+
+   AND TWO OF THE SEVEN ARE NOT CHAPTERS' GLYPHS AT ALL. Legs 1 and 9 wear the
+   full lockup without being stops on the trail, so they need a mark like
+   everyone else and there is no competency for it to name. They are marks for
+   the PANE rather than for a claim, and each is chosen against its eyebrow: a
+   signature under the role, a stack of documents under "In practice". Each is
+   one line in this table and a one-line swap if the owner wants a different
+   one. */
+
+/* THE TITLE CARD — `signature`. A handwritten flourish over a baseline, under
+   an eyebrow that IS her name. Chosen over `user-round`, which was drafted and
+   rejected on the same rule the titles obey: a figure over a person's name
+   restates its own label, and the file's standing note says a title should not
+   merely restate the word above it. A signature says "this is who is speaking"
+   without saying "person" twice, and it is not a circle inside a circular disc
+   — which is why `compass` was rejected for leg 8 and would have been rejected
+   here (THE SCENE'S MARK: the two levers if the disc ever reads as a bullseye
+   are size and tint, and a ring inside it defeats both). */
 .sw-copy:nth-of-type(1) {
-  --sw-copy-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/%3E%3Cpath d='M16 3.128a4 4 0 0 1 0 7.744'/%3E%3Cpath d='M22 21v-2a4 4 0 0 0-3-3.87'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3C/svg%3E");
+  --sw-copy-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21 17-2.156-1.868A.5.5 0 0 0 18 15.5v.5a.5.5 0 0 1-.5.5c-1.5 0-2-2-2.5-3.5S14 10 13 10c-2 0-3 4-4 6-1.5-3-2-6-2-8 0-1 .5-2 1.5-2s1.5 1 1.5 2c0 2.5-1 5-3 7'/%3E%3Cpath d='M3 21h18'/%3E%3C/svg%3E");
 }
 
-/* Complexity — `waypoints`. A node graph: many things wired to one another,
+/* Systems thinking — `waypoints`. A node graph: many things wired to one another,
    which is what a decade spent on complex products actually looks like. This
    note used to name three industries ("health, lending and payments") that the
    title had already stopped listing, and then stopped listing at all — the
    sentence is about the span and the complexity now, so the glyph is left to
-   answer that and nothing narrower. */
+   answer that and nothing narrower.
+
+   HELD IN THE FIVE-GLYPH PASS, and the one it had to be checked against is
+   `shapes` two rows down: both are several small forms in a box. They separate
+   on the thing that survives 19px — this one is CONNECTED and its parts are
+   identical, that one is loose and its parts are unlike. Nothing rectilinear
+   and nothing with a ring would have cleared both `files` and the disc, which
+   is what closed `network`, `grid-2x2` and `atom` for this slot. */
 .sw-copy:nth-of-type(2) {
   --sw-copy-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m10.586 5.414-5.172 5.172'/%3E%3Cpath d='m18.586 13.414-5.172 5.172'/%3E%3Cpath d='M6 12h12'/%3E%3Ccircle cx='12' cy='20' r='2'/%3E%3Ccircle cx='12' cy='4' r='2'/%3E%3Ccircle cx='20' cy='12' r='2'/%3E%3Ccircle cx='4' cy='12' r='2'/%3E%3C/svg%3E");
 }
 
-/* Research — `search`. Finding out, before designing anything. */
+/* Prototyping — `box`. Owner's call, and it closes a mismatch this table has
+   been carrying since the slot changed subject: the glyph here was `search`,
+   written for the research chapter this used to be, and a magnifying glass over
+   "Prototyping with paper, Claude Code or Figma." named nothing in it.
+
+   A BOX IS THE THING BEING MADE, not the tool that makes it, which is the right
+   register for a chapter whose sentence already lists three tools. Its
+   silhouette is a hexagon — the only one in the set, and deliberately not the
+   squares a "prototype" glyph usually reaches for, because `files` at the
+   sign-off is already the rectangular mark. */
 .sw-copy:nth-of-type(3) {
-  --sw-copy-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21 21-4.34-4.34'/%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3C/svg%3E");
+  --sw-copy-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z'/%3E%3Cpath d='m3.3 7 8.7 5 8.7-5'/%3E%3Cpath d='M12 22V12'/%3E%3C/svg%3E");
 }
 
-/* Design systems — `component`. Lucide's own component mark: one form repeated
-   into an assembly, which is the argument the title makes. */
+/* Design systems — `shapes`. A triangle, a circle and a square standing
+   together: a kit of parts, which is what an atomic design system IS, and the
+   only composite mark in the set.
+
+   IT REPLACES `component`, lucide's four-diamond mark, and the reason is
+   SILHOUETTE rather than meaning — `component` was a good argument (one form
+   repeated into an assembly) and a bad shape here, because `waypoints` one row
+   up is also four small elements arranged around a centre. At 18px inside a
+   dark disc the two read as the same mark twice. Three unlike forms cannot be
+   confused with a lattice of identical ones.
+
+   AND IT IS NOT RECTILINEAR, which the row above it now needs it not to be:
+   `box` is a hexagon and `files` at the sign-off is a stack of rectangles, so a
+   grid of squares here — the obvious alternative for a design system — would
+   have traded one collision for another. */
 .sw-copy:nth-of-type(4) {
-  --sw-copy-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.536 11.293a1 1 0 0 0 0 1.414l2.376 2.377a1 1 0 0 0 1.414 0l2.377-2.377a1 1 0 0 0 0-1.414l-2.377-2.377a1 1 0 0 0-1.414 0z'/%3E%3Cpath d='M2.297 11.293a1 1 0 0 0 0 1.414l2.377 2.377a1 1 0 0 0 1.414 0l2.377-2.377a1 1 0 0 0 0-1.414L6.088 8.916a1 1 0 0 0-1.414 0z'/%3E%3Cpath d='M8.916 17.912a1 1 0 0 0 0 1.415l2.377 2.376a1 1 0 0 0 1.414 0l2.377-2.376a1 1 0 0 0 0-1.415l-2.377-2.376a1 1 0 0 0-1.414 0z'/%3E%3Cpath d='M8.916 4.674a1 1 0 0 0 0 1.414l2.377 2.376a1 1 0 0 0 1.414 0l2.377-2.376a1 1 0 0 0 0-1.414l-2.377-2.377a1 1 0 0 0-1.414 0z'/%3E%3C/svg%3E");
+  --sw-copy-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z'/%3E%3Crect x='3' y='14' width='7' height='7' rx='1'/%3E%3Ccircle cx='17.5' cy='17.5' r='3.5'/%3E%3C/svg%3E");
 }
 
-/* Figma to code — `code-xml`. The handover lands as something buildable. */
+/* Bridging design & code — `code-xml`. The handover lands as something
+   buildable. The heading on this line used to read "Figma to code", and then
+   "Design engineering"; neither is the chapter's own label (THE IDS ARE
+   HISTORICAL, ScrollWorld.tsx).
+
+   HELD IN THE FIVE-GLYPH PASS. It names one END of the bridge rather than the
+   span, which is the honest objection to it, and it is kept anyway: the
+   sentence's subject is what the handover ARRIVES as, and lucide has no bridge.
+   The marks that do name a span are all in the wrong family here — `route` is
+   `waypoints` again three rows up, and every git glyph is circles on a stem.
+   Its outline is the most open and horizontal in the set, which is what makes
+   it read between a closed hexagon and a vertical pole. */
 .sw-copy:nth-of-type(5) {
   --sw-copy-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m18 16 4-4-4-4'/%3E%3Cpath d='m6 8-4 4 4 4'/%3E%3Cpath d='m14.5 4-5 16'/%3E%3C/svg%3E");
 }
 
-/* Prototyping — `terminal`. A prompt, because the title's claim is prompting.
-   It is a MARK and not a picture of a device: the skeuomorphic mouse the engine
-   ships was thrown out of this page for being the latter (THE HINT IS A WORD
-   AND A LINE), and the distinction is that this is a glyph in the same stroke
-   language as the other six. */
-.sw-copy:nth-of-type(6) {
-  --sw-copy-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 19h8'/%3E%3Cpath d='m4 17 6-6-6-6'/%3E%3C/svg%3E");
-}
+/* SECTION 6 HAD `terminal` HERE and has no mark now: the slot is silent
+   (ScrollWorld.tsx, THE SLOT IS SILENT). The glyph's own note is worth keeping
+   because it carries a rule this table runs on — it is a MARK and not a picture
+   of a device, the way the skeuomorphic mouse the engine ships was thrown out
+   of this page for being the latter (THE HINT IS A WORD AND A LINE). Any glyph
+   added here later is held to that. */
 
 /* Start to finish — `flag`. The marker at the end of the walk, and this is the
    last chapter before the ending.
@@ -829,9 +1054,34 @@
    right-pointing triangle on a vertical stroke, and inside a circle at 25px
    that is the universal PLAY control. On a page whose every frame is a video
    being scrubbed, a play button in the corner is not a near miss, it is an
-   instruction the page cannot obey. The wavy banner has no such reading. */
+   instruction the page cannot obey. The wavy banner has no such reading.
+
+   HELD IN THE FIVE-GLYPH PASS. It marks the FINISH and not the span, which is
+   right for the last chapter before the ending — the pole is where the walk
+   started and the banner is where it stops. `milestone` was the alternative and
+   lost on silhouette: a notched rectangle on a post is `files` from across the
+   room. */
 .sw-copy:nth-of-type(7) {
   --sw-copy-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528'/%3E%3C/svg%3E");
+}
+
+/* SECTION 8 HAS NO GLYPH AND NO DISC. It carried `book-open` under the eyebrow
+   "Still going" for part of one day in Aug 2026; the pull-back is wordless
+   again (ScrollWorld.tsx, THE PULL BACK IS WORDLESS) so it has no eyebrow, and
+   the applier above gives a disc only to a pane that has one. `compass` was the
+   first choice for that lockup and was rejected on sight of the geometry — a
+   ring at 54% of a circular disc is a bullseye, which is the one reading THE
+   SCENE'S MARK is written to avoid. Worth keeping: it is the general trap for
+   any circular glyph in this table. */
+
+/* OVER TO YOU — `files`. A stack of documents: the thing the sentence points at
+   and the button goes to. It is the one mark on the page that names a
+   DESTINATION rather than a competency, which is what the last pane is for. It
+   does echo the line's "case study", and that is allowed — the eyebrow is what
+   was kept clear of the echo (ScrollWorld.tsx), and a mark agreeing with its
+   sentence is what every other glyph in this table does. */
+.sw-copy:nth-of-type(9) {
+  --sw-copy-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 7h-3a2 2 0 0 1-2-2V2'/%3E%3Cpath d='M9 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h7l4 4v12a2 2 0 0 1-2 2Z'/%3E%3Cpath d='M3 7.6v12.8A1.6 1.6 0 0 0 4.6 22h9.8'/%3E%3C/svg%3E");
 }
 
 /* ══ THE COLUMN IS SET, NOT FADED ═════════════════════════════════════════
@@ -921,22 +1171,26 @@
    Nothing here needs a second table, and no per-word range is authored by hand.
 
    AND THE UNIT IS PERCENT, NOT vh. `scrollMobileFactor` scales every leg by 1.2
-   on phones, so the page's total scroll is 14.3vh on desktop and 17.16vh on a
+   on phones, so the page's total scroll is 13.4vh on desktop and 16.08vh on a
    phone — an absolute vh range would therefore land on a different scene at
    different viewports. Percentages are fractions of whatever the scroll range
    is, which is exactly the quantity the section weights fix. They are the same
-   seven fractions THE WAYMARKERS is written in; recompute both together.
+   fractions THE WAYMARKERS is written in; recompute both together.
 
-   Ranges are each leg's own [start + 0.02·span, start + 0.34·span] over the
-   14.3 weight total: 1.5 / 1.4 / 1.7 / 1.7 / 1.4 / 1.8 / 1.8 for the chapters,
-   then 1.6 for the pull-back and 1.4 for the sign-off.
+   Ranges are each leg's own [start + 0.68·span, start + 0.88·span] over the
+   13.4 weight total (the weights are tabulated once, at THE WAYMARKERS). THIS
+   LINE USED TO SAY 0.02 / 0.34 AND WAS WRONG: those are the SIGN-OFF's numbers,
+   which is one of the three entries deliberately off the formula, and the
+   general rule had been overwritten with its exception. The three exceptions
+   are the title card (pinned to the arrival gate), section 8 (its window is the
+   tail of a leg, not a leg) and the sign-off (early, so the sentence is set
+   before the machine starts writing); each says so where it is written.
 
-   EIGHT TITLES, SEVEN MARKS, NINE SECTIONS. The mark selectors cover sections 1
-   through 7 because the tail of the chain carries no glyph — the pull back is
-   wordless. The sign-off does carry a closing line (ScrollWorld.tsx, THE
-   INVITATION) and its words take the same cascade as every other title, so
-   section 9 gets a window of its own in the table below. Section 8 is
-   genuinely wordless and appears nowhere here.
+   EIGHT TITLES, EIGHT MARKS, NINE SECTIONS. Every leg but 6 carries a title and
+   a mark — five chapters plus the title card, section 8 and the sign-off, which
+   wear the same lockup without being stops on the trail (ScrollWorld.tsx, the
+   `Section` type). Section 6 is the only one with nothing to animate, and it
+   appears nowhere here.
 
    A MISSING WINDOW IS NOT A NO-OP, which is why it is a table entry rather than
    an omission. `.sw-copy__title > span` is unqualified, so the cascade applies
@@ -1028,8 +1282,8 @@
        must take the identical travel, or the mark comes apart from its lens.
        Below 860px the pair is `display: none` (the phone block) and neither
        animation is generated at all. */
-    .sw-copy:nth-of-type(-n + 7)::before,
-    .sw-copy:nth-of-type(-n + 7)::after {
+    .sw-copy:has(.sw-copy__eyebrow)::before,
+    .sw-copy:has(.sw-copy__eyebrow)::after {
       animation: sw-copy-mark-set linear both;
       animation-timeline: --sw-flight;
       animation-range: contain var(--sw-a) contain var(--sw-b);
@@ -1091,7 +1345,7 @@
     }
 
     /* THE WINDOW, PER CHAPTER, AND THIS IS THE ONLY PLACE IT IS WRITTEN. Each
-       leg's own [start + 0.68·span, start + 0.88·span] over the 14.3 weight
+       leg's own [start + 0.68·span, start + 0.88·span] over the 13.4 weight
        total. Custom properties inherit, so the mark, the title and every word
        inside it all read the same pair — change one number and the whole
        chapter moves together. Recompute these with THE WAYMARKERS and the
@@ -1115,44 +1369,69 @@
     /* UNCHANGED BY THE LONG HOLD, and checked rather than assumed — re-checked
        against the recomputed window, not carried over. This runs 68 → 88% of
        scene 2's own leg (17.147 → 19.105%), and that scene's widened dwell
-       (15.7 → 27.3%) holds full opacity across 7 → 93% of itself, which is
-       16.512 → 26.488%. The cascade therefore still sets against ink that is
+       (14.928 → 27.036%) holds full opacity across 7 → 93% of itself, which is
+       15.776 → 26.188%. The cascade therefore still sets against ink that is
        already up, which is the whole point of IT SITS INSIDE THE PLATEAU ON
        PURPOSE above. */
+    /* THE TITLE CARD, PINNED TO THE GATE and off the formula — the exception
+       above. 1.3 → 2.7% became 1.357 → 2.818% in the Aug 2026 retiming, and the
+       reason is worth stating because nothing about this window's DESIGN moved:
+       the gate is a fixed distance of scroll (`--wgc-copy` releases around 0.26
+       of a viewport in), and the flight got shorter, so the same distance is a
+       larger PERCENTAGE of it. Both numbers are the old ones times 14.3/13.4. */
     .sw-copy:nth-of-type(1) {
-      --sw-a: 1.3%;
-      --sw-b: 2.7%;
+      --sw-a: 1.387%;
+      --sw-b: 2.881%;
     }
     .sw-copy:nth-of-type(2) {
-      --sw-a: 17.147%;
-      --sw-b: 19.105%;
+      --sw-a: 16.806%;
+      --sw-b: 18.896%;
     }
     .sw-copy:nth-of-type(3) {
-      --sw-a: 28.364%;
-      --sw-b: 30.741%;
+      --sw-a: 28.776%;
+      --sw-b: 31.313%;
     }
     .sw-copy:nth-of-type(4) {
-      --sw-a: 40.252%;
-      --sw-b: 42.629%;
+      --sw-a: 41.463%;
+      --sw-b: 44%;
     }
     .sw-copy:nth-of-type(5) {
-      --sw-a: 50.713%;
-      --sw-b: 52.671%;
+      --sw-a: 52.627%;
+      --sw-b: 54.716%;
     }
-    .sw-copy:nth-of-type(6) {
-      --sw-a: 62.406%;
-      --sw-b: 64.923%;
-    }
+    /* SECTION 6 HAS NO ENTRY, and unlike the pull back it once did. The slot is
+       silent (ScrollWorld.tsx, THE SLOT IS SILENT): no title and no eyebrow, so
+       no `.sw-copy__title > span` for the cascade to apply to and no mark to
+       give a window to. A MISSING WINDOW IS NOT A NO-OP applies to articles that
+       HAVE something to animate and no window; this is an article with nothing.
+       Chapter 7's sentence is what stands over this leg, and it does so from
+       chapter 7's OWN article — see the entry below. */
+    /* CHAPTER 7 SETS DURING LEG SIX, NOT LEG SEVEN, and that is the one entry
+       in this table whose leg number does not match its index. Its sentence
+       spans both legs (ScrollWorld.tsx, THIS SENTENCE SPANS TWO LEGS), so the
+       words have to be set at the head of the SPAN — 0.68 → 0.88 of leg 6,
+       which is where the article's own opacity is rising. Left on leg 7's own
+       68 → 88% the article would stand at full ink from mid leg 6 with its
+       words still clipped at translateY(110%): a lit pane with a mark, an
+       eyebrow and no sentence, for the better part of a leg. */
     .sw-copy:nth-of-type(7) {
-      --sw-a: 74.993%;
-      --sw-b: 77.51%;
+      --sw-a: 63.075%;
+      --sw-b: 65.164%;
     }
-    /* The sign-off, on the same arithmetic and skipping the pull back, which
-       has no title and no mark to give a window to: leg start 12.9, span 1.4,
-       so 12.928 → 13.376 of the 14.3 total. */
+    /* SECTION 8 HAS NO ENTRY, for the same reason section 6 has none: the
+       pull-back is wordless (ScrollWorld.tsx, THE PULL BACK IS WORDLESS), so
+       there is no title to cascade and no mark to give a window to. It had one
+       for part of a day and it is gone with the copy. */
+    /* The sign-off, and it is the other entry off the formula: 0.02 → 0.34 of
+       its own leg rather than 0.68 → 0.88, so the closing line is set before
+       the machine starts writing (ScrollWorld.tsx, DOES IT FIGHT THE
+       LETTERING?). Leg start 12.0, span 1.4, so 12.028 → 12.476 of the 13.4
+       total. The FRACTIONS are unchanged by the retiming — only the
+       denominator moved — so the sentence still lands at the same frame of the
+       clip it always did. */
     .sw-copy:nth-of-type(9) {
-      --sw-a: 90.406%;
-      --sw-b: 93.538%;
+      --sw-a: 89.761%;
+      --sw-b: 93.104%;
     }
   }
 }
@@ -1267,7 +1546,7 @@
        early — see THE ENDING, below.
 
    THE RANGES ARE THE SAME TABLE AS EVERYTHING ELSE: each leg's own start and
-   end over the 14.3 weight total, which is where THE WAYMARKERS, the trail's
+   end over the 13.4 weight total, which is where THE WAYMARKERS, the trail's
    unfurl and the windows above all come from. `scrollMobileFactor` scales
    every leg by one number, so one table serves the phone and the pane. If a
    `scroll:` weight ever changes, all four move together — and so does THE
@@ -1304,7 +1583,7 @@
    means a complex system arrives, which is the wrong way round.
 
    TWO CHANGES, AND THE SECOND IS THE ONE THAT BUYS THE TIME. The window widens
-   (16.364–26.462% → 15.7–27.3%, below), and this curve holds full opacity
+   (15.97–26.746% → 14.928–27.036%, below), and this curve holds full opacity
    across 7 → 93% of it instead of the house 13 → 87%. Together the title stands
    at full strength for about 9.98% of the page against 7.47% before, which is a
    third longer, and the maze lands at 39.5% through the window — inside the
@@ -1356,6 +1635,14 @@
     opacity: 0;
   }
 }
+
+/* `sw-copy-late` WAS HERE — a 24/85 hold for a window a quarter of a chapter's
+   length, built when section 8's line arrived on the settled frame after the
+   pull-back. The owner moved that line to the head of the leg, so the window is
+   an ordinary one and the house curve fits it. Kept as a note because the
+   ARITHMETIC generalises: 13% of a 0.448vh window is a 58px fade at 900px tall,
+   which pops rather than arrives, so any future window under about half a
+   viewport needs a hold of its own rather than the house one. */
 
 /* The ending rises on the same curve as every other chapter and then never
    comes down — there is no tenth scene for it to make way for. */
@@ -1475,13 +1762,20 @@
      rounding artefact — see the note above before "correcting" one back onto
      its own leg.
 
-     ALL NINE ENTRIES ARE THE 14.3 ARITHMETIC — nine sections, weights
-     1.5 + 1.4 + 1.7 + 1.7 + 1.4 + 1.8 + 1.8 + 1.6 + 1.4. These numbers went
-     through a full round trip when an experimental arrival leg (the Macintosh
-     push-in, now the What I do transition on `/`) briefly ran ahead of the
-     chain and put the whole table on 15.7; both directions were derived from
-     the section weights, never by scaling, and the 15.7 set is preserved in
-     .docs/handoff-home-restructure.md should the weights ever change again. */
+     ALL NINE ENTRIES ARE THE 13.4 ARITHMETIC — nine sections, weights
+     1.3 + 1.4 + 1.7 + 1.7 + 1.4 + 1.4 + 1.8 + 1.3 + 1.4, tabulated once at THE
+     WAYMARKERS. These numbers have been re-derived repeatedly (an experimental
+     arrival leg put the whole table on 15.7 and was reverted; the Aug 2026 cut
+     took it 14.3 → 13.4 over several passes as legs gained and lost copy),
+     always from the section weights and never by scaling. THE VERIFICATION IS
+     A SCRIPT, not an eye: parse the config, recompute every table, diff it
+     against this file. It has caught stale fractions twice.
+
+     THREE OF THEM ARE NOT ON THE 60/52 FORMULA and each says so in its own
+     comment: chapter 2's long hold, chapter 7's two-leg span, and section 8's
+     late arrival. All three also exist a second time as `copyWindow` fractions
+     in ScrollWorld.tsx for the browsers that cannot run this table — CHANGE
+     BOTH OR NEITHER, every time. */
   /* CHAPTER 1 IS THE EXCEPTION, and the only one: it GREETS. Its leg is the
      first thing on the timeline, so its sentence is already on screen when the
      page loads — `sw-copy-dwell-first` skips the rise and keeps only the house
@@ -1490,7 +1784,7 @@
      board — its own subject — for the whole of the board's time on screen. */
   .sw-copy:nth-of-type(1) {
     animation-name: sw-copy-dwell-first;
-    animation-range: contain 0% contain 15.58%;
+    animation-range: contain 0% contain 15.134%;
   }
   /* THE ONE ENTRY OFF THE ARITHMETIC, and the only one in this table that is.
      The other six run 60% of their own leg to 52% of the next; this one runs
@@ -1500,32 +1794,85 @@
      neighbours first, then take this window back out to just inside them. */
   .sw-copy:nth-of-type(2) {
     animation-name: sw-copy-dwell-long;
-    animation-range: contain 15.7% contain 27.3%;
+    animation-range: contain 15.262% contain 27.641%;
   }
   .sw-copy:nth-of-type(3) {
-    animation-range: contain 27.413% contain 38.35%;
+    animation-range: contain 27.761% contain 39.433%;
   }
   .sw-copy:nth-of-type(4) {
-    animation-range: contain 39.301% contain 49.147%;
+    animation-range: contain 40.448% contain 50.955%;
   }
   .sw-copy:nth-of-type(5) {
-    animation-range: contain 49.93% contain 60.392%;
+    animation-range: contain 51.791% contain 61.403%;
   }
+  /* ══ SILENT, AND ITS NEIGHBOUR'S SENTENCE IS WHAT STANDS ON IT ═══════════
+     Section 6 has no title, no eyebrow and no mark, so this range paints
+     nothing at all — it is its own leg, verbatim, and it exists only so the
+     applier cannot run the dwell over the WHOLE timeline (THE PILE-UP
+     POST-MORTEM). Harmless on an empty article today; a trap the moment
+     anybody puts a word back in it.
+
+     THE PANE IS NOT EMPTY OVER THIS LEG. Chapter 7's window opens at 60% of
+     leg SIX and runs to 52% of leg EIGHT, so the reader crosses the bloom with
+     "Taking a product from the first sketch to the shipped screen." standing on
+     the glass. That is the entry below, and it is the reason this one paints
+     nothing rather than the reason the pane is bare.
+
+     IT OVERLAPS CHAPTER 7'S WINDOW, which is the file's one standing
+     prohibition — windows ABUT and never overlap, because every `.sw-copy` is
+     absolutely positioned in the same place and an overlap is two titles
+     printed over each other. There is nothing on this article to print, so
+     there is nothing to overlap. Do not read this as a licence: give section 6
+     a title and this table is wrong. */
   .sw-copy:nth-of-type(6) {
-    animation-range: contain 61.399% contain 72.979%;
+    animation-range: contain 55.97% contain 66.418%;
   }
+  /* ══ THE SPAN: ONE CHAPTER OVER TWO LEGS ════════════════════════════════
+     60% of leg SIX to 52% of leg EIGHT. That is the house phasing (rise at 60%
+     of your own leg, leave at 52% of the next) with "your own leg" read as the
+     PAIR, so nothing here is hand-tuned:
+
+         start = 7.5  + 0.60 × 1.4 = 8.34   → 62.239%
+         end   = 10.7 + 0.52 × 1.3 = 11.376 → 84.896%
+
+     ScrollWorld.tsx holds the matching `copyWindow` for the JS fallback path
+     and the argument for the span; CHANGE BOTH OR NEITHER. The boundaries
+     clear: chapter 5 is gone at 60.058% and section 8's own line does not open
+     until the sign-off at 89.552% — leg 8 is wordless and prints nothing.
+
+     IT TAKES THE LONG-HOLD CURVE for the same reason chapter 2 does — the
+     window is 3.19vh where a chapter's is about 1.4, so the house 13/87 would
+     spend a third of a viewport fading at each end. 7/93 is the one keyframe
+     set both long chapters share. */
   .sw-copy:nth-of-type(7) {
-    animation-range: contain 73.986% contain 84.839%;
+    animation-name: sw-copy-dwell-long;
+    animation-range: contain 62.239% contain 84.896%;
   }
-  /* The pull back paints nothing, so this range only has to not collide with
-     its neighbours: chapter 7 is gone by 84.839% and the sign-off arrives at
-     90.21%. */
+  /* ══ WORDLESS, AND IT IS THE ONLY LEG THAT IS ═══════════════════════════
+     Section 8 paints nothing: no title, no eyebrow, no mark. The pull-back is
+     the move that reframes the whole garden as a screen, and a sentence over it
+     would be read instead of the reveal — ScrollWorld.tsx (THE PULL BACK IS
+     WORDLESS) carries the argument, the frame measurements behind it, and the
+     record of copy being put here and taken back off in Aug 2026.
+
+     ITS OWN LEG, VERBATIM, and the entry exists only so the applier cannot run
+     the dwell over the WHOLE timeline (THE PILE-UP POST-MORTEM). Chapter 7 is
+     gone by 84.896% — 52% of this leg — and the sign-off arrives at 89.552%, so
+     the pane is genuinely bare across the reveal and then the ending speaks.
+
+     THE EXPLICIT WINDOW IT BRIEFLY NEEDED IS GONE WITH THE COPY. While this
+     section spoke it had to declare a `copyWindow` capped at leg 9's start,
+     because the engine derives "52% of the next leg" unconditionally and the
+     sign-off arrives at the HEAD of its own leg — the two would have overlapped
+     on the fallback path. An empty article has nothing to collide with, so the
+     walk is back to TWO explicit windows and both are timing decisions rather
+     than guards. */
   .sw-copy:nth-of-type(8) {
-    animation-range: contain 84.839% contain 90.21%;
+    animation-range: contain 79.851% contain 89.552%;
   }
   .sw-copy:nth-of-type(9) {
     animation-name: sw-copy-arrive;
-    animation-range: contain 90.21% contain 100%;
+    animation-range: contain 89.552% contain 100%;
   }
 
   /* ══ UNDER REDUCED MOTION THE PICTURE IS A SLIDESHOW, SO THE TABLE IS ═════
@@ -1548,7 +1895,7 @@
 
      SO EACH CHAPTER IS PUT BACK ON ITS OWN LEG, exactly: the boundaries below
      are the section weights (1.5 + 1.4 + 1.7 + 1.7 + 1.4 + 1.8 + 1.8 + 1.6 +
-     1.4 = 14.3) accumulated, which is the same table THE WAYMARKERS, the
+     1.4 = 13.4) accumulated, which is the same table THE WAYMARKERS, the
      trail's unfurl and the windows above are all written from. Windows ABUT and
      never overlap — the file's standing rule, because every `.sw-copy` is
      absolutely positioned in the same place and an overlap is two titles
@@ -1580,29 +1927,41 @@
      path is named in the unverified list rather than patched upstream. */
   @media (prefers-reduced-motion: reduce) {
     .sw-copy:nth-of-type(1) {
-      animation-range: contain 0% contain 10.49%;
+      animation-range: contain 0% contain 9.701%;
     }
     .sw-copy:nth-of-type(2) {
       animation-name: sw-copy-dwell;
-      animation-range: contain 10.49% contain 20.28%;
+      animation-range: contain 9.701% contain 20.149%;
     }
     .sw-copy:nth-of-type(3) {
-      animation-range: contain 20.28% contain 32.168%;
+      animation-range: contain 20.149% contain 32.836%;
     }
     .sw-copy:nth-of-type(4) {
-      animation-range: contain 32.168% contain 44.056%;
+      animation-range: contain 32.836% contain 45.522%;
     }
     .sw-copy:nth-of-type(5) {
-      animation-range: contain 44.056% contain 53.846%;
+      animation-range: contain 45.522% contain 55.97%;
     }
+    /* Paints nothing here either, and its leg is covered by the entry below. */
     .sw-copy:nth-of-type(6) {
-      animation-range: contain 53.846% contain 66.434%;
+      animation-range: contain 55.97% contain 66.418%;
     }
+    /* THE SPAN SURVIVES STILLS MODE, and it is the one entry in this table that
+       is not "its own leg". The rule this whole block enforces is that a title
+       must be on the pane while the picture it belongs to is on screen; in
+       stills mode that is exactly its own leg — except for the chapter that
+       covers TWO scenes on purpose, where the picture it belongs to is both of
+       them. So it runs legs 6 and 7 end to end, and it keeps the house curve
+       rather than the long hold: with no travel to cross there is no widened
+       window here, so 13/87 is right again. */
     .sw-copy:nth-of-type(7) {
-      animation-range: contain 66.434% contain 79.021%;
+      animation-name: sw-copy-dwell;
+      animation-range: contain 55.97% contain 79.851%;
     }
+    /* Its own leg, exactly, like every other entry here — and it paints
+       nothing in either mode. */
     .sw-copy:nth-of-type(8) {
-      animation-range: contain 79.021% contain 90.21%;
+      animation-range: contain 79.851% contain 89.552%;
     }
   }
 }
@@ -1635,67 +1994,41 @@
    is the element all of it hung off and is now a hover preview and an
    accessible name, nothing else. ═══════════════════════════════════════════ */
 
-/* ══ THE ENDING IS REACHABLE ONLY AT THE END ════════════════════════════
-   The two end buttons are the sign-off's own `cta`, so the engine builds them
-   inside scene 9's copy article and rides that article's opacity (ScrollWorld
-   .tsx, THE ENDING). That gives the reveal and the hold for nothing — the
-   ending's curve rises to full over the first 20% of its leg and never comes
-   down (THE CHAPTER HOLDS) — and it leaves exactly one thing undone.
+/* ══ THE ENDING IS REACHABLE ONLY AT THE END — RETIRED, AND WORTH KEEPING ═══
+   A `sw-cta-reachable` keyframe pair and a scroll-ranged `visibility` switch on
+   `.sw-copy:nth-of-type(9) .sw-copy__cta` stood here. The sign-off carries no
+   `cta` any more (ScrollWorld.tsx, NO `cta`, AND THE ENDING STILL HAS ITS
+   BUTTON) — the walk has one button and it is `.sw-exit`, which is always
+   visible and always reachable — so the engine builds no CTA row and there is
+   nothing left for this to switch.
 
-   THE 20% WAS 40%, and the engine's. Read live, the buttons arrived a good
-   half-viewport of scrolling after the line they belong to had finished
-   setting, so the ending read as a sentence that then went looking for its
-   controls. They are one lockup and they now land as one.
+   THE LESSON IS GENERAL AND THE NEXT PERSON WILL NEED IT, so it is not deleted
+   with the rules:
 
-   OPACITY IS NOT ABSENCE. The copy layer is `position: fixed`, so those two
-   links exist from the first paint and sit at zero opacity for the twelve
-   viewports of flight before the ending. A `<a>` at opacity 0 is still a tab
-   stop: a keyboard reader pressing Tab at the gate would land on "See the work"
-   with no visible focus ring anywhere on screen, and the page has no other
-   focusable content in that layer to explain it. The engine turns pointer
-   events off per frame; it has no equivalent for the tab order, and it may not
-   be edited.
+   OPACITY IS NOT ABSENCE. The copy layer is `position: fixed`, so everything in
+   it exists from the first paint. An `<a>` at opacity 0 is still a tab stop: a
+   keyboard reader pressing Tab at the gate landed on "See the work" with no
+   visible focus ring anywhere on screen, and the page has no other focusable
+   content in that layer to explain it. The engine turns pointer events off per
+   frame; it has no equivalent for the tab order, and it may not be edited. So
+   anything in this layer that must not be reachable yet needs `visibility`, not
+   opacity — `.sw-route__label` and the masthead's wordmark both have their own
+   version of this.
 
-   SO THE SWITCH IS A SCROLL RANGE, not a script. `visibility` interpolates
-   discretely toward `visible`, so the flip lands on the first frame INSIDE the
-   range and the range's end is inert — it is written as the article's own fade
-   window anyway (leg start to leg start + 20%, the span it rises over) so the
-   two facts stay one fact rather than drifting into two numbers. The frames
-   come out of the same table THE WAYMARKERS is written in: the scroll weights
-   sum to 14.3, the sign-off's leg runs 12.9 → 14.3 of that (90.21%) and is
-   fully lit a fifth of the way along it (92.168%). If a `scroll:` weight ever
-   changes these move with the fractions above, and with THE CHAPTER HOLDS —
-   the two ranges are the same window and must be edited together.
-   `scrollMobileFactor` scales every leg by the same number, so one pair serves
-   the phone band and the desktop pane.
+   AND THE SWITCH WAS A SCROLL RANGE RATHER THAN A SCRIPT. `visibility`
+   interpolates discretely toward `visible`, so the flip lands on the first
+   frame INSIDE the range and the range's end is inert; it was written as the
+   article's own fade window so the two facts stayed one fact. It failed OPEN —
+   no `visibility` on the rule itself, so a browser without scroll-driven
+   animations simply left the links reachable, which is the harmless direction.
+   Hiding by default and revealing by animation fails the other way, into a
+   control nobody can reach.
 
-   IT IS NOT GATED ON REDUCED MOTION, and it is in its own `@supports` rather
-   than inside the one above for that reason: this animates nothing a reader can
-   see move. It is a position with two discrete values, it advances only as far
-   as her own gesture advances it, and gating it would leave exactly the readers
-   most likely to be on a keyboard with the defect it exists to fix.
-
-   AND IT FAILS OPEN. No `visibility` is declared on the rule itself, so a
-   browser without scroll-driven animations — or one that declines to animate
-   this property — inherits `visible` and simply leaves two reachable links on
-   the page, which is the harmless direction. Hiding by default and revealing by
-   animation would fail the other way, into two links nobody can reach. */
-@keyframes sw-cta-reachable {
-  from {
-    visibility: hidden;
-  }
-  to {
-    visibility: visible;
-  }
-}
-
-@supports (animation-timeline: scroll()) {
-  .sw-copy:nth-of-type(9) .sw-copy__cta {
-    animation: sw-cta-reachable linear both;
-    animation-timeline: --sw-flight;
-    animation-range: contain 90.21% contain 92.168%;
-  }
-}
+   ONE MEASUREMENT FROM IT IS STILL LIVE and belongs to THE CHAPTER HOLDS: the
+   ending's copy rises to full over the first 20% of its leg, not the engine's
+   40%. Read live at 40% the buttons arrived a good half-viewport after the line
+   they belonged to had finished setting, so the ending read as a sentence that
+   then went looking for its controls. ═════════════════════════════════════ */
 
 /* `.sw-copy__eyebrow`'s rule left this spot and is now beside `.sw-copy__title`,
    where the rest of the lockup is set. The note that stood here — "no section
@@ -1709,13 +2042,23 @@
    and the arrival cue that replaced it carries the same argument in its own
    block below. */
 
-/* ── THE BUTTON AT THE ENDING ─────────────────────────────────────────────
-   It was two — "See the work" beside "Get in touch" — and it is one. For a
-   while the email sat under it as a line of type; that is gone too, and the
-   ending now offers one thing to do and says nothing else. What is left stands on the foot of the pane at the sign-off with the
-   machine writing `hello world` behind it. The engine ships it as a pill with a
-   hover that does nothing but lift the box 2px, and both halves of that are
-   wrong here.
+/* ── THE BUTTON, AND IT IS THE WHOLE PAGE'S ──────────────────────────────
+   It was two buttons at the ending — "See the work" beside "Get in touch" —
+   then one, then one plus a quiet sentence-link standing at the foot of the
+   pane for the rest of the walk. It is ONE OBJECT NOW and it is not the
+   ending's: `.sw-exit` wears these classes and stands in the foot slot from the
+   first paint to the handover (THE STANDING EXIT). The sign-off carries no
+   `cta`, so nothing else on the route renders a `.sw-btn` at all.
+
+   THE VALUES ARE UNCHANGED BY THAT, and the block is kept where it is rather
+   than folded into `.sw-exit`, for the reason the collapse was made in the
+   first place: these are the ENGINE'S button classes, so any control this route
+   ever renders — a returning `cta`, a second destination — is the same object
+   by construction instead of by somebody remembering. Read this block for what
+   the button IS and `.sw-exit` for where it stands.
+
+   The engine ships it as a pill with a hover that does nothing but lift the box
+   2px, and both halves of that are wrong here.
 
    IT IS NOT A PILL. Everything else on this page that is fully rounded is
    round because it is round: the notches on the trail. A 999px radius on a text control is the one shape this site does
@@ -1742,24 +2085,20 @@
    container with two heights the day a secondary returns. `min-height` plus
    inline-flex centring does it structurally, and the 44px floor is the touch
    target in the same number. */
-/* THE GAP TO THE LINE ABOVE, and it is a real gap again. The engine's 28px was
-   brought to 26px and then to 0, because for a while there was nothing above
-   this row at all and the margin was only space a bottom-anchored box grew
-   upward into. The sign-off carries a closing line now (ScrollWorld.tsx, THE
-   INVITATION), so the row has a sentence to belong to and the number is
-   re-derived rather than zeroed.
+/* `.sw-copy__cta` HAD A RULE HERE and nothing builds the row any more: no
+   section carries a `cta` (ScrollWorld.tsx). What it set was the gap between
+   the ending's closing line and the button under it — `clamp(24px, 2vw, 28px)`,
+   derived as 0.71 → 0.73 of the title's own line box, so the two read as one
+   lockup rather than as two objects sharing a pane.
 
-   IT IS SET UNDER THE TITLE'S OWN LEADING, which is what makes the two read as
-   one lockup instead of as two objects sharing a pane. The title sets at
-   `line-height: 1.1` on a 1.875 → 2.25rem clamp, so its line box runs 33px at
-   the narrow end and 39.6px at 1440; 24 → 28px is 0.73 → 0.71 of that at both
-   ends. Wider and the buttons detach from the sentence they answer; narrower
-   and they sit in the descenders of its last line. */
-.sw-copy__cta {
-  align-items: center;
-  gap: 10px;
-  margin-top: clamp(24px, 2vw, 28px);
-}
+   THAT NUMBER HAS NO JOB NOW, and the reason is the composition change the
+   collapse made: the button is pinned to the pane's FOOT at every scroll
+   position, so at the sign-off it is no longer under the sentence, it is under
+   the whole pane. The ending is a centred line with the walk's one door
+   standing at the bottom of the sheet, which is the arrangement the owner
+   asked for — nothing shifts when the reader arrives on it, because nothing
+   moved. The gap is recorded here in case a lockup ever wants rebuilding; it
+   should be re-derived from whatever type it sits under, not restored. */
 
 .sw-btn {
   font-family: var(--sw-font-body);
@@ -2086,186 +2425,132 @@
    arrangement FlightFork explicitly avoids. */
 
 /* ══ THE STANDING EXIT ════════════════════════════════════════════════════
-   "Skip to the work", at the foot of the pane, on the copy column's own left
-   axis, from the moment the pane lands beside the film until leg 8. It is the
-   only door out of the walk that is open for the whole of it, and it is the
-   object the arrival's skip and the trail duplicate turned into after two
-   rounds of being a screenful-sized decision.
+   "See the work", at the foot of the pane, on the copy column's own left axis,
+   from the first paint to the handover into the work band. It is the walk's
+   ONLY control, and it is the same button the ending used to build for itself.
 
-   IT BELONGS TO THE PANE, AND IT ARRIVES WITH THE PANE. That is the one thing
-   about this control that is not negotiable and it has now been settled twice
-   (owner's call, Aug 2026, after a pass that removed the gate and had to put it
-   back): the exit is printed on the panel, so it may not be standing in a corner
-   of the floppy screen before there is a panel for it to be printed on. See THE
-   GATE IS THE ARRIVAL below for what that costs and what it does not.
+   ── IT WAS TWO CONTROLS AND IT IS ONE (owner's call, Aug 2026) ────────────
+   The route carried a quiet 12px underlined sentence-link here, faded out
+   across leg 8, plus a real `.sw-btn--primary` that the engine built inside the
+   sign-off's copy article from `cta`. Two objects, one job, handing over to
+   each other at the most important moment on the page.
+
+   THE COLLAPSE IS THE OWNER'S AND IT ANSWERS TWO THINGS AT ONCE. The escape
+   hatch has to be an obvious CONTROL from the first screen — a recruiter inside
+   a twelve-viewport film must see the way out without hunting for it, and an
+   underlined sentence in a corner is not that. And once it is a button in the
+   ending's own style, position and wording, a crossfade between it and the
+   ending's button is two elements pretending to be one, which is precisely
+   where a box mismatch shows up as a control jumping.
+
+   SO THE STYLING IS NOT WRITTEN HERE. `FlightExit` renders
+   `sw-btn sw-btn--primary sw-exit`, so every value that makes it a button —
+   size, weight, radius, min-height, hover fill, press, focus ring — comes from
+   THE BUTTON AT THE ENDING above, unchanged and shared by identity rather than
+   by copy. This block declares POSITION and nothing else. If the ending's
+   button is ever retuned, this follows it whether anybody remembers or not.
 
    THE SLOT IS THE PRINTED CAPTION'S, and inheriting it is the point rather than
    an economy. `--sw-print-bottom` was tuned as the place a page puts the thing
    that is true for the whole of it — foot of the pane, left axis, clear of the
    home indicator on a phone and standing on the panel's own foot on desktop —
    and the printed chapter name was never that thing: it changed seven times.
-   The exit does not change at all.
+   This does not change at all, at any scroll position, in either layout.
 
-   THE VOICE IS THE ARRIVAL CUE'S SECOND HALF, and it has stopped being kept at
-   the value it inherited: body face, sentence case, underlined 1px at 0.35em
-   offset, a 44px target padded in and margined back out, and a colour-only
-   100ms hover gated to hover+fine — all of that is unchanged from when it was
-   `.sw-skip` in the fork. The SIZE, WEIGHT and INK are not.
+   ── WHAT THE COLLAPSE SUPERSEDED, kept because the reasoning was sound for
+   the arrangement it was written about ────────────────────────────────────
 
-   IT WAS 12px, WHICH IS THE SIZE OF A CATEGORY LABEL. `text-xs` is what this
-   site sets uppercase eyebrows in; a navigation link is `text-sm`
-   (.docs/type-scale.md). The exit was carrying the eyebrow's size because it
-   inherited a skip control's, and a skip control is a thing you offer once —
-   this is the only door open across fourteen viewports, and it was the
-   quietest object on the pane. It is `text-sm` at weight 500 in full ink now:
-   still a fifth the height of the title beside it, and no longer the smallest
-   thing on a page whose subject is a moving picture.
+   THE VOICE ARGUMENT. Three paragraphs used to sit here deriving the link's
+   size, weight and ink: it had been `text-xs`, which is the size of a category
+   label, and was moved to `text-sm` at weight 500 in full ink because the one
+   door open across the whole walk should not be the quietest object on the
+   pane. That argument reached its conclusion — the door is now the loudest
+   control on the page and the only one — and the values it produced are gone,
+   replaced by the button's. `--sw-exit-size` and `--sw-exit-leading` survive
+   only because the phone band's clearance arithmetic reads them; see
+   `--sw-exit-stack`.
 
-   THE PAIRING WITH THE PREVIEW IS UNHARMED and is in fact clearer. It is a
-   SENTENCE and the trail's preview one line above it is a LABEL — caps,
-   tracked, no pointer events. They now differ in size as well as in case,
-   voice and clickability, which is more distance than the pair needed rather
-   than less.
+   THE PAIRING WITH THE PREVIEW is unharmed and is clearer again: the trail's
+   hover preview one line above is a LABEL (caps, tracked, no pointer events)
+   and this is a BUTTON. They no longer differ only in case and clickability.
 
-   ONE NAME FOR THE WHOLE WALK, AND IT IS "Skip to the work" (owner's call, Aug
-   2026). It read "See the work" for a stretch, on the argument that a permanent
-   door names where it GOES and only a one-screen offer names the act of
-   LEAVING — the ending button's own words, deliberately.
+   THE WORDING. It read "Skip to the work" (owner's call, Aug 2026) against
+   "See the work", on the argument that a reader inside a long film needs to be
+   told they may DECLINE it, and that a destination does not say that. That
+   argument assumed the control disappears before the ending. It does not any
+   more, and a control still standing at the sign-off cannot say "skip" — there
+   is nothing left to skip. "See the work" is the one wording that is true at
+   every scroll position, and naming the destination is what a permanent door
+   does. The distinction the old wording protected — declining the walk versus
+   concluding it — turns out not to need two names, because it never needed two
+   controls.
 
-   THE ARGUMENT THAT WINS IS ABOUT THE READER, NOT ABOUT THE DOOR. By the time
-   this link is on screen the reader is inside a fourteen-viewport film, and the
-   thing they need told is that they may decline it. "See the work" is silent
-   about that; it reads as one more place to go rather than as a way out of the
-   thing currently playing. "Skip" is the word every sequence of this kind uses,
-   and a reader should not have to infer an escape from a destination.
+   THE DEPARTURE. This used to fade out across leg 8's own dwell window so that
+   the ending's button would be the only door on the last screen. There is only
+   ever one door, so the fade has nothing to prevent, and it was also the one
+   moment on the page where a mismatch between the two boxes would have shown.
+   `sw-exit-leaves` is deleted with it. If a reason to hide this control ever
+   appears, note that it is a touch target and a tab stop: hiding it means
+   `visibility`, not opacity (OPACITY IS NOT ABSENCE).
 
-   IT THEREFORE DOES NOT SHARE WORDS WITH THE ENDING'S BUTTON, which turns out to
-   be a gain. The two go to the same place and never share a screen — this fades
-   across leg 8 precisely so they do not — but they are different offers: this
-   one declines the walk, that one concludes it. Two doors to one place is fine;
-   two doors with one name is what read as a duplicate.
+   THE LEGACY COST that went with the fade: where `animation-timeline: scroll()`
+   was unsupported the animation never ran and the exit stood at the sign-off
+   beside the ending's button saying the same words. That defect cannot occur
+   now — there is one button and no animation on it — which is a small argument
+   in the collapse's favour that nobody made at the time.
 
-   ── IT LEAVES AS THE ENDING ARRIVES ───────────────────────────────────────
-   The sign-off carries a real "See the work" button, and two identical doors on
-   one screen is the page asking twice. So this fades out across leg 8 — the
-   pull back, where the garden turns out to be a screen and the piece is visibly
-   ending — and is gone by the time leg 9 starts.
+   ── THE GATE IS GONE, AND THAT REVERSES A TWICE-SETTLED CALL ──────────────
+   This link used to ride `--wgc-copy`, the opening morph's own gate, so it
+   faded up as the sheet finished landing beside the film, roughly 0.26 of a
+   viewport in. The gate's argument: the exit is PRINTED ON THE PANEL, so it may
+   not stand in a corner of the floppy screen before there is a panel for it to
+   be printed on — the composition on that screen is a disk assembling over a
+   frosted sheet and it holds ONE other thing, the centred scroll cue. A pass in
+   Aug 2026 removed the gate on accessibility grounds and the owner's call put
+   it back the same day.
 
-   THE WINDOW IS NOT A NEW NUMBER. `contain 84.839% → contain 90.21%` is leg 8's
-   own entry in the copy dwell table above, verbatim: chapter 7's sentence is
-   gone at 84.839% and the sign-off's begins at 90.21%. The exit therefore
-   leaves in exactly the gap the walk already leaves for itself, and if a
-   `scroll:` weight ever changes, these two numbers are re-derived in one place
-   and copied here — they are not an independent tuning.
+   WHAT CHANGED IS THE OBJECT, NOT THE ARGUMENT. That reasoning is about a line
+   of INK needing a paper ground to be printed on. A solid ink button carries
+   its own ground: it is legible on frosted glass, on the engraving and on paper
+   alike, so it is not furniture waiting for a surface. And the requirement it
+   is weighed against has hardened — the way out must be visible on the first
+   screen, which no gate at 0.26 viewports can satisfy however short it is.
 
-   ── THE GATE IS THE ARRIVAL ───────────────────────────────────────────────
-   `--wgc-copy` is the opening move's own gate: it holds the printed layer at
-   zero until the sheet has drawn back, and releases between roughly 1.5% and
-   2.7% of the page depending on viewport height. The exit rides it, so it fades
-   up on the beat the first chapter's sentence does — which is to say, on the
-   beat the pane finishes landing beside the film. It is not standing on the
-   floppy screen, and it must not be.
+   WHAT THAT COSTS, recorded so the owner can weigh it: the floppy screen now
+   holds two objects again, the centred scroll cue and this button in the left
+   corner. The rank contest between a cue and an exit is one this family of
+   files has lost twice. It is not the same contest — both losses were between
+   two objects of the same KIND, set identically or set as a pill against a
+   pill, and this is a solid control against a word under a descending mark, at
+   opposite ends of the foot of the screen. But it is the thing to look at
+   first on that screen.
 
-   IT RIDES AS A FILTER, NOT AS AN OPACITY, for the reason this file gives
-   everywhere else: an animation owns `opacity` outright and a second declaration
-   cannot multiply into it, so the gate is `filter: opacity()` and the two terms
-   compose — the arrival here, the leg-8 departure there.
+   TWO THINGS WENT WITH THE GATE. `--wgc-copy-vis`, the tab-order switch that
+   kept a keyboard reader off an invisible link on the floppy screen — there is
+   nothing invisible to land on now — and the fallback asymmetry that went with
+   it. WorldGlassCard still publishes both properties; nothing on this route
+   reads `--wgc-copy-vis` any more, and that is a loose end named rather than
+   chased inside a retiming pass.
 
-   AND IT IS NOT DECLARED IN THIS BLOCK, WHICH IS THE ONE THING TO REMEMBER
-   ABOUT IT. It was, for a long time, and it never once ran: THE HANDOVER at the
-   foot of this file re-declares `filter` and `visibility` on `.sw-exit` at the
-   same specificity, later in the source, so the handover's version won and the
-   gate was dead text. The exit consequently stood at full strength on the floppy
-   screen for the whole of that period, while a rule reading `filter:
-   opacity(var(--wgc-copy, 1))` sat here saying it did not.
-
-   THE LESSON IS ABOUT WHERE, NOT ABOUT WHAT. A gate written next to the thing it
-   describes is easier to read and impossible to trust, because nothing at the
-   point of declaration tells you a later block re-declares the property. Both
-   terms are multiplied into a single declaration at the foot of the file now.
-   Anything else this link ever has to be gated by goes into that same
-   expression — never into a second declaration anywhere.
-
-   ── THE GATE WAS REMOVED ONCE, AND PUTTING IT BACK IS THE DECISION ────────
-   A pass in Aug 2026 deleted it, on the accessibility reading that a skip
-   control has to be on screen from the first frame or a reader decides to leave
-   before the door exists. The reasoning was sound in the abstract and wrong
-   here, and the owner's call reversed it the same day.
-
-   WHY IT IS WRONG HERE. This object is printed on the pane. Every value it has
-   — the foot slot, the left axis, the 12.6:1 ink, the `text-sm` weight that was
-   chosen against the title beside it — is a value derived from the panel it
-   stands on. Landing it on the floppy screen does not make an early exit; it
-   makes a piece of the pane's furniture floating in a corner with no pane under
-   it, a beat before the object it belongs to arrives. The composition on that
-   screen is a disk assembling over a frosted sheet, and it holds ONE other
-   thing: the scroll cue, centred. Putting a second thing there is the argument
-   this whole family of files has now lost three times (FlightFork.tsx).
-
-   AND THE READER IS NOT STRANDED, which is the part the removal pass missed.
-   The site masthead is fixed at the top of the floppy screen, it has a real
-   plate under it at every scroll position, and its contents line carries `Work`
-   pointing at the same `#work` id this link does. The first screen has a door.
-   It is a navigation item rather than a skip control, which is a fair criticism
-   of its wording and not of its existence — and the fix for that, if it is ever
-   wanted, is in the masthead, not a second control laid over the artwork.
-
-   WHAT THE REMOVAL PASS DID GET RIGHT, kept: the fallback. `var(--wgc-copy, 1)`
-   fell back to 1, so even once the declaration was reaching the element, the
-   frames before WorldGlassCard's mount effect published the property would paint
-   the finished state over the floppy and then drop it. The fallback is 0 now, so
-   the only frames it covers are frames that should be empty. It was the second
-   of the two faults putting this link on that screen and it was invisible behind
-   the first.
-
-   AND THE TAB ORDER GOES WITH IT. `filter: opacity(0)` hides pixels and nothing
-   else: a keyboard reader pressing Tab on the floppy screen landed on an
-   invisible "Skip to the work" with the focus ring drawn nowhere they could see
-   it — the same defect `.sw-copy__cta` has its own scroll-range `visibility`
-   switch for (OPACITY IS NOT ABSENCE), and the same one `--wgc-brand-vis` exists
-   to prevent on the masthead's wordmark. WorldGlassCard publishes
-   `--wgc-copy-vis` alongside the ramp for it, and the composed rule at the foot
-   of this file reads the two switches as a fallback chain. The leg-8 keyframes
-   still own `visibility` at the end of the walk — an animation beats a base
-   declaration — so all three compose rather than fight.
-
-   Under reduced motion `--wgc-copy` is released from the first frame, so the
-   exit is simply there. That is correct: there is no morph to be early for.
-
-   LEGACY COST, DECLARED. Where `animation-timeline: scroll()` is unsupported
-   the animation never runs, `opacity` stays at its authored 1, and the exit is
-   still standing at the sign-off beside the button that offers the ending.
-   Two working doors to one place is a redundancy rather than a defect, and the
-   alternative — re-deriving the track's progress in JavaScript — would
-   duplicate the arithmetic the view timeline exists to own (THE FLIGHT IS ITS
-   OWN TIMELINE). If it ever needs fixing, fix it there.
-
-   ── THE PHONE GROUND, AND THE DEFECT THAT WAS NOT SOLVED HERE ─────────────
+   ── THE PHONE GROUND ──────────────────────────────────────────────────────
    Above 861px the panel is SOLID paper and ink measures 12.6:1 at every scene.
+   Below 861px the band WAS frosted glass over the film, and on the three dark
+   scenes everything printed on it lost contrast — a defect that reached a
+   control. It is fixed: the band lands as paper on the pane's own progress the
+   way the desktop panel does (THE BAND LANDS AS PAPER TOO, in the 860px block),
+   so every number on the phone is the desktop's at every scene in both motion
+   modes.
 
-   BELOW 861px THE BAND WAS FROSTED GLASS OVER THE FILM, and on the three dark
-   scenes — the dusk bloom, the night gazebo, the graphite resolve — everything
-   printed on it lost contrast. Measured on a night frame the composite ground
-   landed near L 0.157, which puts ink at 2.96:1 and the quiet tone at about
-   2.0:1: a failure of AA for the chapter titles, of §4's 7:1 for the eyebrow,
-   and of AA for a CONTROL, which is the worst of the three.
-
-   IT IS FIXED, BY THE FIX THIS NOTE ALREADY NOMINATED. The band lands as paper
-   on the pane's own progress, exactly the way the desktop panel does — see THE
-   BAND LANDS AS PAPER TOO in the 860px block, which carries the arithmetic and
-   what it costs the picture. Every number on the phone is now the desktop's:
-   ink 12.6:1, `--sw-ink-quiet` 7.63:1, at every scene, in both motion modes.
-
-   TWO THINGS WENT WITH IT. The phone's `--sw-ink` override on this link was a
-   declared mitigation for that ground and has nothing left to mitigate, so it
-   is deleted and the exit is one object at one tone again. And the cheap part
-   of the mitigation was always honest about its limits — it bought back the
-   mid-tone scenes and did nothing for the dark ones, because the failure there
-   was dark ink on a dark backdrop and going darker cannot help.
+   AND THIS CONTROL WOULD SURVIVE IT EVEN IF IT WERE NOT. It is `--sw-ink` fill
+   with `--sw-paper` text, 13.4:1 against its own ground, which is a property of
+   the button and not of what is behind it. That is the difference between a
+   printed sentence and a solid control, and it is the same reason the opening
+   gate could go. The phone-only `--sw-ink` override this rule used to carry was
+   a mitigation for the frosted ground and is long gone.
 
    Still rejected, as everywhere else on this route: a plate, a scrim or a
-   frosted chip under the link. Nothing is laid over the artwork — the band is
-   not laid over anything, it IS the ground the walk is printed on.
+   frosted chip laid over the artwork. A button is not a plate — it is a control
+   with an edge, at a fixed size, in one place, and the artwork is not under it.
    ═══════════════════════════════════════════════════════════════════════════ */
 .sw-exit {
   position: fixed;
@@ -2276,121 +2561,124 @@
      the fork is centred, this is on the left margin. */
   z-index: 30;
 
-  /* Padded in, margined back out: the padding buys the target and the negative
-     margin gives the pixels back, so the WORD still stands on the foot slot and
-     on the column's left axis exactly where it did. 15px on an 18.2px line box
-     is 48.2px tall; 14px each side puts a 9-character link at about 110px wide.
-     Both axes clear WCAG 2.2's 24 × 24 minimum by a wide margin and clear §8's
-     44px touch floor with a little in hand, which a link at the very bottom of
-     a phone screen wants. */
-  display: inline-block;
-  padding: 15px 14px;
-  margin: -15px -14px;
+  /* THE ONLY THING THIS BLOCK STILL SAYS ABOUT THE OBJECT ITSELF. `.sw-btn` is
+     `inline-flex` and would stretch to whatever a fixed box gives it; this
+     keeps the button its own content width, as it is inside the ending's CTA
+     row. Everything else — the 44px min-height that IS the touch target, the
+     type, the radius, the fill, the hover, the press, the focus ring — belongs
+     to `.sw-btn` and `.sw-btn--primary` and is deliberately not restated.
 
-  font-family: var(--sw-font-body);
-  /* `text-sm`, the site's size for a navigation link. See THE PANE'S TYPE ROLES
-     for why it was wrong at `text-xs` and what changed with it. */
-  font-size: var(--sw-exit-size);
-  line-height: var(--sw-exit-leading);
-  /* Medium rather than the body's regular. The one persistent door on a
-     fourteen-viewport page needs to hold its own against a 36px title without
-     being sized anywhere near it, and weight buys presence at no cost in the
-     foot slot's height budget — which on a phone is the scarce thing. */
-  font-weight: 500;
-  letter-spacing: normal;
-  text-transform: none;
+     THE PADDING/NEGATIVE-MARGIN PAIR IS GONE with the sentence it served. A
+     line of type had to be padded out to a 44px target and margined back so the
+     WORD still stood on the column's axis; a button's own edge is what aligns,
+     so the box sits on `--sw-margin-in` (and on the panel's pad on desktop)
+     with nothing to undo. */
+  width: max-content;
 
-  /* FULL INK, EVERYWHERE, AND IT IS ONE OBJECT AGAIN. This was the quiet tone on
-     desktop and full ink on phones, where the phone value was a declared
-     mitigation for a frosted ground (below). That ground is paper now, so the
-     mitigation has nothing left to mitigate — and rather than send the phone
-     back to the quiet tone, both go to ink, because the quiet tone is §4's
-     voice for METADATA and this is a control. 12.6:1 on the landed panel at
-     every scene, in both layouts. */
-  color: var(--sw-ink);
-  text-decoration-line: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.35em;
-  /* The rule under a link is the graphical half of "this is a link", so it is
-     held to 1.4.11's 3:1 rather than left as a hint: 55% ink on the panel
-     measures 3.22:1, where the old 38% of the quiet tone was about 2:1. It
-     still sits well under the word, so the pair reads as ink and its underline
-     rather than as two strokes of the same weight. */
-  text-decoration-color: color-mix(in oklab, var(--sw-ink) 55%, transparent);
+  /* THE ARRIVAL IS AN ANIMATION AND IT LIVES BELOW THIS RULE, in its own
+     `@supports` (THE BUTTON ARRIVES THIRD). `opacity` is authored at 1 here by
+     omission, which is the legacy behaviour and the safe direction: a browser
+     with no scroll timelines gets the button from the first paint rather than
+     never.
 
-  /* NO `filter` AND NO `visibility` HERE, AND THAT IS NOT AN OMISSION — IT IS
+     NO `filter` AND NO `visibility` HERE, AND THAT IS NOT AN OMISSION — IT IS
      THE BUG THIS RULE SHIPPED WITH. Both used to be declared in this block, and
      both were dead on arrival: THE HANDOVER at the foot of this file re-declares
      the same two properties on `.sw-exit` at the same specificity, and a later
      rule wins. The opening gate written here was therefore never applied at all
      — which is why the exit stood on the floppy screen for as long as it did,
      and why the fault survived a pass that was looking straight at this rule.
+     (The gate is deliberately gone now, above. The lesson is not.)
 
-     Both properties now have exactly ONE declaration each, at the foot of the
-     file, where the arrival term and the handover term are multiplied together.
-     Anything that has to gate this link goes there. If a third term is ever
-     needed, add it to that expression — do not open a second declaration here,
-     because the cascade will silently discard whichever one loses. */
+     Both properties have exactly ONE declaration each, at the foot of the file.
+     Anything that has to gate this control goes there — do not open a second
+     declaration here, because the cascade will silently discard whichever one
+     loses. */
+}
 
-  /* The underline's colour only, at the site's `instant` (100ms) and `out`.
-     Nothing moves: this stands still at the foot of a page whose whole subject
-     is a moving picture, and a control that answered with a transform would be
-     the one thing on the pane competing with the film. The word's own colour
-     has left this list with the hover that used to change it — see below. */
-  transition:
-    color 100ms cubic-bezier(0, 0, 0.2, 1),
-    text-decoration-color 100ms cubic-bezier(0, 0, 0.2, 1);
+/* ══ THE BUTTON ARRIVES THIRD ══════════════════════════════════════════════
+   The opening is staged in three beats and this is the last of them:
+
+     1. the floppy assembling over the frosted desk — no copy, no control
+     2. leg 1's lockup: the mark, PRODUCT DESIGNER, and the sentence
+     3. the button, fading up in the place it will occupy for the rest of the
+        page
+
+   ── THIS REVERSES "STANDING FROM SCROLL 0" ────────────────────────────────
+   The whole reason this control was made prominent was that a recruiter should
+   see the way out on the FIRST SCREEN, and that is exactly what the floppy beat
+   now delays. The counter-argument is kept because it is a real cost, not a
+   strawman: a reader who never scrolls never sees an exit, and the masthead's
+   own Work item is the only door on that frame.
+
+   THE OWNER'S CALL IS THAT THE DELAY IS SHORT ENOUGH TO ACCEPT. In scroll
+   distance it is 2.96% of the flight before the button starts to appear and
+   4.06% before it is fully up — 0.40 → 0.54 of a viewport on desktop (13.4vh of
+   flight) and 0.48 → 0.65 on a phone (16.08vh, `scrollMobileFactor`). So it is
+   most of one screen of scrolling: not a moment, but the first gesture any
+   reader makes.
+
+   ── WHY 2.96%, AND WHY IT IS NOT A ROUND NUMBER ───────────────────────────
+   It is DERIVED from the copy it has to come after. Leg 1's word cascade runs
+   `--sw-a` 1.387% → `--sw-b` 2.881% (THE WINDOW, PER CHAPTER — pinned to the
+   arrival gate rather than to the leg, because chapter 1 greets). This opens at
+   2.96%, a sixteenth of a point after the last word of the sentence has
+   finished setting. RE-DERIVE IT FROM `--sw-b` whenever the weights move — it
+   tracked to within two hundredths of a point of the cascade's end on the last
+   retiming, which is close enough to overlap, and it is not a tuning.
+
+   1.1 POINTS WIDE, which is 0.147vh — about 133px of scroll at 900px tall. Long
+   enough to read as an arrival rather than a switch, short enough that the
+   button is not still resolving while the reader looks for it.
+
+   IT USES THE PANE'S OWN LANGUAGE rather than a timer. Same scroll timeline,
+   same `contain` range, same `linear both` as every copy window on this route,
+   so it is interruptible by definition and reverses the instant the reader
+   scrolls back up. There is no `setTimeout` and nothing to fall out of step
+   with.
+
+   IT FADES IN WHERE IT WILL LIVE and never moves again. The box is fixed at
+   `--sw-print-bottom` on the copy column's own axis from its first frame to the
+   handover; only the opacity changes. That is the entire point of collapsing
+   the standing exit and the ending's button into one element — the leg 9
+   handover has to produce zero movement, and it cannot produce any if nothing
+   is ever positioned twice.
+
+   NOT GATED ON REDUCED MOTION, and it matches the copy for the reason THE
+   CHAPTER HOLDS gives: this is a scroll-linked OPACITY, which is exactly what
+   §7 keeps under `reduce`, and it advances only as far as the reader's own
+   gesture advances it. Removing it would leave the reader most likely to be
+   scanning with a control that pops in with no transition at all.
+
+   THE TAB ORDER IS NOT THIS RULE'S JOB. `opacity: 0` still leaves a focusable
+   button on the floppy screen, so `--wgc-copy-vis` is back in the visibility
+   chain at the foot of this file — WorldGlassCard publishes it while the
+   opening gate is closed and removes it once the pane has landed. There is a
+   small window between the gate opening and this fade starting where the button
+   is focusable and not yet visible: about 0.4 of a point, 55px of scroll. Named
+   rather than papered over; closing it means moving the visibility switch onto
+   this same range, which needs the implicit-keyframe behaviour checked in both
+   engines first.
+
+   LEGACY, DECLARED. Where `animation-timeline: scroll()` is unsupported this
+   never runs and the authored `opacity: 1` stands, so the button appears with
+   the pane instead of after the copy. That is the harmless direction and it is
+   the behaviour this control had for most of its life. */
+@keyframes sw-exit-arrives {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @supports (animation-timeline: scroll()) {
   .sw-exit {
-    animation: sw-exit-leaves linear both;
+    animation: sw-exit-arrives linear both;
     animation-timeline: --sw-flight;
-    /* Leg 8's own window, copied from the copy dwell table. Not an independent
-       tuning — see THE WINDOW IS NOT A NEW NUMBER. */
-    animation-range: contain 84.839% contain 90.21%;
+    animation-range: contain 2.96% contain 4.06%;
   }
-}
-
-/* Opacity only, in both motion modes: a fade is what §7 keeps under `reduce`,
-   and there was never anything else here to remove. */
-@keyframes sw-exit-leaves {
-  0% {
-    opacity: 1;
-  }
-  /* `visibility` flips at the END and not before: it interpolates discretely, so
-     it holds `visible` across the whole fade and only lands hidden once the
-     animation has, with `both` keeping it there for the rest of the track. That
-     is not a nicety — 44px of this is a touch target, and an invisible control
-     standing at the foot of the sign-off would be a tab stop and a click target
-     over the ending. */
-  100% {
-    opacity: 0;
-    visibility: hidden;
-  }
-}
-
-/* Gated, so a tap on a phone never leaves the darkened state stuck on. */
-@media (hover: hover) and (pointer: fine) {
-  /* THE UNDERLINE IS THE WHOLE ANSWER NOW, and it is a bigger change than it
-     was: the word is already full ink at rest, so what darkens is the rule
-     under it, 55% ink to 100%. That reads harder than the old tone shift did,
-     because a hairline going to full weight is a change of state and a grey
-     word going a shade darker is not. The `color` declaration that used to sit
-     here is gone rather than left as a no-op. */
-  .sw-exit:hover {
-    text-decoration-color: currentColor;
-  }
-}
-
-/* Same focus language as the ending's button and the trail's notches. The ring
-   draws around the PADDING box — 110 × 48 rather than the 82 × 18 of the word —
-   because the padding is what makes the target and the indicator should show the
-   target. `--sw-trail` measures 3.39:1 on the landed panel, clearing 1.4.11. */
-.sw-exit:focus-visible {
-  text-decoration-color: currentColor;
-  outline: 2px solid var(--sw-trail);
-  outline-offset: 2px;
 }
 
 /* ── Deleted chrome ───────────────────────────────────────────────────────
@@ -2452,7 +2740,7 @@
        margin. A ~200px cluster floating at mid-height reads as a widget; a line
        that leaves the frame at both ends reads as a path that was there before
        you arrived and continues after you leave.
-     · Drawn in ONE constant medium grey, not the seven per-scene accents and no
+     · Drawn in ONE constant medium grey, not the per-scene accents and no
        longer the path green (owner's call). A green line quoted the garden's own
        ribbon and read as part of the artwork; a neutral one reads as the
        instrument it is, and leaves the only green on screen to the picture.
@@ -2464,7 +2752,7 @@
      · The stop's NAME prints at the foot of the bottom-left copy column, where
        the corner fade already provides ground. Nothing new is painted for it.
 
-   WHY WORDLESS MARKS ON THE RIGHT. Two of the seven scenes are night fields
+   WHY WORDLESS MARKS ON THE RIGHT. Two of the nine scenes are night fields
    (deep violet, near-black, bioluminescent sparkle) and five are pale paper.
    No single text colour clears 4.5:1 on both. A non-text mark only needs 3:1
    (WCAG 1.4.11), and #7E7E7E sits in the narrow luminance band that clears 3:1
@@ -2584,18 +2872,34 @@
      the trail, the previewed stop's name (`.sw-route__label`). Each is one line
      box, so the phone column needs one number rather than a three-term stack.
 
-     THE NUMBER IS THE EXIT'S, and only the exit's. The two used to be the same
-     14.4px and the distinction did not matter; the exit is `text-sm` now and
-     the preview is still `text-xs`, so 18.2px against 14.4px. Everything that
-     reads this token is CLEARING THE EXIT — the phone copy column above it and
-     the preview that floats one line over it — so the exit's box is the right
-     one and the preview's is not wanted anywhere.
+     THE NUMBER IS THE EXIT'S, and only the exit's. Everything that reads this
+     token is CLEARING THE EXIT — the phone copy column above it, the phone
+     band's own height, and the trail preview that floats one line over it — so
+     the exit's box is the right one and the preview's is not wanted anywhere.
 
-     DERIVED, NOT RESTATED. It is the exit's own two type tokens multiplied, so
-     a change to either lands here and in the phone column's clearance without a
-     second edit. It was a literal `0.75rem * 1.2` and drifted the moment the
-     link's size moved. */
-  --sw-exit-stack: calc(var(--sw-exit-size) * var(--sw-exit-leading));
+     AND IT IS THE BOX NOW, NOT THE LINE BOX. It was
+     `--sw-exit-size × --sw-exit-leading`, 18.2px, which was the right number
+     while the exit was one line of type. It is a BUTTON (THE STANDING EXIT), so
+     what everything downstream has to clear is its 44px min-height — the touch
+     target and the visible object are the same rectangle on a button, which is
+     the point of making it one.
+
+     WHAT THE 25.8px COSTS, measured at the two phone shapes where a pixel of
+     band is a pixel of picture. At 320 × 568 the band goes 317 → 343px against
+     a ~362px cap, so it clears, and the picture gives up 26px of about 193.
+     At 740 × 360 the band is already cap-bound, so the sum growing changes
+     nothing there at all — the cap absorbs it and the copy still clears the
+     band's top edge, because the longest title sets two lines on that measure
+     against a five-line budget. Some of it is bought back at
+     `--sw-copy-pause`, below.
+
+     `--sw-exit-size` AND `--sw-exit-leading` SURVIVE THIS with one consumer
+     each: nothing about the button reads them any more (it takes `.sw-btn`'s
+     type), but they are what the 18.2px above was, and they are kept so the
+     arithmetic in this comment can be checked. If they ever have no reader at
+     all, delete all three together rather than leaving a token nothing uses. */
+  --sw-exit-box: 44px;
+  --sw-exit-stack: var(--sw-exit-box);
 }
 @supports (height: 100dvh) {
   .sw-root {
@@ -3011,34 +3315,62 @@
   display: none;
 }
 
-/* ── The waymarkers ───────────────────────────────────────────────────────
-   True scroll fractions, computed from the section weights in ScrollWorld.tsx
-   (1.5 + 1.4 + 1.7 + 1.7 + 1.4 + 1.8 + 1.8 + 1.6 + 1.4 = 14.3vh of scroll) as
-   each scene's MIDPOINT over that total. `complexity` and `figma-to-code` set
-   no `scroll` of their own and take `diveScroll`, which is 1.4 — read the
-   default, not 1.3, if you recompute this by hand. `scrollMobileFactor` scales
-   every segment by the same number, so the fractions are identical at every
-   viewport width — which is the whole reason this can be static CSS.
+/* ══ THE WAYMARKERS — AND THE ONE TABLE EVERY OTHER TABLE IS CUT FROM ══════
+   ── THE WEIGHTS. Everything derived on this route comes off this line, so it
+   is written once, here, and every other block points at it:
 
-   NINE SECTIONS, SEVEN MARKS. The ending's two are not chapters — the pull
-   back out of the garden and the `hello world` sign-off. The engine builds a
-   dot per section, so both are taken back out below. That is why the marks
-   stop at 72.7% and the trail runs unmarked at the bottom: the walk is over.
+       leg   1     2     3     4     5     6     7     8     9    TOTAL
+       w    1.3   1.4   1.7   1.7   1.4   1.4   1.8   1.3   1.4    13.4
+       from  0    1.3   2.7   4.4   6.1   7.5   8.9  10.7  12.0
+       %    0.0  9.701 20.149 32.836 45.522 55.97 66.418 79.851 89.552
 
-   If you change any `scroll:` weight in the config, recompute these seven
-   numbers AND the seven animation-ranges below. They are the same seven
-   fractions in both places.
+   Legs 2, 5 and 6 set no `scroll` of their own and take `diveScroll`, which is
+   1.4 — read the default, not 1.3, if you recompute by hand.
+   `scrollMobileFactor` scales every segment by the same number, so every
+   fraction below is identical at every viewport width, which is the whole
+   reason this can be static CSS.
 
-   THE WHOLE TABLE HAS MOVED TWICE WITHOUT A CHAPTER BEING RETUNED, which is
-   the trap in this block: a mark can move without its own leg being touched,
-   so the seven are always recomputed together, never a line at a time. The
-   tail pass (ScrollWorld.tsx, LINGER IS A TAIL BUDGET) took 2 and 5 from
-   1.3 → 1.4, 3 from 1.5 → 1.7, 4 from 1.6 → 1.7 and 9 from 1.2 → 1.4 for
-   13.6 → 14.3vh. Then an experimental arrival leg added 1.4vh at the FRONT of
-   the chain (14.3 → 15.7), moved every mark UP the trail purely by growing the
-   denominator, and was reverted the same way when the push-in moved to `/`
-   (ScrollWorld.tsx, THE CHAIN OPENS AT THE GATE) — both directions' numbers
-   were derived from the weights, never by scaling.
+   ── THE SIX TABLES CUT FROM IT, so a weight change can be chased to the end:
+
+       1. these `top:` percentages          scene midpoints
+       2. the notch windows, below          the same midpoints, remapped onto
+                                            the unfurl's own span
+       3. the copy dwell table              60% of a leg → 52% of the next
+       4. `--sw-a` / `--sw-b`               68% → 88% of a leg
+       5. the reduced-motion dwell table    each leg, exactly
+       6. two `copyWindow` fractions        ScrollWorld.tsx, legs 2 and 7
+
+   THE TWO EXPLICIT WINDOWS ARE THE ONES THAT WILL CATCH YOU OUT — leg 2's long
+   hold and the legs 6+7 span. They are fractions of the WHOLE FLIGHT written in
+   a TypeScript file, so a weight change anywhere moves both even when the leg
+   they belong to was not touched, and CSS cannot see them. Each is derived in
+   one or two lines of arithmetic in its own comment rather than inlined as a
+   magic number — re-run those lines, do not scale the old values. (There were
+   briefly three: leg 8 needed a boundary guard while it had copy on it. It is
+   wordless again and the guard went with the copy.)
+
+   ── NINE SECTIONS, FIVE MARKS. Four sections are not chapters: leg 1 is a
+   title card, leg 6 is silent, leg 8 is the wordless pull-back and leg 9 is the
+   sign-off. The engine
+   builds a dot per section, so all four are taken back out below. That is why
+   the marks stop at 67.9% and the trail runs unmarked at the bottom: the walk
+   is over.
+
+   AND THE LAST MARK IS A PAIR'S MIDPOINT, not a leg's, because chapter 7 spans
+   legs 6 and 7. It is the only entry here that is not one scene's centre.
+
+   ── THE TABLE HAS MOVED THREE TIMES WITHOUT A CHAPTER BEING RETUNED, which is
+   the trap in this block: a mark moves when ANY weight moves, so the set is
+   always recomputed together, never a line at a time. The tail pass
+   (ScrollWorld.tsx, LINGER IS A TAIL BUDGET) took 2 and 5 from 1.3 → 1.4, 3
+   from 1.5 → 1.7, 4 from 1.6 → 1.7 and 9 from 1.2 → 1.4, for 13.6 → 14.3vh.
+   Then an experimental arrival leg added 1.4vh at the FRONT of the chain
+   (14.3 → 15.7), moved every mark UP the trail purely by growing the
+   denominator, and was reverted the same way. Then the Aug 2026 cut took leg 1
+   from 1.5 → 1.3, leg 6 from 1.8 → 1.4 and leg 8 from 1.6 → 1.3 (14.3 → 13.4)
+   as those three stopped
+   being chapters. Every direction was derived from the weights, never by
+   scaling.
 
    `linger:` does NOT enter this calculation either. It remaps scroll to clip
    time INSIDE a leg and leaves the leg's start, end and midpoint exactly where
@@ -3069,37 +3401,48 @@
   margin-top: -22px;
   pointer-events: auto;
 }
-.sw-route__dot:nth-of-type(1) {
-  top: 5.245%;
-}
+/* FIVE TOPS FOR FIVE CHAPTERS. The indices are the SECTION chain's, not the
+   dots' own running order — the engine builds nine buttons and four of them are
+   removed below, so `nth-of-type(7)` really is the seventh section. */
 .sw-route__dot:nth-of-type(2) {
-  top: 15.385%;
+  top: 14.925%;
 }
 .sw-route__dot:nth-of-type(3) {
-  top: 26.224%;
+  top: 26.493%;
 }
 .sw-route__dot:nth-of-type(4) {
-  top: 38.112%;
+  top: 39.179%;
 }
 .sw-route__dot:nth-of-type(5) {
-  top: 48.951%;
+  top: 50.746%;
 }
-.sw-route__dot:nth-of-type(6) {
-  top: 60.14%;
-}
+/* THE LAST MARK IS THE MIDPOINT OF TWO LEGS, not of one, and it is the only
+   entry in this table that is. Chapter 7's sentence spans legs 6 and 7 (THE
+   SPAN, in the dwell table), so the stop it marks is 7.5 → 10.7 rather than
+   8.9 → 10.7 and its centre is 66.423%. Placed at leg 7's own midpoint
+   (71.533%) the dot would sit past the middle of the chapter it names and the
+   traveller would pass it with a third of that chapter already read. */
 .sw-route__dot:nth-of-type(7) {
-  top: 72.727%;
+  top: 67.91%;
 }
 
-/* TWO REMOVED WAYMARKERS — the ending's pull back and sign-off, which are
-   sections but not chapters, and the engine builds a dot per section
-   regardless.
+/* FOUR REMOVED WAYMARKERS — the title card, the silent leg and the ending's
+   two — because the engine builds a dot per SECTION and only five sections are
+   chapters. The rule that decides it is in ScrollWorld.tsx and it is absolute:
+   a waymarker exists if and only if the section has a `label`. Legs 1, 8 and 9
+   carry an eyebrow WITHOUT a label precisely so they can wear a chapter's
+   lockup without appearing here; leg 6 carries neither.
 
    `display: none` rather than `visibility` or opacity, so they leave the
    accessibility tree and the tab order with the pixels: a screen-reader stop
-   labelled nothing, that jumps you to a scene with no title, is worse than no
-   stop at all. The reader still reaches the ending by scrolling — it is the
-   next thing after the last chapter, which is the only affordance it needs. */
+   labelled nothing, that jumps you to a scene with no title of its own, is
+   worse than no stop at all. The reader still reaches every one of them by
+   scrolling, which is the only affordance they need.
+
+   IT WAS TWO AND IT IS FOUR, so read this list against the config rather than
+   against the shape the file used to have. */
+.sw-route__dot:nth-of-type(1),
+.sw-route__dot:nth-of-type(6),
 .sw-route__dot:nth-of-type(8),
 .sw-route__dot:nth-of-type(9) {
   display: none;
@@ -3123,7 +3466,27 @@
     transform 100ms ease-out,
     background-color 100ms ease-out;
 }
-.sw-route__dot.is-active i {
+/* ══ THE SIXTH DOT HANDS ITS ACTIVE STATE TO THE SEVENTH ════════════════
+   The engine lights whichever dot matches the segment the reader is in
+   (`dots.forEach(d => d.classList.toggle('is-active', k === near))`,
+   scrub-engine.js:502), and it may not be edited. Across leg 6 that is dot 6 —
+   which is `display: none`, because leg 6 is not a chapter. So without this
+   rule the rail would go COMPLETELY DARK for a leg during which chapter 7's
+   sentence is standing on the pane, which reads as the trail losing its place
+   rather than as a chapter continuing.
+
+   THE ADJACENT-SIBLING SELECTOR IS EXACT AND NEEDS NO SCRIPT. Dots 6 and 7 are
+   siblings in DOM order, so `#6.is-active + #7` lights the dot that owns the
+   chapter for the whole of both legs, which is what the reader is being told.
+   It costs one selector and no JavaScript, and it fails to the current
+   behaviour if the pair ever stops being adjacent.
+
+   IT IS ONLY WANTED WHERE A HIDDEN DOT SITS INSIDE A CHAPTER. Dots 1, 8 and 9
+   are hidden too and get no hand-off: at leg 1 the walk has not started, and at
+   legs 8 and 9 it is over. A cold rail is correct at both ends and is the only
+   thing distinguishing those panes from the chapters they now look like. */
+.sw-route__dot.is-active i,
+.sw-route__dot:nth-of-type(6).is-active + .sw-route__dot i {
   background: var(--sw-trail-line);
   transform: scale(1.25);
 }
@@ -3260,7 +3623,30 @@
     var(--sw-print-bottom) + var(--sw-exit-stack) + clamp(14px, 1.8vh, 22px)
   );
   transform: none;
-  white-space: nowrap;
+  /* ── IT WRAPS NOW, AND THAT IS WHAT LETS A LABEL BE LONG ────────────────
+     `white-space: nowrap` was here, inherited from the engine's own pill, and
+     it was the one surface where a long chapter name genuinely broke rather
+     than merely costing a line. This element is `position: fixed` with no right
+     bound, so at 14px with 0.16em tracking the longest label the trail carries
+     — "Bridging design and code", 18.14em, 254px — ran about 30px PAST the
+     panel's right edge and onto the film at an 861px window, where the copy
+     column is 224px.
+
+     THE MEASURE IS THE COLUMN'S, so the preview wraps exactly where the eyebrow
+     of the same words wraps, which is the point: they are the same word set in
+     the same type, one printed in the lockup and one floated in the corner, and
+     they should break the same way. Below 861px `--sw-copy-col` is not the copy
+     measure (the band runs wall to wall) and this element is invisible anyway —
+     the engine sets `display: none` and only the accessible name survives — so
+     the value there is harmless.
+
+     IT GROWS UPWARD, because the element is anchored by `bottom`, so a second
+     line runs into empty pane rather than into the button below it.
+
+     The rejected alternatives are the two this file always rejects: shrinking
+     the type (12px caps are already at the floor of legibility) and truncating
+     (a preview whose whole job is to say the name may not withhold it). */
+  max-width: var(--sw-copy-col);
   /* The engine ships this as a frosted pill beside its dot. Frosted chrome is a
      standing no on this route and a plate over the artwork is the thing every
      masthead treatment here was refused for, so the pill is unpainted rather
@@ -3351,11 +3737,17 @@
    nothing should be added back that does.
 
    THE FULL SCROLL-DRIVEN INVENTORY, so the amendment above can be checked
-   against something: the copy dwell table (`.sw-copy`), the ending's CTA gate,
-   the trail's unfurl and traveller, the notches' arrival, and the standing
-   exit's departure (`sw-exit-leaves`). Five, where there were eight — the
+   against something: the copy dwell table (`.sw-copy`), the trail's unfurl and
+   traveller, and the notches' arrival. Four, where there were eight — the
    printed name's two keyframe sets and its leader draw retired with the object
-   they moved.
+   they moved, the ending's CTA gate went with the `cta` it guarded, and the
+   standing exit's departure went when the exit stopped departing.
+
+   EVERY ANIMATION ON THIS ROUTE IS SCROLL-DRIVEN, and that is a property worth
+   keeping rather than a coincidence. A blinking caret was built on the title
+   card's eyebrow and removed the same day (the note above `.sw-copy__eyebrow`);
+   it would have been the one time-driven loop here, and the amendment above
+   would not have covered it.
 
    Gated behind @supports: with no scroll-timeline support the trail is simply
    an undrawn hairline at full length, every notch is visible, `.is-active`
@@ -3405,8 +3797,9 @@
      The travel is linear from 0 to the full span, and that is not a
      simplification: because the notches sit at the true scroll fractions, a
      linear ride passes exactly through each one at that scene's centre —
-     5.2 / 15.4 / 26.2 / 38.1 / 49.0 / 60.1 / 72.7%. The engine's own scroll
-     range (totalW·vh = 14.3vh) is what `--sw-flight` measures, so the two
+     14.6 / 25.9 / 38.3 / 49.6 / 66.4%, the last of which is a two-leg
+     chapter's midpoint rather than a leg's (THE WAYMARKERS). The engine's own scroll
+     range (totalW·vh = 13.4vh) is what `--sw-flight` measures, so the two
      cannot drift. This used to read `scroll(root block)` and say the same
      thing, which was true on /world and false on `/` — see THE FLIGHT IS ITS
      OWN TIMELINE for what that cost and why the timeline moved.
@@ -3442,8 +3835,9 @@
        This block used to be written in `vh`: the line ran `0 40vh` and the
        seven notches ran `1.1vh 4.1vh` … `28.09vh 31.09vh`, derived from "the
        line reaches fraction F at F × 40vh". Every one of those numbers was
-       measured against a page 40 viewports long, and this page is 14.3
-       (`totalW · vh`, the sum of the section weights — see THE WAYMARKERS).
+       measured against a page 40 viewports long, and this page was 14.3 then
+       and is 13.4 now (`totalW · vh`, the sum of the section weights — see THE
+       WAYMARKERS).
 
        A LENGTH IN `animation-range` IS A DISTANCE ALONG THE SCROLL RANGE, not
        a fraction of it, so `40vh` was 280% of a page that ended at 14.3vh. The
@@ -3455,16 +3849,20 @@
        trail was never drawn.
 
        PERCENTAGES ARE THE ONLY SAFE UNIT HERE, and for a second reason beyond
-       the arithmetic: `scrollMobileFactor: 1.2` makes the same nine legs 17.16
-       viewports on a phone against 14.3 on a desktop, so ANY absolute length
+       the arithmetic: `scrollMobileFactor: 1.2` makes the same nine legs 16.08
+       viewports on a phone against 13.4 on a desktop, so ANY absolute length
        lands on a different scene at a different viewport. A percentage is a
        fraction of whatever the scroll range turns out to be, which is exactly
-       the quantity the section weights fix — which is why the same seven
-       numbers can serve both. (The copy column's own windows are written in
+       the quantity the section weights fix — which is why one set of numbers
+       serves both. (The copy column's own windows are written in
        percent for this reason; see THE COLUMN IS SET, NOT FADED.)
 
        ── AND THE UNFURL NOW STARTS WHERE THE PAGE'S CHROME DOES ───────────
-       `2% 13%` rather than `0 100%`. Two constraints pin it.
+       `2.088% 12.105%` rather than `0 100%`. Two constraints pin it, and both
+       numbers moved in the Aug 2026 retiming for different reasons — the ORIGIN
+       is an absolute distance of scroll expressed as a percentage of a flight
+       that got shorter (2% × 14.3/13.4), the END is pinned to a leg boundary
+       that moved (see below).
 
        It may not start at 0. The first 1.8–2.3% of the page is the object
        being put away and the sheet drawing back to the rail, and `--wgc-copy`
@@ -3477,9 +3875,13 @@
        And it may not run the whole page, or the trail becomes a progress bar —
        which is the job `.sw-scrollbar` was deleted for duplicating, and which
        the traveller (`.sw-route::after`, unranged and linear over the full
-       timeline) already does properly. Landing at 13% means the route draws
-       itself alongside the first chapter and stands complete as the second
-       begins: chapter 1's leg ends at 10.49%.
+       timeline) already does properly. Landing at 12.105% means the route
+       draws itself alongside the first chapter and stands complete just after
+       the second begins: chapter 1's leg ends at 9.489%. The end is held at the
+       same fraction INTO leg 2 that it had before the retiming (25.6% of it)
+       rather than at the same percentage of the page, because what the number
+       means is "complete as the second chapter starts", not "complete at
+       13%".
 
        The traveller is deliberately NOT ranged and is not touched here. It
        rides the whole timeline and passes each notch at that notch's own
@@ -3491,28 +3893,28 @@
     .sw-route::before {
       animation: sw-trail-draw linear both;
       animation-timeline: --sw-flight;
-      animation-range: contain 2% contain 13%;
+      animation-range: contain 2.134% contain 12.376%;
     }
 
     /* Each notch appears as the line arrives. The line reaches fraction F of
-       its own height at 2% + F × 11% of the page, and each window opens
+       its own height at 2.088% + F × 10.017% of the page, and each window opens
        0.35% before that and closes 0.7% after — the same 1:2 lead-to-settle the
        vh version had, re-expressed against the unfurl it is actually measured
        on.
 
-       F IS THE SEVEN WAYMARKER FRACTIONS AND NOTHING ELSE: 5.245 / 15.385 /
-       26.224 / 38.112 / 48.951 / 60.140 / 72.727%, re-derived here from the
-       section weights (1.5 + 1.4 + 1.7 + 1.7 + 1.4 + 1.8 + 1.8 + 1.6 + 1.4 =
-       14.3) as each labelled scene's midpoint, NOT by scaling the old
-       numbers. They are the same seven values THE WAYMARKERS pins each dot's
-       `top:` to. Change a `scroll:` weight and all three tables move together —
-       the dots' tops, these ranges, and the copy column's windows.
+       F IS THE FIVE WAYMARKER FRACTIONS AND NOTHING ELSE: 14.599 / 25.912 /
+       38.321 / 49.635 / 66.423%, re-derived from the section weights (THE
+       WAYMARKERS has the table) rather than scaled off the old numbers. They
+       are the same five values THE WAYMARKERS pins each dot's `top:` to. Change
+       a `scroll:` weight and all three tables move together — the dots' tops,
+       these ranges, and the copy column's windows.
 
-       THE SELECTORS ARE 1 THROUGH 7, matching the marks: the seven chapters,
-       first seven sections of the chain. The ending's two dots are
-       `display: none`; giving either a notch window would animate something
-       nobody can see and put a stale entry in a table whose whole discipline
-       is that it has exactly seven.
+       THE SELECTORS ARE 2, 3, 4, 5 AND 7 — the chapters, and NOT a contiguous
+       run, which is the trap in reading this table quickly. Sections 1, 6, 8
+       and 9 have dots that are `display: none`; giving any of them a notch
+       window would animate something nobody can see and put a stale entry in a
+       table whose whole discipline is that it has exactly one line per visible
+       stop.
 
        On `i`, never on the button — see the containing-block note above. The
        printed name is therefore never hidden by the unfurl, which is right:
@@ -3521,26 +3923,20 @@
       animation: sw-notch-in linear both;
       animation-timeline: --sw-flight;
     }
-    .sw-route__dot:nth-of-type(1) i {
-      animation-range: contain 2.227% contain 3.277%;
-    }
     .sw-route__dot:nth-of-type(2) i {
-      animation-range: contain 3.342% contain 4.392%;
+      animation-range: contain 3.313% contain 4.363%;
     }
     .sw-route__dot:nth-of-type(3) i {
-      animation-range: contain 4.535% contain 5.585%;
+      animation-range: contain 4.497% contain 5.547%;
     }
     .sw-route__dot:nth-of-type(4) i {
-      animation-range: contain 5.842% contain 6.892%;
+      animation-range: contain 5.797% contain 6.847%;
     }
     .sw-route__dot:nth-of-type(5) i {
-      animation-range: contain 7.035% contain 8.085%;
-    }
-    .sw-route__dot:nth-of-type(6) i {
-      animation-range: contain 8.265% contain 9.315%;
+      animation-range: contain 6.981% contain 8.031%;
     }
     .sw-route__dot:nth-of-type(7) i {
-      animation-range: contain 9.65% contain 10.7%;
+      animation-range: contain 8.739% contain 9.789%;
     }
   }
 }
@@ -3687,8 +4083,8 @@
      full-height sheet of glass; in a bottom band the title IS the head of its own
      pane and needs no finder. Selector specificity matches the rules that create
      the two pseudo-elements, or this would silently lose to them. */
-  .sw-copy:nth-of-type(-n + 7)::before,
-  .sw-copy:nth-of-type(-n + 7)::after {
+  .sw-copy:has(.sw-copy__eyebrow)::before,
+  .sw-copy:has(.sw-copy__eyebrow)::after {
     display: none;
   }
 
@@ -3757,11 +4153,24 @@
     );
 
     /* THE PAUSE between the copy column's foot and the standing exit, hoisted
-       out of `.sw-copy`'s `bottom` because the band's height reads it too. An
-       underlined link needs less air to read as a separate object than the
-       display-face caption that used to stand there did, which is why this is
-       smaller than the 20 → 32px the retired lockup took. */
-    --sw-copy-pause: clamp(16px, 2.4vh, 26px);
+       out of `.sw-copy`'s `bottom` because the band's height reads it too. It
+       ran 20 → 32px under the retired display-face caption, then 16 → 26px
+       under the underlined link that replaced it.
+
+       16 → 12px AT THE FLOOR, Aug 2026, and it is an argument about EDGES
+       rather than a raid on the foot slot to pay for the button. Type needs air
+       from other type to read as a separate object; a bordered, filled control
+       brings its own boundary and 16px of its own internal padding, so the
+       distance from the last line of the title to the button's top edge does
+       not have to do that work. The ceiling comes down with it so the ramp
+       stays a ramp.
+
+       IT PAYS BACK ABOUT A FIFTH of what `--sw-exit-stack` just cost at the two
+       phone shapes where the floor binds (320 × 568 and 740 × 360, both at
+       12px), and nothing at 390 and up, where the ramp was never at its floor.
+       Do not go below 12: at that point the title's descenders are inside the
+       button's own top padding and the two read as one block. */
+    --sw-copy-pause: clamp(12px, 2.4vh, 22px);
   }
 
   /* HERE THE PANE IS THE BAND, NOT THE VIEWPORT, and that is the one thing the
@@ -3784,10 +4193,12 @@
      leg 8 (THE STANDING EXIT). The
      buttons need no other phone rule: they inherit the band's insets from the
      same place. The one thing this breakpoint still owes them is a size. */
-  .sw-copy:nth-of-type(9) {
-    top: auto;
-    height: var(--wgc-panel);
-  }
+  /* `.sw-copy:nth-of-type(9)` HAD A RULE HERE — `top: auto; height:
+     var(--wgc-panel)` — whose only job was to give the sign-off the band's own
+     height so its flex centring resolved against the band rather than the
+     screen. The centring is retired (THE PANE IS ONE COMPOSITION), so the
+     sign-off takes the same bottom anchor as every other article and the
+     exception goes with the thing it served. */
 
   /* THEY HAVE TO SET ON ONE ROW, and at the engine's own size they do not: at
      0.95rem with 26px of side padding the pair measures about 304px against the
@@ -4923,7 +5334,7 @@
      contact shadow is untouched, since a shadow is not transparency. The glyph
      needs no rule at all — it was always solid paper on a mask, and it measures
      9:1 on this surface against 6.5:1 on the glass. */
-  .sw-copy:nth-of-type(-n + 7)::before {
+  .sw-copy:has(.sw-copy__eyebrow)::before {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     background-image: none;
@@ -5127,12 +5538,26 @@
        that is 14px by construction rather than 7px by luck.
 
        THE LINE COUNT IS THE ONE ESTIMATE. `--sw-band-lines` is how many lines
-       the LONGEST title takes on this width's measure ("Finding out how people
-       really work before designing anything.", 61 characters). It is measured
-       at the two ends — five lines on the 258px measure at 320, two on the
-       655px measure at 740 — and carried across the middle with a line in
-       hand, because on a portrait phone an extra line costs the DROP and not
-       picture and is therefore free insurance — the band grows, `--sw-film-open`
+       the LONGEST title takes on this width's measure. THE BINDING CASE HAS
+       MOVED and this note used to name a title that is no longer on the page
+       ("Finding out how people really work before designing anything."). After
+       the Aug 2026 copy pass every title on the walk is new, and the longest is
+       LEG 2 — "Ten years of improving complex workflows for teams and users.",
+       61 characters, FIVE lines on the 258px measure at 320. Leg 7 ties it at
+       61 characters but breaks at four; the title card is 43 and sets in four;
+       every other title is three or four. Re-measure against leg 2 before
+       writing a longer line anywhere.
+
+       IT WENT TO 6 FOR PART OF A DAY, while the title card carried a 79
+       character version of its sentence, and the arithmetic is worth keeping
+       because it is the ceiling: at six lines the sum comes to about 375px
+       against a cap of `80svh − --sw-film-top`, which is roughly 362px if the
+       masthead's published bottom edge is at its 92px fallback and less if the
+       bar wraps deeper. SIX LINES DOES NOT FIT AT 320 × 568. Five is not merely
+       the current value, it is the most this shape can hold with the foot slot,
+       the button and the picture's own floor all paid for. The middle widths
+       are carried with a line in hand, because on a portrait phone an extra
+       line costs the DROP and not picture and is therefore free insurance — the band grows, `--sw-film-open`
        shrinks by the same amount, the box stays at 100vw and the paper above it
        gives up the pixel. There is 74px of that to spend at 390 × 900, 58 at
        430 × 932, 30 at 390 × 844 and none at the two mount-bound shapes.
@@ -5691,9 +6116,12 @@
   /* ── THE LONGEST TITLE'S LINE COUNT, BY MEASURE ───────────────────────────
      The measure is a function of width alone (`.sw-copy` runs `--sw-margin-in`
      to `--sw-margin-in + 26px`), so the line count is too, and these are the
-     two places it changes. Five lines is the base because the 258px measure at
-     320 is where it was measured; a 600px window carries a 554px measure and
-     the same 61 characters set in three.
+     two places it changes. Five lines is the base and the binding title is now
+     leg 2 — "Ten years of improving complex workflows for teams and users.",
+     61 characters, five lines on the 258px measure at 320. A 600px window
+     carries a 526px measure and every title on the walk sets in two or three
+     there, which is what the override below already said; re-measured against
+     the new copy rather than assumed, and unchanged.
 
      THE SHORT-SCREEN RULE IS LAST AND IS ABOUT HEIGHT, NOT WIDTH. A landscape
      phone has both the widest measure on this breakpoint (655px at 740, where
@@ -6309,12 +6737,20 @@
        TITLE and let the measure follow, and the panel follows the measure.
 
        ONE STANDARD STEP ON THE CAP, AND THE FLOOR STAYS. The ramp ran 24 → 30px
-       (`text-2xl` → `text-3xl`) and now runs 24 → 36px (`text-2xl` →
-       `text-4xl`): the owner reads the title as too quiet for the only sentence
-       on the pane, and 36px is the next step, not an invented number. Nothing
-       between the two ends is a "step" and nothing has to be — a clamp
-       interpolates, and every fluid role on this site does the same
-       (.docs/type-scale.md, the editorial ladder).
+       (`text-2xl` → `text-3xl`) and runs 24 → 36px (`text-2xl` → `text-4xl`):
+       the owner read the title as too quiet for the only sentence on the pane,
+       and 36px is the next step, not an invented number. Nothing between the
+       two ends is a "step" and nothing has to be — a clamp interpolates, and
+       every fluid role on this site does the same (.docs/type-scale.md, the
+       editorial ladder).
+
+       IT WENT TO 48px AND CAME BACK, Aug 2026, recorded so it is not proposed a
+       third time. `text-5xl` shipped in the working tree on a slope that
+       reached its cap at 1148px; the owner looked at it live and said it was
+       too big. The `text-4xl` cap and this exact slope are what stood before
+       it. Both verdicts are written out at THE PANE'S TYPE ROLES — 37px at 1440
+       too small, 48px at 1440 too big — and the cap is the standard step
+       between them.
 
        WHY THE FLOOR HELD, and it is the constraint that shaped this whole pass.
        The panel's height is `--sw-band-h`, which is `--sw-film-w × 9/16`, and
@@ -6332,8 +6768,14 @@
        this block declares and the measure, the panel, the film's width and the
        band's height all fall out of it. The panel runs ~272px at 861 (narrower
        than the 328px it used to take there, which is what buys the short
-       windows back) and ~411px at 1440 (28.5% of the window; the picture keeps
+       windows back) and ~410px at 1440 (28.5% of the window; the picture keeps
        71.5%), against the ~354px it took before.
+
+       WHERE THE CAP LANDS is argued at THE PANE'S TYPE ROLES with the three
+       candidates modelled: 1442, so a 1440 laptop sits AT the cap rather than
+       climbing towards it. 1280 gets 32.7px, 1366 gets 34.4px, and 1600 and
+       1920 are flat at 36 because past 1442 the panel is already down to 26%
+       and 22% of the window.
 
        THE FORE-EDGE IS STILL GONE from this sum: it was the sheet's own margin
        against the picture it lay ON, and there is no such relationship now. The
@@ -6397,13 +6839,139 @@
       100vw - var(--sw-plate-left) - var(--sw-plate-right) - var(--wgc-panel) -
         var(--sw-mount-pad)
     );
-    --sw-band-h: min(
-      calc(
-        100svh - var(--sw-mount-top) - var(--sw-mount-floor) -
-          var(--sw-mount-pad) * 2
-      ),
-      var(--sw-film-w) * 9 / 16
+    /* ══ THE PANEL MAY NOT BE SHORTER THAN WHAT STANDS IN IT ═══════════════
+       ── READ THE REVERSAL FIRST. This block was written as THE PANEL NO
+       LONGER TAKES ITS HEIGHT FROM THE PICTURE, a composition change made to
+       fit a 48px title, and it was argued at that size: paper above and below
+       the film at most desktop widths, the picture down from 851 × 479 to
+       739 × 416 at 1440, the panel from 28.5% of the window to 33–36%.
+
+       ALL OF THAT WAS THE 48px CAP AND NONE OF IT WAS THIS MECHANISM. The cap
+       is `text-4xl` again (THE PANE'S TYPE ROLES carries the owner's verdict),
+       and at 36px the `max()` below is INERT from about 1100px of width up —
+       `--sw-film-inset` is exactly 0 at 1152, 1280, 1366, 1440, 1600, 1920 and
+       everything between, the picture is 851 × 479 at 1440 again, and the panel
+       is 28.5% of the window again. The desktop composition at every width the
+       owner looks at is byte-for-byte what it was before the 48px attempt.
+
+       SO WHAT IS LEFT IS A SHORT-WINDOW FLOOR, which is a much smaller claim
+       than the heading it replaced, and it is kept for one reason: it is the
+       only thing in scope that fixes 861 × 768. Under the old single number
+       the panel's height was the PICTURE's, so on a short narrow window the
+       copy column overran the button at the panel's foot — 36px of overlap at
+       861 × 768 and 7px at 1024 × 768. That was true before the 48px attempt
+       and would be true again without this. It is a control with body text on
+       top of it, not a typographic near miss.
+
+       IT IS NOT WHAT THE TYPE WAS GROWN FOR ANY MORE, and it is a one-line
+       revert if the owner wants the picture's height back at those two shapes:
+       `--sw-band-h: min(var(--sw-avail-h), var(--sw-film-h))`, and then
+       `--sw-panel-*`, `--sw-film-inset` and the film plate's inset terms all
+       have no reader and go together. The two shapes go back to −36px and −7px.
+
+       WHERE THE OVERLAP ACTUALLY COMES FROM, so the right lever gets pulled
+       next time: not the cap. At 861 the title is at its FLOOR, so no cap can
+       reach it. It is the standing exit growing from an 18px line box to a 44px
+       button (`--sw-exit-box`, ~26px of it) against a panel whose height is a
+       function of the picture. The three real levers the file has always named
+       are the film's 9/16 box, the button leaving the panel's foot, and the
+       floor — all three are composition decisions and all three are the
+       owner's.
+
+       ── HOW IT WORKS. `--sw-band-h` was ONE number and both plates took it:
+       `min(available height, film-w × 9/16)`. Since `--sw-film-w` is the window
+       minus the panel, and the panel's width is the title's measure, that was a
+       feedback loop — a bigger title widened the panel, which narrowed the
+       film, which SHORTENED the panel, which is the room the bigger title had
+       just asked for. Every pixel of panel width was spent twice.
+
+       THERE ARE THREE HEIGHTS NOW, and only the third is shared:
+
+         --sw-panel-min   what the panel's CONTENT needs, bottom up
+         --sw-film-h      the picture's own aspect, unchanged
+         --sw-band-h      the mount's inner height: whichever is taller
+
+       THE PANEL'S HEIGHT IS A SUM OF WHAT STANDS IN IT, which is not a new idea
+       on this route — it is the phone band's own rule (THE BAND IS THE SUM OF
+       WHAT STANDS IN IT) applied to the desktop panel, term for term, with the
+       mark added back because the phone drops it. Move the type and the panel
+       follows in BOTH axes now, where before it followed in width only and
+       inherited its height from a picture that had nothing to do with the copy.
+
+       THE LINE COUNT IS A CONSTANT HERE, unlike on a phone, and that is worth
+       stating because it is what makes a single number safe: the measure is a
+       fixed ratio of the size (THE MEASURE), so characters-per-line does not
+       change with the ramp and neither does the wrap. The longest title on the
+       walk sets FOUR lines at every desktop width from 861 to 1920. If a longer
+       title is ever written, this is the number to re-measure.
+
+       THE FOOT GAP IS DERIVED FROM THE TYPE, not chosen: 0.72 of the title's
+       own line box, which is the ratio the retired CTA row was tuned to when it
+       sat under the closing line. It tracks the ramp, so the button never
+       crowds a bigger title or floats away from a smaller one.
+
+       WHAT THE PICTURE GIVES UP, at `text-4xl`, AND IT IS ALMOST NOTHING. The
+       film keeps its aspect and is CENTRED in the mount rather than filling it,
+       so where the panel is the taller object there is paper above and below
+       it. That is 18px at 861 × 768, 13px at 900 × 768, 4px at 1024 × 768, and
+       EXACTLY ZERO from 1152 up. The picture is 482 × 271 at 861 and
+       851 × 479 at 1440 — the same numbers the coupled version gives, because
+       the panel's WIDTH never depended on this and the width is what the film
+       is cut from. It is 1.8 to 3.1 times the panel's width across the range,
+       which is the property the two-panel composition depends on.
+
+       (The paragraph this replaced measured 52px of paper at 1440, 46px at 1366
+       and 41px at 1280, and a picture down to 739 × 416. Those were the 48px
+       cap's numbers. Do not carry them forward — they are not what this
+       mechanism costs.)
+
+       WHAT WAS REJECTED. A panel at the FULL available height was the obvious
+       decoupling and is wrong for the same reason the sign-off's centring was:
+       it hands the pane 190px of empty glass at 1440 and makes the gap between
+       the lockup and the button a function of the window rather than of the
+       type. A fixed overhang over the film's height was rejected for being a
+       number with no derivation behind it — it would have to be re-tuned every
+       time the ramp moved, which is exactly the class of drift this file keeps
+       recording.
+
+       IT DOES NOT CROWD THE RAIL. The trail is cut to the mount (THE RAIL IS
+       CUT TO THE FRAME) and its span is `--sw-mount-h`, so a taller mount makes
+       a longer rail and every waymarker stays at its own scroll fraction —
+       those are percentages of the rail's height, not of the viewport. NOT ONE
+       NUMBER in THE WAYMARKERS moves. The rail's horizontal gutter is untouched
+       and the panel is on the opposite side of the picture from it. */
+    --sw-avail-h: calc(
+      100svh - var(--sw-mount-top) - var(--sw-mount-floor) -
+        var(--sw-mount-pad) * 2
     );
+
+    /* Four lines of the longest title, and the constant is safe because the
+       measure is a fixed ratio of the size — see above. */
+    --sw-panel-lines: 4;
+    --sw-panel-copy: calc(
+      var(--sw-copy-icon) + var(--sw-copy-icon) * 0.62 +
+        var(--sw-eyebrow-size) * var(--sw-eyebrow-leading) +
+        var(--sw-eyebrow-gap) + var(--sw-panel-lines) * var(--sw-title-size) *
+        var(--sw-title-leading)
+    );
+    --sw-panel-foot: calc(
+      var(--sw-title-size) * var(--sw-title-leading) * 0.72
+    );
+    --sw-panel-min: calc(
+      var(--sw-pane-pad) * 2 + var(--sw-panel-copy) + var(--sw-panel-foot) +
+        var(--sw-exit-box)
+    );
+
+    --sw-film-h: min(var(--sw-avail-h), var(--sw-film-w) * 9 / 16);
+    --sw-band-h: min(
+      var(--sw-avail-h),
+      max(var(--sw-panel-min), var(--sw-film-h))
+    );
+    /* Never negative: `--sw-band-h` is the max of the two, clamped to the same
+       ceiling the film is. The picture centres in whatever the mount turns out
+       to be, which is the only placement that survives the panel being taller
+       at some widths and shorter at others. */
+    --sw-film-inset: calc((var(--sw-band-h) - var(--sw-film-h)) / 2);
 
     /* THE MOUNT HUGS THE BAND and the pair is CENTRED in the space under the
        app bar — never hung from it, or all the slack piles up at the foot and
@@ -6626,11 +7194,13 @@
     top: calc(var(--sw-plate-top) + var(--sw-pane-pad));
   }
 
-  /* The sign-off centres in the PANEL, which is no longer the window. */
-  .sw-copy:nth-of-type(9) {
-    top: var(--sw-plate-top);
-    bottom: var(--sw-plate-bottom);
-  }
+  /* NO PER-ARTICLE RULE HERE ANY MORE. The sign-off used to be re-anchored to
+     the panel's own top and bottom edges so it could centre inside the PANEL
+     rather than inside the window; leg 1 was briefly given the same treatment
+     as a title card. Both are gone — every article hangs from the head of the
+     column at every width (THE PANE IS ONE COMPOSITION AND NOTHING IN IT EVER
+     MOVES), so the `.sw-copy` rule above is the only positioning any of them
+     needs. */
 
   /* Both foot objects stand on the PANEL's left axis, not the window's — the
      same inset the copy column above them takes. One rule for the pair so they
@@ -6658,14 +7228,26 @@
 
      `overflow: hidden` is what turns the radius into a real crop on the scenes,
      which the engine positions absolutely and scales past the box. */
+  /* THE PICTURE IS CENTRED IN THE MOUNT, NOT STRETCHED TO IT. `--sw-film-inset`
+     is the difference between the mount's inner height and the film's own
+     (THE PANEL MAY NOT BE SHORTER THAN WHAT STANDS IN IT); it is zero wherever
+     the film is the taller plate, so this reads as the old rule at those widths
+     and needs no branch — which at `text-4xl` is every desktop width from about
+     1100px up. It rides `--wgc-move` with the rest of the geometry, so the
+     picture arrives at its landed height rather than resizing after it
+     lands. */
   .sw-stage {
     left: calc(
       (var(--sw-plate-left) + var(--wgc-panel) + var(--sw-mount-pad)) *
         var(--wgc-move, 0)
     );
     right: calc(var(--sw-plate-right) * var(--wgc-move, 0));
-    top: calc(var(--sw-plate-top) * var(--wgc-move, 0));
-    bottom: calc(var(--sw-plate-bottom) * var(--wgc-move, 0));
+    top: calc(
+      (var(--sw-plate-top) + var(--sw-film-inset)) * var(--wgc-move, 0)
+    );
+    bottom: calc(
+      (var(--sw-plate-bottom) + var(--sw-film-inset)) * var(--wgc-move, 0)
+    );
     border-radius: calc(var(--sw-plate-radius) * var(--wgc-move, 0));
     overflow: hidden;
   }
@@ -6758,7 +7340,7 @@
 
   /* THE RAIL IS CUT TO THE FRAME. A trail running the window's full height
      beside a short centred composition is an instrument measuring something
-     that is not on the page. It costs nothing to move: the seven marks are
+     that is not on the page. It costs nothing to move: the five marks are
      `top:` percentages of `.sw-route`'s own height and the traveller rides
      `translateY(var(--sw-trail-span))`, so both are fractions of the rail
      rather than of the viewport — shortening the scale leaves every mark at
@@ -6882,38 +7464,44 @@
   filter: opacity(calc(1 - var(--sw-handoff, 0)));
 }
 
-/* ── THE STANDING EXIT'S ONLY `filter` AND ONLY `visibility` ───────────────
-   THE PIXELS. Two terms: `--wgc-copy` opens the link as the pane lands beside
-   the film, `--sw-handoff` closes it again as the work band rises. A product,
-   because either one at zero must hide it. `opacity` itself is untouched here —
-   the leg-8 animation owns that outright (THE STANDING EXIT), and a filter is
-   the only way to compose with an animated property.
+/* ── THE ONE DOOR'S ONLY `filter` AND ONLY `visibility` ───────────────────
+   THE PIXELS ARE ONE TERM HERE. `--sw-handoff` closes the button as the work
+   band rises. The OPENING is not in this expression — it is a scroll-driven
+   `opacity` animation (THE BUTTON ARRIVES THIRD) — and this stays a `filter`
+   precisely so the two compose: an animation owns `opacity` outright and a
+   second declaration cannot multiply into it.
 
-   THE FALLBACKS ARE NOT SYMMETRICAL, on purpose. `--wgc-copy` falls back to 0:
-   the frames before WorldGlassCard's mount effect publishes it are frames on the
-   floppy screen, and the finished state flashing there was the original fault.
-   `--sw-handoff` falls back to 0 the other way round — absent means the handover
-   has not started — so the two defaults agree on "not yet visible" at load.
+   `--wgc-copy` IS NOT IN THIS EXPRESSION and its absence is deliberate. The
+   opening gate used to be a multiplicative term here, releasing the button as
+   the pane landed. The arrival is a beat LATER than that now — after the
+   eyebrow and the sentence have set — so it is expressed as a scroll range
+   rather than as the morph's own value, and adding the gate back would be two
+   openings multiplied together.
+
+   `--wgc-copy-vis` IS, THOUGH, and it is the whole tab-order story. `opacity: 0`
+   hides pixels and nothing else: without this a keyboard reader pressing Tab on
+   the floppy screen would land on an invisible button with its focus ring drawn
+   nowhere they can see. WorldGlassCard publishes the property ONLY while the
+   opening gate is closed and REMOVES it once the pane has landed, so the chain
+   falls through to the handover's own switch and finally to `visible`. That is
+   also why it removes the property instead of writing "visible": a custom
+   property holding a real value cannot be fallen through.
 
    THE HIT TESTING AND THE TAB ORDER, which opacity does not touch: 44px of this
-   is a touch target and it is `position: fixed` outside every faded layer, so an
-   invisible copy would eat clicks over the bottom-left corner of the work grid
-   forever, and a keyboard reader on the floppy screen would land on a link whose
-   focus ring is drawn nowhere they can see.
+   is a touch target and it is `position: fixed` outside every faded layer, so
+   an invisible copy would eat clicks over the bottom-left corner of the work
+   grid forever, and a keyboard reader would go on finding it in the tab order
+   under the bands. `visibility` is what removes it, and the handover's own
+   switch is the only thing that has to.
 
-   IT IS A FALLBACK CHAIN RATHER THAN A PRODUCT because `visibility` is a keyword
-   and cannot be multiplied. It reads in the order the two states occur:
-   `--wgc-copy-vis` is published ONLY while the link is still gated (hidden), and
-   REMOVED once it has arrived — so after that the chain falls through to the
-   handover's own switch, and finally to `visible` for the walk itself. That is
-   also why WorldGlassCard removes the property instead of writing "visible": a
-   custom property holding a real value cannot be fallen through.
-
-   The leg-8 keyframes declare `visibility: hidden` at 100% and an animation
-   outranks any base declaration, so the departure still belongs to them. This
-   covers the two ends the animation cannot reach. */
+   THE LESSON THAT OUTLIVES ALL OF IT: this element has exactly ONE declaration
+   per property, in one place. It shipped with a bug where the opening gate was
+   written next to the thing it described, four thousand lines above, and this
+   block silently won — the gate was dead text for weeks and reading its own
+   rule could not reveal it. If a third term is ever needed, add it to these two
+   declarations. Do not open a second one anywhere. */
 .sw-exit {
-  filter: opacity(calc(var(--wgc-copy, 0) * (1 - var(--sw-handoff, 0))));
+  filter: opacity(calc(1 - var(--sw-handoff, 0)));
   visibility: var(--wgc-copy-vis, var(--sw-handoff-vis, visible));
 }
 
